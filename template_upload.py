@@ -7,10 +7,14 @@ import neotomaUploader as nu
 
 load_dotenv()
 
-data = json.loads(os.getenv('PGDB_LOCAL2'))
+# Proper
+data_p = json.loads(os.getenv('PGDB_LOCAL'))
+conn_p = psycopg2.connect(**data_p, connect_timeout = 5)
+cur_p = conn_p.cursor()
 
+#Holding tank
+data = json.loads(os.getenv('PGDB_TANK'))
 conn = psycopg2.connect(**data, connect_timeout = 5)
-
 cur = conn.cursor()
 
 args = nu.parse_arguments()
@@ -76,6 +80,7 @@ for filename in filenames:
     logfile.append('=== Inserting Chronology ===')
     # Placeholders exist
     uploader['chronology'] = nu.insert_chronology(cur = cur,
+                                                  cur_p = cur_p,
                                                 yml_dict = yml_dict,
                                                 csv_template = csv_template,
                                                 uploader = uploader)
@@ -98,6 +103,7 @@ for filename in filenames:
 
     logfile.append('=== Inserting Dataset PI ===')
     uploader['datasetpi'] = nu.insert_dataset_pi(cur = cur,
+                                                 cur_p = cur_p,
                                                 yml_dict = yml_dict,
                                                 csv_template = csv_template,
                                                 uploader = uploader)
@@ -105,12 +111,12 @@ for filename in filenames:
  
     logfile.append('=== Inserting Data Processor ===')
     uploader['processor'] = nu.insert_data_processor(cur = cur,
-                                                    yml_dict = yml_dict,
-                                                    csv_template = csv_template,
-                                                    uploader = uploader)
+                                                     cur_p = cur_p,
+                                                     yml_dict = yml_dict,
+                                                     csv_template = csv_template,
+                                                     uploader = uploader)
     logfile.append(f"dataset Processor: {uploader['processor']}")
  
-
         # Not sure where to get this information from
         # logfile.append('=== Inserting Repository ===')
         # uploader['repository'] = nu.insert_dataset_repository(cur = cur,
@@ -126,17 +132,19 @@ for filename in filenames:
     logfile.append(f"Dataset Database: {uploader['database']}")
 
     logfile.append('=== Inserting Samples ===')
-    uploader['samples'] = nu.insert_sample(cur, 
+    uploader['samples'] = nu.insert_sample(cur = cur,
+                                           cur_p = cur_p, 
                                         yml_dict = yml_dict,
                                         csv_template = csv_template,
                                         uploader = uploader)
     logfile.append(f"Dataset Samples: {uploader['samples']}")
 
     logfile.append('=== Inserting Sample Analyst ===')
-    uploader['sampleAnalyst'] = nu.insert_sample_analyst(cur, 
-                                        yml_dict = yml_dict,
-                                        csv_template = csv_template,
-                                        uploader = uploader)
+    uploader['sampleAnalyst'] = nu.insert_sample_analyst(cur = cur, 
+                                                         cur_p=cur_p,
+                                                         yml_dict = yml_dict,
+                                                         csv_template = csv_template,
+                                                         uploader = uploader)
     logfile.append(f"Sample Analyst: {uploader['sampleAnalyst']}")
 
     logfile.append('=== Inserting Sample Age ===')
@@ -148,10 +156,11 @@ for filename in filenames:
 
     logfile.append('=== Inserting Data ===')
     # TaxonID PlaceHolder
-    uploader['data'] = nu.insert_data(cur, 
-                                    yml_dict = yml_dict,
-                                    csv_template = csv_template,
-                                    uploader = uploader)
+    uploader['data'] = nu.insert_data(cur = cur, 
+                                      cur_p = cur_p,
+                                      yml_dict = yml_dict,
+                                      csv_template = csv_template,
+                                      uploader = uploader)
     logfile.append(f"Data: {uploader['data']}")
 
     modified_filename = filename.replace('data/', 'data/upload_logs/')

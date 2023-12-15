@@ -1,7 +1,7 @@
 import logging
 from .pull_params import pull_params
 
-def insert_data(cur, yml_dict, csv_template, uploader):
+def insert_data(cur, cur_p, yml_dict, csv_template, uploader):
     results_dict = {'data_points': [], 'valid': []}
     data_query = """
                  SELECT ts.insertdata(_sampleid := %(sampleid)s,
@@ -31,8 +31,8 @@ def insert_data(cur, yml_dict, csv_template, uploader):
         for val_dict in inputs:
             # Getting TaxonID
             get_taxonid = """SELECT * FROM ndb.taxa WHERE taxonname %% %(taxonname)s;"""
-            cur.execute(get_taxonid, {'taxonname': val_dict['taxonname']})
-            taxonid = cur.fetchone()
+            cur_p.execute(get_taxonid, {'taxonname': val_dict['taxonname']})
+            taxonid = cur_p.fetchone()
             if taxonid != None:
                 taxonid = int(taxonid[0])
             else:
@@ -44,8 +44,11 @@ def insert_data(cur, yml_dict, csv_template, uploader):
             val_dict['variablecontextid'] = None # placeholder
             # Get UnitsID
             get_unitsid = """SELECT * FROM ndb.variableunits WHERE variableunits %% %(units)s;"""
-            cur.execute(get_unitsid, {'units': val_dict['unitcolumn'][i]})
-            unitsid = cur.fetchone()[0] # This is just getting the varunitsid
+            cur_p.execute(get_unitsid, {'units': val_dict['unitcolumn'][i]})
+            unitsid = cur_p.fetchone()[0] # This is just getting the varunitsid
+            # Insertion might happen if I don't get it, 
+            # should I search in proper or tank?
+            #For now HT
             cur.execute(get_varid, 
                         {'unitsid':unitsid, 
                          'taxonid': taxonid, 
@@ -55,6 +58,7 @@ def insert_data(cur, yml_dict, csv_template, uploader):
             if varid != None:
                 varid = int(varid[0])
             else:
+                # Should I insert in proper or HT? For now HT
                 cur.execute(var_query, {'taxonid': taxonid,
                                         'variableelementid': None,
                                         'variableunitsid': unitsid,

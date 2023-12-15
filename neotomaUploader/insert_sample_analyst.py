@@ -1,7 +1,7 @@
 import logging
 from .pull_params import pull_params
 
-def insert_sample_analyst(cur, yml_dict, csv_template, uploader):
+def insert_sample_analyst(cur, cur_p, yml_dict, csv_template, uploader):
     """
     Inserts sample analyst data into Neotoma
 
@@ -24,7 +24,7 @@ def insert_sample_analyst(cur, yml_dict, csv_template, uploader):
     contids = []
     baseid = 1
     for i in inputs['contactid']:
-        cur.execute(get_contact, {'contactname': i})
+        cur_p.execute(get_contact, {'contactname': i})
         contids.append({'contactname': i, 'id': cur.fetchone()[0], 'order': baseid})
         baseid = baseid + 1
     results_dict['contids'] = contids

@@ -3,7 +3,7 @@ import logging
 import datetime
 from .pull_params import pull_params
 
-def insert_chronology(cur, yml_dict, csv_template, uploader):
+def insert_chronology(cur, cur_p, yml_dict, csv_template, uploader):
     """
     Inserts chronology data into Neotoma.
 
@@ -45,8 +45,8 @@ def insert_chronology(cur, yml_dict, csv_template, uploader):
     agetype = list(set(inputs_age['unitcolumn']))
     agetype = agetype[0]
 
-    cur.execute(get_cont, {'contactname': inputs['contactid'][0]})
-    contactid = cur.fetchone()[0]
+    cur_p.execute(get_cont, {'contactname': inputs['contactid'][0]})
+    contactid = cur_p.fetchone()[0]
 
     if agetype == 'cal yr BP':
         agetypeid = 2

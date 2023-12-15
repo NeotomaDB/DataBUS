@@ -2,7 +2,7 @@ import logging
 from .pull_params import pull_params
 import datetime
 
-def insert_sample(cur, yml_dict, csv_template, uploader):
+def insert_sample(cur, cur_p, yml_dict, csv_template, uploader):
     """
     Inserts sample data into Neotoma.
 
@@ -39,8 +39,8 @@ def insert_sample(cur, yml_dict, csv_template, uploader):
   
     for j in range(len(uploader['anunits']['anunits'])):
         get_taxonid = """SELECT * FROM ndb.taxa WHERE taxonname %% %(taxonname)s;"""
-        cur.execute(get_taxonid, {'taxonname': inputs['taxonname']})
-        taxonid = cur.fetchone()
+        cur_p.execute(get_taxonid, {'taxonname': inputs['taxonname']})
+        taxonid = cur_p.fetchone()
         if taxonid != None:
             taxonid = int(taxonid[0])
         else:

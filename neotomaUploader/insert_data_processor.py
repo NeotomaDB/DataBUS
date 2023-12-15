@@ -1,7 +1,7 @@
 import logging
 from .pull_params import pull_params
 
-def insert_data_processor(cur, yml_dict, csv_template, uploader):
+def insert_data_processor(cur, cur_p, yml_dict, csv_template, uploader):
     """
     Inserts data processors into Neotoma
 
@@ -24,7 +24,7 @@ def insert_data_processor(cur, yml_dict, csv_template, uploader):
 
     contids = list()
     for i in inputs['contactid']:
-        cur.execute(get_contact, {'name': i})
+        cur_p.execute(get_contact, {'name': i})
         contids.append({'name': i, 'id': cur.fetchone()[0]})
     results_dict['processorid'] = contids
 

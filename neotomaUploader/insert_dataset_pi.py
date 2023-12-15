@@ -25,7 +25,7 @@ def insert_dataset_pi(cur, yml_dict, csv_template, uploader):
     baseid = 1
     contids = []
     for i in inputs['contactname']:
-        cur.execute(get_contact, {'name': i})
+        cur_p.execute(get_contact, {'name': i})
         contids.append({'name': i, 'id': cur.fetchone()[0], 'order': baseid})
         baseid = baseid + 1
     
