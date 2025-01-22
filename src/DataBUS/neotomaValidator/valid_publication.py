@@ -27,7 +27,7 @@ def valid_publication(cur, yml_dict, csv_file, validator):
     doi_pattern = r"^10\.\d{4,9}/[-._;()/:A-Z0-9]+$"
 
     if inputs['publicationid'] is None:
-        response.message.append(f"? No DOI present")
+        response.message.append("? No DOI present")
         response.valid.append(True)
         if inputs['citation']:
             for cit in inputs['citation']:
@@ -47,7 +47,7 @@ def valid_publication(cur, yml_dict, csv_file, validator):
     else:
         try:
             inputs['publicationid'] = int(inputs['publicationid'])
-        except Exception as e:
+        except Exception:
             response.message.append("Cannot coerce publication ID to integer. Try as DOI.")
         if isinstance(inputs['publicationid'], int):
             pub_query = """
@@ -65,7 +65,7 @@ def valid_publication(cur, yml_dict, csv_file, validator):
                 response.valid.append(False)
         elif isinstance(inputs['publicationid'], str):
             if re.match(doi_pattern, inputs['publicationid'], re.IGNORECASE):
-                response.message.append(f"✔  Reference is correctly formatted as DOI.")
+                response.message.append("✔  Reference is correctly formatted as DOI.")
                 response.valid.append(True)
                 url = f"https://api.crossref.org/works/{inputs['doi'][0]}"
                 request = requests.get(url)
@@ -111,14 +111,14 @@ def valid_publication(cur, yml_dict, csv_file, validator):
                                     origlang = data['language'],
                                     notes = None)
                     response.valid.append(True)
-                except Exception as e:
+                except Exception:
                     response.valid.append(False)
                     response.message.append("✗  Publication cannot be created {e}")
                     #pub = Publication()
             else:
                 response.message.append("? Text found in reference column but "
-                                        f"it does not meet DOI standards"
-                                        f"of citation not given."
-                                        f"Publication info will not be uploaded.")
+                                        "it does not meet DOI standards"
+                                        "of citation not given."
+                                        "Publication info will not be uploaded.")
     response.validAll = all(response.valid)
     return response

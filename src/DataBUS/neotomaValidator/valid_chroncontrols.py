@@ -30,7 +30,7 @@ def valid_chroncontrols(yml_dict, csv_file):
     try:
         agetype = list(set(inputs_age["unitcolumn"]))
         inputs["agetype"] = agetype[0]
-    except KeyError as e:
+    except KeyError:
         inputs["agetype"] = None
 
     if inputs["agetype"]:
@@ -60,15 +60,15 @@ def valid_chroncontrols(yml_dict, csv_file):
     try:
         if len(inputs["depth"]) == len(inputs_age["age"]) == len(inputs["thickness"]):
             response.message.append(
-                f"✔ The number of depths (analysis units), ages, and thicknesses are the same."
+                "✔ The number of depths (analysis units), ages, and thicknesses are the same."
             )
             response.valid.append(True)
         else:
             response.message.append(
-                f"✗ The number of depths (analysis units), ages, and thicknesses is not the same. Please check."
+                "✗ The number of depths (analysis units), ages, and thicknesses is not the same. Please check."
             )
             response.valid.append(False)
-    except Exception as e:
+    except Exception:
         response.message.append("? Depth, Age, or Thickness are not given.")
 
     for k in inputs:
@@ -118,5 +118,5 @@ def valid_chroncontrols(yml_dict, csv_file):
 
     response.validAll = all(response.valid)
     if response.validAll:
-        response.message.append(f"✔  Chron control can be created")
+        response.message.append("✔  Chron control can be created")
     return response

@@ -137,6 +137,6 @@ def valid_data_long(cur, yml_dict, csv_file, validator, filename):
     response.uncertainty_inputs = uncertainty_d
 
     if response.validAll:
-        response.message.append(f"✔  Datum can be created.")
+        response.message.append("✔  Datum can be created.")
 
     return response

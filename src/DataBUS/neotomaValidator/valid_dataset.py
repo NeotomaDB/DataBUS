@@ -27,7 +27,7 @@ def valid_dataset(cur, yml_dict, csv_file):
 
     if inputs["datasetname"] == None:
         if inputs["database"][0]['value'].lower() == "East Asian Nonmarine Ostracod Database".lower():
-            inputs["datasetname"] = f"EANOD/handle/OST"
+            inputs["datasetname"] = "EANOD/handle/OST"
 
 
     
@@ -47,7 +47,7 @@ def valid_dataset(cur, yml_dict, csv_file):
         response.valid.append(True)
     else:
         inputs["datasettypeid"] = None
-        response.message.append(f"✗ Dataset type is not known to neotoma. Add it first")
+        response.message.append("✗ Dataset type is not known to neotoma. Add it first")
         response.valid.append(False)
 
     try:
@@ -56,7 +56,7 @@ def valid_dataset(cur, yml_dict, csv_file):
             datasetname=inputs["datasetname"],
             notes=inputs["notes"],
         )
-        response.message.append(f"✔ Dataset can be created.")
+        response.message.append("✔ Dataset can be created.")
         response.valid.append(True)
     except Exception as e:
         response.message.append(f"✗ Dataset cannot be created: {e}")

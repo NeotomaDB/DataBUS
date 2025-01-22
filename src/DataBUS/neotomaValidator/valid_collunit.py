@@ -96,7 +96,7 @@ def valid_collunit(cur, yml_dict, csv_file):
                                         f"Please modify CSV file to match available environments")
             else:
                 inputs["depenvtid"] = None
-                response.message.append(f"Please add the new depositional environment.")
+                response.message.append("Please add the new depositional environment.")
             response.valid.append(False)
     
     if inputs['geog']:
@@ -183,8 +183,8 @@ def valid_collunit(cur, yml_dict, csv_file):
                 msg = cu.compare_cu(found_cu)
                 response.message.append(f"? Are CollUnits equal: {cu == found_cu}.")
                 if msg:
-                    response.message.append(f"Fields at the CU level differ.\n"
-                                            f"Verify that the information is correct.")
+                    response.message.append("Fields at the CU level differ.\n"
+                                            "Verify that the information is correct.")
                     for i in msg:
                         response.message.append(f"{i}")
                     
@@ -214,12 +214,12 @@ def valid_collunit(cur, yml_dict, csv_file):
             goodcols = [i[-2] for i in close_handles]
             if any([j == cu.handle for j in goodcols]):
                 response.message.append(
-                    f"" #Collection unit was found - but this would also happen from the above search
+                    "" #Collection unit was found - but this would also happen from the above search
                 )
             else:
                 response.message.append(
-                    f"?  The collection unit handle does not occur "
-                    f"within close sites."
+                    "?  The collection unit handle does not occur "
+                    "within close sites."
                 )
                 sitecol = itertools.groupby(
                     [{"sitename": k[1], "collunit": k[-2]} for k in close_handles],
@@ -234,12 +234,12 @@ def valid_collunit(cur, yml_dict, csv_file):
                     response.culist.append(site)
         else:
             response.message.append(
-                f"✔  There are no nearby sites, a new collection unit "
-                f"will be created."
+                "✔  There are no nearby sites, a new collection unit "
+                "will be created."
             )
             response.valid.append(True)
     else:
-        response.message.append(f"No given coordinates for CU. Cannot find nearby CUs")
+        response.message.append("No given coordinates for CU. Cannot find nearby CUs")
         response.valid.append(True)
 
     response.validAll = all(response.valid)

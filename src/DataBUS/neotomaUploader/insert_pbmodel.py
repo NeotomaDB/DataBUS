@@ -40,7 +40,7 @@ def insert_pbmodel(cur, yml_dict, csv_file, uploader):
             try:
                 pb_model.insert_to_db(cur)
                 response.valid.append(True)
-                response.message.append(f"✔  Added Lead Model.")
+                response.message.append("✔  Added Lead Model.")
             except Exception as e:
                 response.valid.append(False)
                 response.message.append(f"✗  Lead Model could not be inserted {e}.")

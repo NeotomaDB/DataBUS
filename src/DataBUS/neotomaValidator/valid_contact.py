@@ -28,7 +28,7 @@ def valid_contact(cur, csv_template, yml_dict):
         )
         agentname = element["contactid"]
         if not agentname:
-            response.message.append(f"? Contact ID not given.")
+            response.message.append("? Contact ID not given.")
             continue
 
         namematch = []

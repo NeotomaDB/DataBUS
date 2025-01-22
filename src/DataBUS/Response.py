@@ -37,7 +37,7 @@ class SiteResponse(Response):
                 str(site) for site in self.closesites
             )
         if self.sitelist:
-            response_str += f"\n Sitelist:\n" + "\n".join(
+            response_str += "\n Sitelist:\n" + "\n".join(
                 str(site) for site in self.sitelist
             )
         return response_str
@@ -63,7 +63,7 @@ class CUResponse(Response):
                 str(site) for site in self.closecu
             )
         if self.culist:
-            response_str += f"\n Sitelist:\n" + "\n".join(
+            response_str += "\n Sitelist:\n" + "\n".join(
                 str(site) for site in self.culist
             )
         return response_str
@@ -81,7 +81,7 @@ class AUResponse(Response):
     def __str__(self):
         response_str = super().__str__()
         if self.aulist:
-            response_str += f"\n Analysis Unit list:\n" + "\n".join(
+            response_str += "\n Analysis Unit list:\n" + "\n".join(
                 str(site) for site in self.aulist
             )
         return response_str
@@ -97,7 +97,7 @@ class ChronResponse(Response):
     def __str__(self):
         response_str = super().__str__()
         if self.chronlist:
-            response_str += f"\n Chronology Unit list:\n" + "\n".join(
+            response_str += "\n Chronology Unit list:\n" + "\n".join(
                 str(site) for site in self.chronlist
             )
         return response_str

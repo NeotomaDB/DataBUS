@@ -18,11 +18,11 @@ def insert_dataset_repository(cur, yml_dict, csv_file, uploader):
                 notes=inputs["notes"],
             )
             response.valid.append(True)
-        except Exception as e:
+        except Exception:
             repo = Repository(
                 datasetid=uploader["datasetid"].datasetid, repositoryid=None, notes=None
             )
-            response.message.append(f"✗ Repo cannot be created.")
+            response.message.append("✗ Repo cannot be created.")
             response.valid.append(False)
         finally:
             try:
@@ -37,7 +37,7 @@ def insert_dataset_repository(cur, yml_dict, csv_file, uploader):
                 response.message.append(f"✗ Repo cannot be inserted: {e}.")
                 response.valid.append(False)
     else:
-        response.message.append(f"✔ Repository information is not available.")
+        response.message.append("✔ Repository information is not available.")
         response.valid.append(True)
 
     response.validAll = all(response.valid)

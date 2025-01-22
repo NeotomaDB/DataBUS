@@ -62,7 +62,7 @@ def insert_chronology(cur, yml_dict, csv_file, uploader):
             recdatemodified=inputs["recdatemodified"],
         )
         response.valid.append(True)
-    except Exception as e:
+    except Exception:
         response.valid.append(False)
         response.message.append("✗  Chronology cannot be created {e}")
         chron = Chronology(collectionunitid=uploader["collunitid"].cuid)

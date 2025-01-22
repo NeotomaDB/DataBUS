@@ -57,12 +57,12 @@ def insert_collunit(cur, yml_dict, csv_file, uploader):
                     if len(new_date) == 7 and new_date[4] == '-' and new_date[5:7].isdigit():
                         new_date = f"{new_date}-01"
                         datetime.strptime(date_string, "%Y-%m-%d")
-                        notes = notes + f""
+                        notes = notes + ""
                     elif new_date.endswith("--") or new_date.endswith("//"):
                         notes = f"Collection Date seems to be: {new_date}"
                         new_date = None
                     else:
-                        notes = notes + f""
+                        notes = notes + ""
             params.remove("colldate")
             inputs = nh.clean_inputs(
             nh.pull_params(params, yml_dict, csv_file, "ndb.collectionunits") ) 
@@ -136,7 +136,7 @@ def insert_collunit(cur, yml_dict, csv_file, uploader):
         )
         response.valid.append(True)
         response.message.append("✔  Added Collection Unit")
-    except Exception as e:  #  be more informative
+    except Exception:  #  be more informative
         cu = CollectionUnit(
             siteid=uploader["sites"].siteid, handle="Pholder", geog=geog
         )
@@ -192,14 +192,14 @@ def insert_collunit(cur, yml_dict, csv_file, uploader):
                 response.valid.append(False)
                 response.message.append(f"✗  Could not upsert site: {e}")
         elif len(coll_info) == 0:
-            response.message.append(f"? Collunit not found")
+            response.message.append("? Collunit not found")
             if overwrite["handle"] == True:
                 response.valid.append(True)
                 response.message.append(
-                    f"✔  Overwrite is set to True."
-                    f"Collection Unit is not "
-                    f"currently associated to a Collection Unit in Neotoma. "
-                    f"New Collection unit will be created."
+                    "✔  Overwrite is set to True."
+                    "Collection Unit is not "
+                    "currently associated to a Collection Unit in Neotoma. "
+                    "New Collection unit will be created."
                 )
             else:
                 response.valid.append(False)

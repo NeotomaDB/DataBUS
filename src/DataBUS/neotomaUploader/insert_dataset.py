@@ -71,7 +71,7 @@ def insert_dataset(cur, yml_dict, csv_file, uploader):
             response.datasetid = ds.insert_to_db(cur)
             response.valid.append(True)
             response.message.append(f"✔ Added Dataset {response.datasetid}.")
-        except Exception as e:
+        except Exception:
             response.datasetid = ds.insert_to_db(cur)
             response.valid.append(True)
             response.message.append(

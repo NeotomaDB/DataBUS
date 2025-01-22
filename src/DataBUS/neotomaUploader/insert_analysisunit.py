@@ -28,10 +28,10 @@ def insert_analysisunit(cur, yml_dict, csv_file, uploader):
         inputs = nh.clean_inputs(
             nh.pull_params(params, yml_dict, csv_file, "ndb.analysisunits")
         )
-    except Exception as e:
+    except Exception:
         response.validAll = False
         response.valid.append(False)
-        response.message.append(f"AU Elements in the CSV file are not properly inserted. Please verify the CSV file")
+        response.message.append("AU Elements in the CSV file are not properly inserted. Please verify the CSV file")
 
     inputs["database"] = nh.retrieve_dict(yml_dict, "ndb.datasetdatabases.databasename")
     if inputs["database"][0]['value'].lower() == "East Asian Nonmarine Ostracod Database".lower():
@@ -58,8 +58,8 @@ def insert_analysisunit(cur, yml_dict, csv_file, uploader):
             inputs[k] = [inputs[k]] * len(inputs["depth"]) if inputs[k] is not None else [kv[k]] * len(inputs["depth"])
 
     if not uploader['collunitid'].cuid:
-        response.message.append(f"✗ CU ID needed to create Analysis Unit"
-                                f" Placeholder `1` will be used to create log.")
+        response.message.append("✗ CU ID needed to create Analysis Unit"
+                                " Placeholder `1` will be used to create log.")
         uploader['collunitid'].cuid = 1
 
     if inputs['depth']:
@@ -89,7 +89,7 @@ def insert_analysisunit(cur, yml_dict, csv_file, uploader):
                     response.message.append(f"✔ Added Analysis Unit {auid}.")
                     response.valid.append(True)
                 else:
-                    response.message.append(f"✗ Analysis Unit can be created but CU has errors.")
+                    response.message.append("✗ Analysis Unit can be created but CU has errors.")
             except Exception as e:
                 response.message.append(
                     f"✗ Analysis Unit Data is not correct. Error message: {e}"

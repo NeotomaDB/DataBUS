@@ -46,7 +46,7 @@ def insert_sample_age(cur, yml_dict, csv_file, uploader):
                 ageolder=age_older,
             )
             response.valid.append(True)
-        except Exception as e:
+        except Exception:
             response.valid.append(False)
             sa = SampleAge()
         finally:

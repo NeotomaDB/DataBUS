@@ -47,7 +47,7 @@ def valid_site(cur, yml_dict, csv_file):
         )
     except AssertionError:
         response.message.append(
-            f"✗ The template must contain a sitename and coordinates."
+            "✗ The template must contain a sitename and coordinates."
         )
         response.valid.append(False)
 
@@ -136,8 +136,8 @@ def valid_site(cur, yml_dict, csv_file):
                 msg = site.compare_site(new_site)
                 response.message.append(f"? Are sites equal: {site == new_site}.")
                 if msg:
-                    response.message.append(f"Fields at the Site level differ."
-                                            f"Verify that the information is correct.")
+                    response.message.append("Fields at the Site level differ."
+                                            "Verify that the information is correct.")
                     for i in msg:
                         response.message.append(f"{i}")
 
@@ -157,7 +157,7 @@ def valid_site(cur, yml_dict, csv_file):
                 if not response.matched["distmatch"]:
                     close_sites = site.find_close_sites(cur, limit=3)
                     response.message.append(
-                        f"? Following sites are close to proposed sites."
+                        "? Following sites are close to proposed sites."
                     )
                     for site_data in close_sites:
                         close_site = Site(

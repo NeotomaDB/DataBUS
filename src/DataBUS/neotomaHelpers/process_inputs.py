@@ -39,7 +39,7 @@ def process_inputs(inputs, response=None, name=None, values=None):
                     response["message"].append(f"Handle has been given: {inputs[name]}")
                 else:
                     response["given_handle"] = False
-                    response["message"].append(f"A new Handle will be generated")
+                    response["message"].append("A new Handle will be generated")
                     inputs[name] = str(inputs["core"][0])[:10]
 
     # Check other values

@@ -45,7 +45,7 @@ def pull_params(params, yml_dict, csv_template, table=None):
                                 clean_valor = list(map(str, clean_valor))
                                 if i == "notes":
                                     if all(j.strip() == "" for j in clean_valor):
-                                        clean_valor = f""
+                                        clean_valor = ""
                                     else:
                                         #clean_valor = f" {val['column']}: {', '.join(clean_valor)}"
                                         clean_valor = [f" {val['column']}: {num}" for num in clean_valor]

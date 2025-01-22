@@ -104,9 +104,9 @@ def valid_data(cur, yml_dict, csv_file, validator):
                         f"ts.insertvariable new ID: {varid}"
                     )
                     response.valid.append(True)
-                except Exception as e:
+                except Exception:
                     response.valid.append(False)
-                    response.message.append(f"✗ Cannot insert Var ID")
+                    response.message.append("✗ Cannot insert Var ID")
                     varid = 1  # error placeholder
 
             #### Where the datum stuff begins
@@ -132,6 +132,6 @@ def valid_data(cur, yml_dict, csv_file, validator):
     response.uncertainty_inputs = uncertainty_d
 
     if response.validAll:
-        response.message.append(f"✔  Datum can be created.")
+        response.message.append("✔  Datum can be created.")
 
     return response

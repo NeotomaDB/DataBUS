@@ -31,7 +31,7 @@ def insert_publication(cur, yml_dict, csv_file, uploader):
                                                           """
     #inputs['doi'][0] = "10.1038/nature12373" #placeholder for trial.
     if inputs['publicationid'] is None:
-        response.message.append(f"? No DOI present")
+        response.message.append("? No DOI present")
         response.valid.append(True)
         if inputs['citation']:
             for cit in inputs['citation']:
@@ -53,7 +53,7 @@ def insert_publication(cur, yml_dict, csv_file, uploader):
                                                     'publicationid': pub_id[0],
                                                     'primarypub': True})
                         response.valid.append(True)
-                    except Exception as e:
+                    except Exception:
                         response.message.append("Could not associate dataset ID to publication ID")
                         response.valid.append(False)
                 else:
@@ -62,7 +62,7 @@ def insert_publication(cur, yml_dict, csv_file, uploader):
     else:
         try:
             inputs['publicationid'] = int(inputs['publicationid'])
-        except Exception as e:
+        except Exception:
             response.message.append("Cannot coerce publication ID to integer. Try as DOI.")
         if isinstance(inputs['publicationid'], int):
             pub_query = """
@@ -83,7 +83,7 @@ def insert_publication(cur, yml_dict, csv_file, uploader):
                 response.valid.append(False)
         elif isinstance(inputs['publicationid'], str):
             if re.match(doi_pattern, inputs['publicationid'], re.IGNORECASE):
-                response.message.append(f"✔  Reference is correctly formatted as DOI.")
+                response.message.append("✔  Reference is correctly formatted as DOI.")
                 response.valid.append(True)
                 url = f"https://api.crossref.org/works/{inputs['doi'][0]}"
                 request = requests.get(url)
@@ -129,7 +129,7 @@ def insert_publication(cur, yml_dict, csv_file, uploader):
                                     origlang = data['language'],
                                     notes = None)
                     response.valid.append(True)
-                except Exception as e:
+                except Exception:
                     response.valid.append(False)
                     response.message.append("✗  Publication cannot be created {e}")
                     #pub = Publication()
@@ -155,12 +155,12 @@ def insert_publication(cur, yml_dict, csv_file, uploader):
                         cur.execute(dataset_pub_q, {'datasetid': uploader["datasetid"].datasetid,
                                                     'publicationid': pubid,
                                                     'primarypub': True})
-                    except Exception as e:
+                    except Exception:
                         response.message.append("Could not associate dataset ID to publication ID")
                         response.valid.append(False)
             else:
                 response.message.append("? Text found in reference column but "
-                                        f"it does not meet DOI standards."
-                                        f"Publication info will not be uploaded.")
+                                        "it does not meet DOI standards."
+                                        "Publication info will not be uploaded.")
     response.validAll = all(response.valid)
     return response

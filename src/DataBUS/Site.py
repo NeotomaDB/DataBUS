@@ -1,4 +1,4 @@
-from .Geog import Geog, WrongCoordinates
+from .Geog import Geog
 
 
 class Site:
@@ -21,9 +21,9 @@ class Site:
         self.siteid = siteid
 
         if sitename is None:
-            raise ValueError(f"✗ Sitename must be given.")
+            raise ValueError("✗ Sitename must be given.")
         if not isinstance(sitename, (list, str)):
-            raise TypeError(f"✗ Sitename must be a string or list of strings.")
+            raise TypeError("✗ Sitename must be a string or list of strings.")
         if isinstance(sitename, str):
             sitename = [sitename]
         if isinstance(sitename, list) and len(sitename) != 1:

@@ -21,9 +21,9 @@ def valid_analysisunit(yml_dict, csv_file):
         inputs = nh.clean_inputs(
             nh.pull_params(params, yml_dict, csv_file, "ndb.analysisunits")
         )
-    except Exception as e:
+    except Exception:
         response.validAll = False
-        response.message.append(f"AU Elements in the CSV file are not properly inserted. Please verify the CSV file")
+        response.message.append("AU Elements in the CSV file are not properly inserted. Please verify the CSV file")
 
 
     for k in inputs:

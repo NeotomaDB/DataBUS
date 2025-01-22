@@ -1,4 +1,4 @@
-from DataBUS import Response, SiteResponse
+from DataBUS import Response
 
 
 def logging_dict(a_dict, logfile, special_feat=None):

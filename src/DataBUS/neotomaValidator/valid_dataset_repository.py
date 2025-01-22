@@ -16,7 +16,7 @@ def valid_dataset_repository(cur, yml_dict, csv_file):
 
     if not inputs["repo"]:
         response.valid.append(True)
-        response.message.append(f"✔ No repository information to be added.")
+        response.message.append("✔ No repository information to be added.")
     else:
         response.message.append(f"? Reposiory {inputs['repoid']} given.")
         query = """
@@ -45,7 +45,7 @@ def valid_dataset_repository(cur, yml_dict, csv_file):
                 """
         try:
             Repository(repositoryid=inputs["repoid"])
-            response.message.append(f"✔ Repository created.")
+            response.message.append("✔ Repository created.")
             response.valid.append(False)
         except Exception as e:
             response.message.append(f"✗ Repository cannot be created {e}.")

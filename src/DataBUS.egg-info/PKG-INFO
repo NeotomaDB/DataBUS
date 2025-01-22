@@ -1,0 +1,26 @@
+Metadata-Version: 2.2
+Name: DataBUS
+Version: 0.1.0
+Summary: Upload dataset records to the Neotoma Database
+Author-email: Socorro E Dominguez Vidana <dominguezvid@uwisc.edu>
+Requires-Python: >=3.7
+Requires-Dist: numpy==1.25.0
+Requires-Dist: pandas==2.0.2
+Requires-Dist: psycopg2-binary==2.9.6
+Requires-Dist: python-dateutil==2.8.2
+Requires-Dist: python-dotenv==1.0.0
+Requires-Dist: pytz==2023.3
+Requires-Dist: PyYAML==6.0
+Requires-Dist: six==1.16.0
+Requires-Dist: tzdata==2023.3
+Requires-Dist: openpyxl
+Requires-Dist: requests
+Provides-Extra: build
+Requires-Dist: build; extra == "build"
+Requires-Dist: twine; extra == "build"
+Provides-Extra: dev
+Requires-Dist: black; extra == "dev"
+Requires-Dist: bumpver; extra == "dev"
+Requires-Dist: isort; extra == "dev"
+Requires-Dist: mypy; extra == "dev"
+Requires-Dist: pytest; extra == "dev"

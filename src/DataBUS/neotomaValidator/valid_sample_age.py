@@ -63,5 +63,5 @@ def valid_sample_age(cur, yml_dict, csv_file, validator):
 
     response.validAll = all(response.valid)
     if response.validAll:
-        response.message.append(f"✔ Sample ages can be created.")
+        response.message.append("✔ Sample ages can be created.")
     return response

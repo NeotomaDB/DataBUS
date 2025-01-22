@@ -19,7 +19,7 @@ def valid_datauncertainty(cur, yml_dict, csv_file, validator):
     for i, uncertainty in enumerate(inputs):
         assert (
             len(uncertainty["uncertainty"]) == validator["taxa"].uncertainty_inputs[i]
-        ), (f"Number of " f"uncertainty values does not match number of data values")
+        ), ("Number of " "uncertainty values does not match number of data values")
 
         # SQL uncertainty basis ID
         if uncertainty["uncertaintybasis"]:
@@ -60,5 +60,5 @@ def valid_datauncertainty(cur, yml_dict, csv_file, validator):
                 response.message.append(f"✗ Data Uncertainty cannot be created: {e}")
     response.validAll = all(response.valid)
     if response.validAll:
-        response.message.append(f"✔  Data Uncertainty can be created")
+        response.message.append("✔  Data Uncertainty can be created")
     return response

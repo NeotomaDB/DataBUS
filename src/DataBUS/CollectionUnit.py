@@ -1,4 +1,4 @@
-from .Geog import Geog, WrongCoordinates
+from .Geog import Geog
 
 class CollectionUnit:
     description = "Collection Unit object in Neotoma"

@@ -1,7 +1,6 @@
 import yaml
 from yaml.loader import SafeLoader
 import os
-import pandas as pd
 from .excel_to_yaml import excel_to_yaml
 
 

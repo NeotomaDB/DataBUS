@@ -19,7 +19,7 @@ def insert_datauncertainty(cur, yml_dict, csv_file, uploader):
     for i, uncertainty in enumerate(inputs):
         assert len(uncertainty["uncertainty"]) == len(
             uploader["data"].uncertaintyinputs[i]["dataid"]
-        ), (f"Number of " f"uncertainty values does not match number of data values")
+        ), ("Number of " "uncertainty values does not match number of data values")
         # SQL uncertainty basis ID
 
         uncertainty["uncertaintybasis"] = re.sub(r'(\d+)SD', r'\1 Standard Deviation', uncertainty["uncertaintybasis"])

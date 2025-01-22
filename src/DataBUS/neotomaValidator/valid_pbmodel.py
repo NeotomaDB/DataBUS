@@ -33,6 +33,6 @@ def valid_pbmodel(cur, yml_dict, csv_file, validator):
             response.message.append(f"✗  Lead model cannot be created: {e}")
     response.validAll = all(response.valid)
     if response.validAll:
-        response.message.append(f"✔  Lead Model can be created.")
+        response.message.append("✔  Lead Model can be created.")
 
     return response

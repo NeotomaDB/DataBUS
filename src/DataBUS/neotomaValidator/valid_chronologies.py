@@ -36,7 +36,7 @@ def valid_chronologies(cur, yml_dict, csv_file):
     try:
         agetype = list(set(inputs_age["unitcolumn"]))
         inputs["agetype"] = agetype[0]
-    except KeyError as e:
+    except KeyError:
         inputs["agetype"] = None
 
     if inputs["agetype"]:

@@ -106,7 +106,7 @@ def insert_site(cur, yml_dict, csv_file):
                 )
             response.siteid = site.insert_to_db(cur)
     else:
-        response.message.append(f"A new site ID will be generated")
+        response.message.append("A new site ID will be generated")
         try:
             response.siteid = site.insert_to_db(cur)
             response.sitelist.append(site)

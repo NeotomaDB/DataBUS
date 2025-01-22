@@ -59,5 +59,5 @@ def valid_sample(cur, yml_dict, csv_file, validator):
 
     response.validAll = all(response.valid)
     if response.validAll:
-        response.message.append(f"✔ Sample can be created.")
+        response.message.append("✔ Sample can be created.")
     return response
