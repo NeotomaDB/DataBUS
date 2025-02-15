@@ -13,6 +13,7 @@ def valid_analysisunit(yml_dict, csv_file):
     except Exception as e:
         response.validAll = False
         response.message.append(f"AU Elements in the CSV file are not properly inserted. Please verify the CSV file")
+        inputs = {}
     inputs['analysisunitid']=None
     inputs['collectionunitid']=None
 

@@ -8,7 +8,7 @@ class Sample:
         analysisdate=None,
         taxonid=None,
         labnumber=None,
-        prepmethod=None,
+        preparationmethod=None,
         notes=None,
     ):
         self.analysisunitid = analysisunitid
@@ -21,7 +21,7 @@ class Sample:
         self.analysisdate = analysisdate
         self.taxonid = taxonid
         self.labnumber = labnumber
-        self.prepmethod = prepmethod
+        self.preparationmethod = preparationmethod
         self.notes = notes
 
     def insert_to_db(self, cur):
@@ -33,7 +33,7 @@ class Sample:
                                _analysisdate := %(analysisdate)s,
                                _taxonid := %(taxonid)s,
                                _labnumber := %(labnumber)s,
-                               _prepmethod := %(prepmethod)s,
+                               _preparationmethod := %(preparationmethod)s,
                                _notes := %(notes)s)
                         """
         inputs = {
@@ -44,7 +44,7 @@ class Sample:
             "analysisdate": self.analysisdate,
             "taxonid": self.taxonid,
             "labnumber": self.labnumber,
-            "prepmethod": self.prepmethod,
+            "preparationmethod": self.preparationmethod,
             "notes": self.notes,
         }
 

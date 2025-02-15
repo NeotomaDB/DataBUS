@@ -13,7 +13,7 @@ def clean_notes(notes = None, name = None):
     if notes:
         # List values
         list_dict = {k: v for d in notes for k, v in d.items() if isinstance(v, list)}
-        mapped_vals = ["; ".join(items) for items in zip(*list_dict.values())]
+        mapped_vals = ("; ".join(items) for items in zip(*list_dict.values()))
 
         mapped_vals = list(set(mapped_vals))
         if not name:
@@ -27,8 +27,8 @@ def clean_notes(notes = None, name = None):
         result = reorder_dict(single_vals, name)
         result = f"{result}"
         result = result.replace("Notes:", "")
+        result = result.replace("'", "")
 
     else:
         result = None
-
     return result

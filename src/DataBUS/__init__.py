@@ -24,3 +24,4 @@ from .Variable import Variable
 from .LeadModel import LeadModel
 from .DataUncertainty import DataUncertainty
 from .Publication import Publication
+from .Speleothem import Speleothem

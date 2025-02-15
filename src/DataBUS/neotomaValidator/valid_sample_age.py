@@ -14,7 +14,8 @@ def valid_sample_age(cur, yml_dict, csv_file, validator):
         Response: An object containing validation results and messages.
     """
     response = Response()
-    params = ["age","sampleid", "chronologyid", "ageyounger", "ageolder", "uncertainty"]
+    params = ["age", "sampleid", "chronologyid", 
+              "ageyounger", "ageolder", "uncertainty"]
     agemodel = nh.pull_params(['agemodel'], yml_dict, csv_file, "ndb.chronologies")
 
     try:
@@ -69,6 +70,9 @@ def valid_sample_age(cur, yml_dict, csv_file, validator):
                     response.message.append("? No uncertainty to substract. Ageyounger/Ageolder will be None.")
                     inputs['ageyounger'] = None
                     inputs['ageolder'] = None 
+            # Assess if they are a list, then make it so that we take the max/min values of the list.
+            # Need to ask if it is OK to have multiple ages and since they are linked with the geochronology
+            # if I also need to create multiple chronologies (one for each sample age)
             try:
                 kwargs.pop('uncertainty', None)
                 SampleAge(**kwargs)
