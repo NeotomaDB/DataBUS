@@ -12,19 +12,16 @@ def valid_data(cur, yml_dict, csv_file, wide = False):
     Returns:
     Response: A response object containing validation results and messages.
     """
-   
     inputs = nh.pull_params(["value"], yml_dict, csv_file, "ndb.data")
     params = ["variableelement", "taxon", "variableunits", "variablecontext"]
     inputs2 = nh.pull_params(params, yml_dict, csv_file, "ndb.variables")
     inputs = {**inputs, **inputs2}
-
     response = Response()
     if 'value' in inputs:
         if not inputs['value']:
             response.message.append("? No Values to validate.")
             response.validAll = False
             return response
-
     var_query = """SELECT variableelementid FROM ndb.variableelements
                     WHERE LOWER(variableelement) = %(element)s;"""
     taxon_query = """SELECT * FROM ndb.taxa 
@@ -38,13 +35,13 @@ def valid_data(cur, yml_dict, csv_file, wide = False):
            'taxon': [taxon_query, 'taxonid'], 
            'variableunits': [units_query, 'variableunitsid'],
            'variablecontext': [context_query, 'variablecontextid']}
-
     if wide == True:
         taxa = inputs.copy()
         taxa.pop('taxon', None)
         taxa.pop('variableelement', None)
         taxa.pop('variablecontext', None)
         taxa.pop('variableunits', None)
+        taxa = {k: v for k, v in taxa.items() if not all(x is None for x in v)}
     else:
         taxa = {'value': inputs['value']}
     for n, key in enumerate(taxa.keys()):
@@ -102,13 +99,14 @@ def valid_data(cur, yml_dict, csv_file, wide = False):
                 response.valid.append(True)
             
             try:
-                Datum(sampleid=int(3), variableid=varid, value=inputs['value'][i])
+                Datum(sampleid=int(3), variableid=varid, value=taxa[key][i])
                 response.valid.append(True)
             except Exception as e:
                 response.valid.append(False)
                 response.message.append(f"✗  Datum cannot be created: {e}")
             
     response.validAll = all(response.valid)
+    response.message = list(set(response.message))
     if response.validAll:
         response.message.append(f"✔  Datum can be created.")
-    return response
+    return response 

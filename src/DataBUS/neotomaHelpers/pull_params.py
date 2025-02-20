@@ -7,13 +7,11 @@ from .clean_notes import clean_notes
 def pull_params(params, yml_dict, csv_template, table=None, name = None):
     """
     Pull parameters associated with an insert statement from the yml/csv tables.
-
     Args:
         params (_list_): A list of strings for the columns needed to generate the insert statement.
         yml_dict (_dict_): A `dict` returned by the YAML template.
         csv_template (_dict_): The csv file with the required data to be uploaded.
         table (_string_): The name of the table the parameters are being drawn for.
-
     Returns:
         _dict_: Cleaned and repeated valors for input into a ts.insert functions.
     """
@@ -22,7 +20,6 @@ def pull_params(params, yml_dict, csv_template, table=None, name = None):
         add_unit_inputs = {}
         if re.match(".*\.$", table) == None:
             table = table + "."
-        add_units_inputs_list = []
         for param in params:
             subfields = [entry for entry in yml_dict['metadata'] if entry.get('neotoma', '').startswith(f'{table}{param}.')]
             if subfields:
@@ -64,49 +61,18 @@ def pull_params(params, yml_dict, csv_template, table=None, name = None):
                             else:
                                 add_unit_inputs[i] = []
                                 add_unit_inputs[i].append({f"{val.get('column')}": clean_valor})
+                        elif 'taxonname' in val:
+                            add_unit_inputs[val['taxonname']] = clean_valor
+                            if 'uncertaintybasis' in val:
+                                add_unit_inputs[f"{val['taxonname']}_uncertaintybasis"] = val['uncertaintybasis']
+                            if 'uncertaintyunit' in val:
+                                add_unit_inputs[f"{val['taxonname']}_uncertaintyunit"] = val['uncertaintyunit']
+                            if 'notes' in val:
+                                add_unit_inputs[f"{val['taxonname']}_notes"] = val['notes']
                         else:
                             add_unit_inputs[i] = clean_valor
-                            
-                     # TODO Rethink this part   
-                    if "unitcolumn" in val:
-                        clean_valor2 = clean_column(
-                            val.get("unitcolumn"),
-                            csv_template,
-                            clean=not val.get("rowwise"),
-                        )
-                        clean_valor2 = [
-                            value if value != "NA" else None for value in clean_valor2
-                        ]
-                        add_unit_inputs["unitcolumn"] = clean_valor2
-
-                    if "uncertainty" in val.keys():
-                        clean_valor3 = clean_column(
-                            val["uncertainty"]["uncertaintycolumn"],
-                            csv_template,
-                            clean=not val.get("rowwise"),
-                        )
-                        # clean_valor3 = [float(value) if value != 'NA' else None for value in clean_valor3]
-                        add_unit_inputs["uncertainty"] = clean_valor3
-                        if "uncertaintybasis" in val["uncertainty"].keys():
-                            add_unit_inputs["uncertaintybasis"] = val["uncertainty"][
-                                "uncertaintybasis"
-                            ]
-                        if "notes" in val["uncertainty"].keys():
-                            add_unit_inputs["uncertaintybasis_notes"] = val[
-                                "uncertainty"
-                            ]["notes"]
-                        else:
-                            add_unit_inputs["uncertaintybasis_notes"] = None
-
-                    samples_dict = add_unit_inputs.copy()
-                    samples_dict["name"] = val.get("column")
-                    samples_dict["taxonid"] = val.get("taxonid")
-                    samples_dict["taxonname"] = val.get("taxonname")
-                    add_units_inputs_list.append(samples_dict)
-
             else:
                 add_unit_inputs[i] = None
-
         if 'notes' in add_unit_inputs.keys():
             add_unit_inputs['notes']=clean_notes(add_unit_inputs['notes'], name)
             return add_unit_inputs
