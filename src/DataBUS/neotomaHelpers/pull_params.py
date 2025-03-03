@@ -4,7 +4,7 @@ from .retrieve_dict import retrieve_dict
 from .clean_column import clean_column
 from .clean_notes import clean_notes
  
-def pull_params(params, yml_dict, csv_template, table=None, name = None):
+def pull_params(params, yml_dict, csv_template, table=None, name = None, values = False):
     """
     Pull parameters associated with an insert statement from the yml/csv tables.
     Args:
@@ -21,15 +21,23 @@ def pull_params(params, yml_dict, csv_template, table=None, name = None):
         if re.match(".*\.$", table) == None:
             table = table + "."
         for param in params:
-            subfields = [entry for entry in yml_dict['metadata'] if entry.get('neotoma', '').startswith(f'{table}{param}.')]
+            if values == False:
+                subfields = [entry for entry in yml_dict['metadata'] if entry.get('neotoma', '').startswith(f'{table}{param}.')]
+            else:
+                subfields = [entry for entry in yml_dict['metadata'] if entry.get('column', '') == f'{param}']
             if subfields:
                 for entry in subfields:
                     param_name = entry['neotoma'].replace(f'{table}', "")
                     params.append(param_name)
-                params.remove(param)
+                if param in params:
+                    params.remove(param)
         for i in params:
-            valor = retrieve_dict(yml_dict, table + i)
-            if len(valor) > 0:
+            taxon_dictionaries = []
+            if values == False:
+                valor = retrieve_dict(yml_dict, table + i)
+            else:
+                valor = subfields
+            if len(valor) > 0: 
                 for count, val in enumerate(valor):
                     clean_valor = clean_column(val.get("column"), 
                                                csv_template, 
@@ -62,18 +70,31 @@ def pull_params(params, yml_dict, csv_template, table=None, name = None):
                                 add_unit_inputs[i] = []
                                 add_unit_inputs[i].append({f"{val.get('column')}": clean_valor})
                         elif 'taxonname' in val:
-                            add_unit_inputs[val['taxonname']] = clean_valor
-                            if 'uncertaintybasis' in val:
-                                add_unit_inputs[f"{val['taxonname']}_uncertaintybasis"] = val['uncertaintybasis']
-                            if 'uncertaintyunit' in val:
-                                add_unit_inputs[f"{val['taxonname']}_uncertaintyunit"] = val['uncertaintyunit']
-                            if 'notes' in val:
-                                add_unit_inputs[f"{val['taxonname']}_notes"] = val['notes']
+                            if not all(x is None for x in clean_valor): 
+                                add_unit_inputs[val['taxonname']] = {}
+                                add_unit_inputs[val['taxonname']]['value'] = clean_valor
+                                if 'unitcolumn' in val:
+                                    add_unit_inputs[val['taxonname']]['unitcolumn'] = val['unitcolumn']
+                                if 'uncertaintyunit' in val:
+                                    add_unit_inputs[val['taxonname']][f"{val['taxonname']}_uncertaintyunit"] = val['uncertaintyunit']
+                                #if 'notes' in val:
+                                #    add_unit_inputs[val['taxonname']][f"{val['taxonname']}_notes"] = val['notes']
+                            #if not all(x is None for x in taxondict[val['taxonname']]):
+                            #    taxondict.append(taxondict)
+                                #add_unit_inputs = taxondict.copy()
+                            #if 'uncertaintybasis' in val:
+                            #    add_unit_inputs[f"{val['taxonname']}_uncertaintybasis"] = val['uncertaintybasis']
+                            # if 'uncertaintyunit' in val:
+                            #     add_unit_inputs[f"{val['taxonname']}_uncertaintyunit"] = val['uncertaintyunit']
+                            # if 'notes' in val:
+                            #     add_unit_inputs[f"{val['taxonname']}_notes"] = val['notes']
                         else:
                             add_unit_inputs[i] = clean_valor
             else:
                 add_unit_inputs[i] = None
-        if 'notes' in add_unit_inputs.keys():
+        if taxon_dictionaries:
+            return taxon_dictionaries
+        elif 'notes' in add_unit_inputs.keys():
             add_unit_inputs['notes']=clean_notes(add_unit_inputs['notes'], name)
             return add_unit_inputs
         else:
