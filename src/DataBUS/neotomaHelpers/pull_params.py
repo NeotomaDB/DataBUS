@@ -77,8 +77,8 @@ def pull_params(params, yml_dict, csv_template, table=None, name = None, values 
                                     add_unit_inputs[val['taxonname']]['unitcolumn'] = val['unitcolumn']
                                 if 'uncertaintyunit' in val:
                                     add_unit_inputs[val['taxonname']][f"{val['taxonname']}_uncertaintyunit"] = val['uncertaintyunit']
-                                #if 'notes' in val:
-                                #    add_unit_inputs[val['taxonname']][f"{val['taxonname']}_notes"] = val['notes']
+                                if 'uncertaintybasis' in val:
+                                    add_unit_inputs[val['taxonname']][f"{val['taxonname']}_uncertaintybasis"] = val['uncertaintybasis']
                             #if not all(x is None for x in taxondict[val['taxonname']]):
                             #    taxondict.append(taxondict)
                                 #add_unit_inputs = taxondict.copy()
