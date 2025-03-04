@@ -32,7 +32,8 @@ include-package-data = true
       "sqlHelpers/insert_pb_model.sql",
       "sqlHelpers/insert_data_uncertainty.sql",
       "sqlHelpers/insert_taxa_row.sql",
-      "sqlHelpers/upsert_collunit.sql"]
+      "sqlHelpers/upsert_collunit.sql",
+      ""sqlHelpers/insert_speleothem.sql"]
 
     [project.optional-dependencies]
     build = ["build", "twine"]
