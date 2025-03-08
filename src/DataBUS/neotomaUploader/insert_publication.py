@@ -18,14 +18,16 @@ def insert_publication(cur, yml_dict, csv_file, uploader):
     params = ["doi", "publicationid", "citation"]
     inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.publications")
     inputs['citation'] = list(set(inputs['citation']))
+
     if inputs["publicationid"]:
         inputs["publicationid"] = [value if value != "NA" else None for value in inputs["publicationid"]]
         inputs["publicationid"] = inputs["publicationid"][0]
         
     doi_pattern = r"^10\.\d{4,9}/[-._;()/:A-Z0-9]+$"
-    cit_q = """SELECT *
+    cit_q = """SELECT *, similarity(LOWER(citation), %(cit)s) as SIM
                FROM ndb.publications
                WHERE citation IS NOT NULL
+                AND similarity(LOWER(citation), %(cit)s) > .65
                ORDER BY similarity(LOWER(citation), %(cit)s) DESC
                LIMIT 1; """
     
@@ -34,20 +36,23 @@ def insert_publication(cur, yml_dict, csv_file, uploader):
                                                           %(primarypub)s)"""
 
     if inputs['publicationid'] is None:
-        response.message.append(f"? No DOI present")
+        response.message.append(f"? No ID present")
         response.valid.append(True)
         if inputs['citation']:
             for cit in inputs['citation']:
                 cur.execute(cit_q, {'cit': cit.lower()})
-                obs = cur.fetchall()
-                pub_id = obs[0] if obs is not None else None
+                obs = cur.fetchone()
+                pub_id = obs if obs is not None else None
                 if pub_id:
                     response.message.append(f"✔  Found Publication: "
-                                            f"{obs[0][3]} in Neotoma")
+                                            f"{obs[3]} in Neotoma")
                     response.valid.append(True)
                     cur.execute(dataset_pub_q, {'datasetid': uploader["datasets"].datasetid,
-                                        'publicationid': pub_id[0],
-                                        'primarypub': True})
+                                                'publicationid': pub_id[0],
+                                                'primarypub': True})
+                else:
+                    response.message.append(f"✗  The publication does not exist in Neotoma: {cit}.")
+                    response.valid.append(False)
     else:
         try:
             inputs['publicationid'] = int(inputs['publicationid'])

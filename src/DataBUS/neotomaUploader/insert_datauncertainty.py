@@ -1,78 +1,85 @@
 import DataBUS.neotomaHelpers as nh
 from DataBUS import Response, DataUncertainty
-import re
  
-def insert_datauncertainty(cur, yml_dict, csv_file, uploader):
+def insert_datauncertainty(cur, yml_dict, csv_file, uploader, wide = False):
     """"""
+    inputs = nh.pull_params(["uncertaintyvalue"], yml_dict, csv_file, "ndb.datauncertainties")
     response = Response()
+    if 'value' in inputs:
+        if not inputs['value']:
+            response.message.append("? No Values to validate.")
+            response.validAll = False
+            return response
+    basis_query = """SELECT uncertaintybasisid FROM ndb.uncertaintybases
+                    WHERE LOWER(uncertaintybasis) = %(element)s;"""
+    units_query = """SELECT variableunitsid FROM ndb.variableunits 
+                     WHERE LOWER(variableunits) = %(element)s;"""
 
-    params = ["value"]
-    # Data count from uploader
-    # Gets me: uncertaintyvalue , uncertaintyunit, uncertaintybasisid # add to get notes as well
-    inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.data")
-    inputs = [d for d in inputs if "uncertainty" in d]
-    assert len(uploader["data"].uncertaintyinputs) == len(
-        inputs
-    ), "Taxa Uncertainties and extracted uncertainties do not match."
-    taxacounter = 0
-    
-    for i, uncertainty in enumerate(inputs):
-        assert len(uncertainty["uncertainty"]) == len(
-            uploader["data"].uncertaintyinputs[i]["dataid"]
-        ), (f"Number of " f"uncertainty values does not match number of data values")
-        # SQL uncertainty basis ID
+    par = {'uncertaintybasis': [basis_query, 'uncertaintybasisid'], 
+           'variableunits': [units_query, 'variableunitsid']}
+    if wide == True:
+        taxa = inputs.copy()
+    else:
+        taxa = {'value': inputs['value']}
 
-        uncertainty["uncertaintybasis"] = re.sub(r'(\d+)SD', r'\1 Standard Deviation', uncertainty["uncertaintybasis"])
-        # Replace SE with "Standard Error"
-        uncertainty["uncertaintybasis"] = re.sub(r'(\d+)SE', r'\1 Standard Error', uncertainty["uncertaintybasis"])
-
-        if uncertainty["uncertaintybasis"]:
-            basis_q = """
-                    SELECT uncertaintybasisid from ndb.uncertaintybases
-                    WHERE LOWER(uncertaintybasis) = %(uncertaintybasis)s
-                    """
-            cur.execute(basis_q, {"uncertaintybasis": uncertainty["uncertaintybasis"].lower()})
-            uncertainty["uncertaintybasisid"] = cur.fetchone()
-            if uncertainty["uncertaintybasisid"]:
-                uncertainty["uncertaintybasisid"] = uncertainty["uncertaintybasisid"][0]
-        else:
-            uncertainty["uncertaintybasisid"] = None
-
-        for j in range(len(uncertainty["uncertainty"])):
-            taxacounter += 1
-            # SQL uncertaintyunitid
-            get_vunitsid = """SELECT variableunitsid FROM ndb.variableunits 
-                                WHERE LOWER(variableunits) = %(units)s;"""
-            cur.execute(get_vunitsid, {"units": uncertainty["unitcolumn"][j].lower()})
-            vunitsid = cur.fetchone()  # This is to get varunitsid
-            if vunitsid:
-                vunitsid = vunitsid[0]
-
+    for key in taxa.keys():
+        params = [v for k, v in taxa[key].items() if k not in ['value', 'uncertaintybasis']]
+        inputs2 = nh.pull_params(params, yml_dict, csv_file, "ndb.variables", values=True)
+        if 'uncertaintybasis' in taxa[key]:
+            inputs2['uncertaintybasis'] = taxa[key]['uncertaintybasis']
+        inputs2['taxon'] = key
+        entries = {}
+        counter = 0
+        for k,v in par.items():
+            key_ = f"{key}_{k}"
+            if k in inputs2:
+                if isinstance(inputs2[k], list):
+                    cur.execute(v[0], {'element': inputs2[k][0].lower()})
+                    entries[v[1]] = cur.fetchone()
+                    if not entries[v[1]]:
+                        counter +=1
+                        response.message.append(f"✗  {k} ID for {key} not found. "
+                                                f"Does it exist in Neotoma?")
+                        response.valid.append(False)
+                        entries[v[1]] = None
+                    else:
+                        entries[v[1]] = entries[v[1]][0]
+                elif isinstance(inputs2[k], str):
+                    cur.execute(v[0], {'element': inputs2[k].lower()})
+                    entries[v[1]] = cur.fetchone()
+                    if not entries[v[1]]:
+                        counter +=1
+                        response.message.append(f"✗  {k} ID for {inputs2[k]} not found. "
+                                                f"Does it exist in Neotoma?")
+                        response.valid.append(False)
+                        entries[v[1]] = None 
+                    else:
+                        entries[v[1]] = entries[v[1]][0]
+                else:
+                    inputs[key_] = None
+                    entries[v[1]] = None
+                    response.message.append(f"?  {key} {k} ID not given. ")
+                    response.valid.append(True)
+            else:
+                    response.message.append(f"?  {key} {k} ID not given. ")
+                    response.valid.append(True)
+                    entries[v[1]] = counter
+        assert len(taxa[key]['value']) == len(uploader['data'].data_id[key]), "Uncertainties and Data IDs must have the same length"
+        for i in range(len(taxa[key]['value'])):
             try:
                 du = DataUncertainty(
-                    dataid=int(
-                        uploader["data"].uncertaintyinputs[i]["dataid"][j]
-                    ),  # retrieve correct ID for insert
-                    uncertaintyvalue=uncertainty["uncertainty"][j],
-                    uncertaintyunitid=int(vunitsid),  # False - need to get the ID first
-                    uncertaintybasisid=uncertainty[
-                        "uncertaintybasisid"
-                    ],  # Need to get from leadmodels
-                    notes=uncertainty["uncertaintybasis_notes"],
-                )
+                    dataid= uploader['data'].data_id[key][i],  # retrieve correct ID for insert
+                    uncertaintyvalue = taxa[key]['value'][i],
+                    uncertaintyunitid = entries['variableunitsid'],  # False - need to get the ID first
+                    uncertaintybasisid = entries["uncertaintybasisid"],  # Need to get from leadmodels
+                    notes=entries.get("notes", None))
+                du.insert_to_db(cur)
                 response.valid.append(True)
             except Exception as e:
                 response.valid.append(False)
-                response.message.append(f"✗ Data Uncertainty cannot be created: {e}")
-                du = DataUncertainty()
-
-            finally:
-                try:
-                    du.insert_to_db(cur)
-                    response.valid.append(True)
-                    #response.message.append(f"✔ Added Data Uncertainty.")
-                except Exception as e:
-                    response.valid.append(False)
-                    response.message.append(f"✗ Cannot add Data Uncertainty: {e}")
+                response.message.append(f"✗  Datum Uncertainty cannot be inserted: {e}")
     response.validAll = all(response.valid)
+    response.message = list(set(response.message))
+    if response.validAll:
+        response.message.append(f"✔  Datum Uncertainty can be created.")
     return response

@@ -22,7 +22,9 @@ def insert_analysisunit(cur, yml_dict, csv_file, uploader):
         response.validAll = False
         response.valid.append(False)
         response.message.append(f"AU Elements in the CSV file are not formatted properly. Please verify the CSV file")
-
+    facies_q = """SELECT faciesid
+                  FROM ndb.faciestypes
+                  WHERE LOWER(facies) = %(faciesid)s"""
     if not inputs['mixed']:
         inputs['mixed'] = False
 
@@ -40,7 +42,13 @@ def insert_analysisunit(cur, yml_dict, csv_file, uploader):
             try:
                 kwargs = dict(zip(iterable_params.keys(), values))
                 kwargs.update(static_params) 
-                AnalysisUnit(**kwargs)
+                kwargs['collectionunitid'] = uploader['collunitid'].cuid
+                if 'faciesid' in kwargs and isinstance(kwargs['faciesid'], str):
+                    cur.execute(facies_q, {'faciesid': kwargs['faciesid'].lower()})
+                    kwargs['faciesid'] = cur.fetchone()
+                if kwargs['faciesid']:
+                    kwargs['faciesid'][0]
+                au = AnalysisUnit(**kwargs)
                 auid = au.insert_to_db(cur)
                 response.message.append(f"✔ Added Analysis Unit {auid}.")
                 response.valid.append(True)

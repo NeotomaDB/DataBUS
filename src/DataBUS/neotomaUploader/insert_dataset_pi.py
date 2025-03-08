@@ -19,7 +19,6 @@ def insert_dataset_pi(cur, yml_dict, csv_file, uploader):
     """
     response = Response()
     inputs = nh.pull_params(["contactid", "contactname"], yml_dict, csv_file, "ndb.datasetpis")
-
     if not inputs['contactid']:
         if isinstance(inputs['contactname'], list):
             seen = set()
@@ -37,26 +36,30 @@ def insert_dataset_pi(cur, yml_dict, csv_file, uploader):
     if not inputs["contactid"]:
         cont_name = nh.get_contacts(cur, inputs["contactname"])
         for agent in cont_name:
-            try:
-                contact = Contact(contactid=int(agent["id"]), 
-                                    order=int(agent["order"]))
-                response.valid.append(True)
-                marker = True
-            except Exception as e:
-                contact = Contact(contactid=None, order=None)
-                response.message.append(f"✗ Contact DatasetPI is not correct. {e}")
+            if agent['id'] is None:
+                response.message.append(f"✗ Contact DatasetPI not found.")
                 response.valid.append(False)
-            if marker == True:
-                try:
-                    contact.insert_pi(cur, uploader["datasets"].datasetid)
-                    response.message.append(f"✔ Added PI {agent['id']}.")
-                    contids.append(agent['id'])
-                except Exception as e:
-                    response.message.append(f"✗ DatasetPI cannot be added. {e}")
-                    response.valid.append(False)
             else:
-                response.message.append(f"✗ Data PI information is not correct.")
-                response.valid.append(False)
+                try:
+                    contact = Contact(contactid=int(agent["id"]), 
+                                        order=int(agent["order"]))
+                    response.valid.append(True)
+                    marker = True
+                except Exception as e:
+                    contact = Contact(contactid=None, order=None)
+                    response.message.append(f"✗ Contact DatasetPI is not correct. {e}")
+                    response.valid.append(False)
+                if marker == True:
+                    try:
+                        contact.insert_pi(cur, uploader["datasets"].datasetid)
+                        response.message.append(f"✔ Added PI {agent['id']}.")
+                        contids.append(agent['id'])
+                    except Exception as e:
+                        response.message.append(f"✗ DatasetPI cannot be added. {e}")
+                        response.valid.append(False)
+                else:
+                    response.message.append(f"✗ Data PI information is not correct.")
+                    response.valid.append(False)
     else:
         for id in inputs["contactid"]:
             contids.append(id)

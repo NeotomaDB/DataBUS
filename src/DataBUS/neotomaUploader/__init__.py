@@ -26,4 +26,5 @@ from .insert_data import insert_data
 from .insert_sample_age import insert_sample_age
 from .insert_datauncertainty import insert_datauncertainty
 from .insert_pbmodel import insert_pbmodel
+from .insert_speleothem import insert_speleothem
 from .insert_publication import insert_publication

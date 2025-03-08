@@ -19,17 +19,22 @@ def insert_sample(cur, yml_dict, csv_file, uploader):
     """
     response = Response()
     params = ["sampledate", "samplename", "analysisdate",
-              "prepmethod", "notes", "taxonname"]
+             "labnumber", "prepmethod", "notes", "taxonname"]
     inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.samples")
-    inputs["labnumber"] = nh.retrieve_dict(yml_dict, "ndb.samples.labnumber")
-    inputs["labnumber"] = inputs["labnumber"][0]["value"]
-
+    
     get_taxonid = """SELECT * FROM ndb.taxa WHERE taxonname %% %(taxonname)s;"""
     for j in range(len(uploader["anunits"].auid)):
-        cur.execute(get_taxonid, {"taxonname": inputs["taxonname"]})
-        taxonid = cur.fetchone()
-        if taxonid:
-            inputs['taxonid'] = int(taxonid[0])
+        if 'taxonname' in inputs and isinstance(inputs['taxonname'], str):
+            inputs['taxonname']=inputs['taxonname'].lower()
+            cur.execute(get_taxonid, {"taxonname": inputs["taxonname"]})
+            inputs['taxonid'] = cur.fetchone()
+            if inputs['taxonid']:
+                inputs['taxonid'] = int(inputs['taxonid'][0])
+            else:
+                inputs['taxonid'] = None
+                inputs['taxonid']
+        elif 'taxonid' in inputs and isinstance(inputs['taxonid'], int):
+            inputs['taxonid'] = int(inputs['taxonid'][0])
         else:
             inputs['taxonid'] = None
         try:

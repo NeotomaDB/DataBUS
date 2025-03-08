@@ -32,9 +32,10 @@ def pull_params(params, yml_dict, csv_template, table=None, name = None, values 
                 if param in params:
                     params.remove(param)
         for i in params:
-            taxon_dictionaries = []
             if values == False:
                 valor = retrieve_dict(yml_dict, table + i)
+                if i == 'j':
+                    raise ValueError
             else:
                 valor = subfields
             if len(valor) > 0: 
@@ -79,22 +80,12 @@ def pull_params(params, yml_dict, csv_template, table=None, name = None, values 
                                     add_unit_inputs[val['taxonname']][f"{val['taxonname']}_uncertaintyunit"] = val['uncertaintyunit']
                                 if 'uncertaintybasis' in val:
                                     add_unit_inputs[val['taxonname']][f"{val['taxonname']}_uncertaintybasis"] = val['uncertaintybasis']
-                            #if not all(x is None for x in taxondict[val['taxonname']]):
-                            #    taxondict.append(taxondict)
-                                #add_unit_inputs = taxondict.copy()
-                            #if 'uncertaintybasis' in val:
-                            #    add_unit_inputs[f"{val['taxonname']}_uncertaintybasis"] = val['uncertaintybasis']
-                            # if 'uncertaintyunit' in val:
-                            #     add_unit_inputs[f"{val['taxonname']}_uncertaintyunit"] = val['uncertaintyunit']
-                            # if 'notes' in val:
-                            #     add_unit_inputs[f"{val['taxonname']}_notes"] = val['notes']
                         else:
                             add_unit_inputs[i] = clean_valor
             else:
                 add_unit_inputs[i] = None
-        if taxon_dictionaries:
-            return taxon_dictionaries
-        elif 'notes' in add_unit_inputs.keys():
+        
+        if 'notes' in add_unit_inputs.keys():
             add_unit_inputs['notes']=clean_notes(add_unit_inputs['notes'], name)
             return add_unit_inputs
         else:

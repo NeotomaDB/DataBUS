@@ -20,7 +20,6 @@ def insert_data_processor(cur, yml_dict, csv_file, uploader):
     response = Response()
     inputs = nh.pull_params(["contactid", "contactname"], yml_dict, csv_file, "ndb.sampleanalysts")
 
-
     if not inputs['contactid']:
         if isinstance(inputs['contactname'], list):
             seen = set()
@@ -34,28 +33,33 @@ def insert_data_processor(cur, yml_dict, csv_file, uploader):
         inputs["contactid"] = list(dict.fromkeys(inputs["contactid"]))
 
     contids = []
-    marker = False
-    if not inputs["contactid"]:
+    if not inputs["contactid"] and inputs["contactid"]:
         cont_name = nh.get_contacts(cur, inputs["contactname"])
         for agent in cont_name:
-            try:
-                contact = Contact(contactid=int(agent["id"]), 
-                                    order=int(agent["order"]))
-                contact.insert_data_processor(cur, 
-                                                  datasetid=uploader["datasets"].datasetid)
-                response.valid.append(True)
-                response.message.append(f"✔ Processor {agent['id']} inserted.")
-            except Exception as e:
-                contact = Contact(contactid=1, order=None) #placeholder
-                response.message.append(f"✗ Contact Dataset Processor is not correct. {e}")
+            if agent['id'] is None:
+                response.message.append(f"✗ Contact Dataset Processor not found.")
                 response.valid.append(False)
-    else:
+            else:
+                try:
+                    contact = Contact(contactid=int(agent["id"]), 
+                                        order=int(agent["order"]))
+                    contact.insert_data_processor(cur, 
+                                                    datasetid=uploader["datasets"].datasetid)
+                    response.valid.append(True)
+                    response.message.append(f"✔ Processor {agent['id']} inserted.")
+                except Exception as e:
+                    contact = Contact(contactid=1, order=None) #placeholder
+                    response.message.append(f"✗ Contact Dataset Processor is not correct. {e}")
+                    response.valid.append(False)
+    elif inputs["contactid"]:
         for id in inputs["contactid"]:
             contids.append(id)
             contact = Contact(contactid=id)
-            contact.insert_pi(cur,
-                              collunitid=uploader["collunitid"].cuid)
+            contact.insert_data_processor(cur,datasetid=uploader["datasets"].datasetid)
             response.valid.append(True)
+    else:
+        response.valid.append(True)
+        response.message.append(f"? No contacts to be added.")
 
     response.processor = contids
     response.validAll = all(response.valid)

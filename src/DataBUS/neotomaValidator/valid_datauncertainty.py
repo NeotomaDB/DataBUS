@@ -12,7 +12,7 @@ def valid_datauncertainty(cur, yml_dict, csv_file, wide=False):
         wide (bool, optional): Flag indicating whether to use wide format for taxa. Defaults to False.
     Returns:
         Response: An object containing validation results, including messages and validity status.
-    """
+    """ 
     inputs = nh.pull_params(["uncertaintyvalue"], yml_dict, csv_file, "ndb.datauncertainties")
     response = Response()
     if 'value' in inputs:

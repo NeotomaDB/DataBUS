@@ -108,6 +108,7 @@ def insert_collunit(cur, yml_dict, csv_file, uploader):
         inputs['siteid'] = uploader["sites"].siteid
         if isinstance(inputs['colldate'], datetime.datetime):
             inputs['colldate'] = inputs['colldate'].strftime('%Y-%m-%d %H:%M:%S')
+        inputs['handle'] = inputs['handle'][:10]
         cu = CollectionUnit(**inputs)
         response.valid.append(True)
         response.message.append("✔  Added Collection Unit")
