@@ -1,4 +1,9 @@
+<!-- badges: start -->
+[![lifecycle](https://img.shields.io/badge/lifecycle-stable-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#stable)
 [![NSF-1948926](https://img.shields.io/badge/NSF-1948926-blue.svg)](https://www.nsf.gov/awardsearch/showAward?AWD_ID=1948926)
+[![NSF-2410961](https://img.shields.io/badge/NSF-1948926-blue.svg)](https://www.nsf.gov/awardsearch/showAward?AWD_ID=2410961)
+
+<!-- badges: end -->
 
 # Working with the Python Data Upload Template
 
