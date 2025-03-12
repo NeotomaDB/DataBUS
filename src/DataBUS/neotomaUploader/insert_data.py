@@ -24,7 +24,7 @@ def insert_data(cur, yml_dict, csv_file, uploader, wide = False):
 
     var_query = """SELECT variableelementid FROM ndb.variableelements
                     WHERE LOWER(variableelement) = %(element)s;"""
-    taxon_query = """SELECT * FROM ndb.taxa 
+    taxon_query = """SELECT taxonid FROM ndb.taxa 
                      WHERE LOWER(taxonname) = %(element)s;"""
     units_query = """SELECT variableunitsid FROM ndb.variableunits 
                      WHERE LOWER(variableunits) = %(element)s;"""
@@ -93,7 +93,7 @@ def insert_data(cur, yml_dict, csv_file, uploader, wide = False):
                         entries[v[1]] = entries[v[1]][0]
                 elif isinstance(inputs2[k], str):
                     cur.execute(v[0], {'element': inputs2[k].lower()})
-                    entries[v[1]] = cur.fetchone()
+                    entries[v[1]] = cur.fetchall()
                     if not entries[v[1]]:
                         counter +=1
                         response.message.append(f"✗  {k} ID for {inputs2[k]} not found. "
