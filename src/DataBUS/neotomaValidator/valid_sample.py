@@ -1,6 +1,6 @@
 import DataBUS.neotomaHelpers as nh
 from DataBUS import Sample, Response
- 
+
 def valid_sample(cur, yml_dict, csv_file, validator):
     """
     Validates sample data from a YAML dictionary and CSV file against a database.
@@ -14,7 +14,7 @@ def valid_sample(cur, yml_dict, csv_file, validator):
     """
     response = Response()
     params = ["samplename", "analysisdate", "labnumber", 
-              "preparationmethod", "notes","sampledate", 
+              "prepmethod", "notes","sampledate",  
               "taxonname"]
     inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.samples")
 
