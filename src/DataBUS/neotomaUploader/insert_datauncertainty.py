@@ -2,7 +2,23 @@ import DataBUS.neotomaHelpers as nh
 from DataBUS import Response, DataUncertainty
  
 def insert_datauncertainty(cur, yml_dict, csv_file, uploader, wide = False):
-    """"""
+    """
+    Insert uncertainty data into the Neotoma database by validating input parameters,
+    retrieving related IDs, and inserting each uncertainty record.
+    Parameters:
+        cur: Database cursor object used for executing SQL queries.
+        yml_dict: Dictionary containing YAML configuration parameters.
+        csv_file: CSV file (or its reference) from which data is extracted.
+        uploader: Object or dictionary with uploader details, including mapping of taxon keys
+                  to lists of data IDs for inserting uncertainty records.
+        wide (bool, optional): Flag indicating if the CSV input is in wide format. Defaults to False.
+    Returns:
+        Response: An object containing:
+            - validAll (bool): Overall flag indicating if all operations were valid.
+            - valid (list of bool): List indicating the validity of each individual data insertion.
+            - message (list of str): List of messages with warnings, errors, or confirmations about the process.
+    """
+
     inputs = nh.pull_params(["uncertaintyvalue"], yml_dict, csv_file, "ndb.datauncertainties")
     response = Response()
     if 'value' in inputs:
@@ -23,11 +39,12 @@ def insert_datauncertainty(cur, yml_dict, csv_file, uploader, wide = False):
         taxa = {'value': inputs['value']}
 
     for key in taxa.keys():
-        params = [v for k, v in taxa[key].items() if k not in ['value', 'uncertaintybasis']]
-        inputs2 = nh.pull_params(params, yml_dict, csv_file, "ndb.variables", values=True)
+        if 'unitcolumn' in taxa[key]:
+            param = taxa[key]['unitcolumn']
+        inputs2 = nh.pull_params([param], yml_dict, csv_file, "ndb.variables", values=wide)
+        inputs2['taxon'] = key
         if 'uncertaintybasis' in taxa[key]:
             inputs2['uncertaintybasis'] = taxa[key]['uncertaintybasis']
-        inputs2['taxon'] = key
         entries = {}
         counter = 0
         for k,v in par.items():
@@ -71,8 +88,9 @@ def insert_datauncertainty(cur, yml_dict, csv_file, uploader, wide = False):
                     dataid= uploader['data'].data_id[key][i],  # retrieve correct ID for insert
                     uncertaintyvalue = taxa[key]['value'][i],
                     uncertaintyunitid = entries['variableunitsid'],  # False - need to get the ID first
-                    uncertaintybasisid = entries["uncertaintybasisid"],  # Need to get from leadmodels
+                    uncertaintybasisid = entries["uncertaintybasisid"],
                     notes=entries.get("notes", None))
+                
                 du.insert_to_db(cur)
                 response.valid.append(True)
             except Exception as e:

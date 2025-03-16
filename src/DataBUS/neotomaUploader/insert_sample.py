@@ -1,7 +1,6 @@
 import DataBUS.neotomaHelpers as nh
 from DataBUS import Sample, Response
 
-
 def insert_sample(cur, yml_dict, csv_file, uploader):
     """
     Inserts sample data into Neotoma.
@@ -31,7 +30,7 @@ def insert_sample(cur, yml_dict, csv_file, uploader):
                  'samplename': inputs['samplename'][i] if isinstance(inputs.get('samplename'), list) else inputs['samplename'],
                  'analysisdate': inputs['analysisdate'][i] if isinstance(inputs.get('analysisdate'), list) else inputs['analysisdate'],
                  'taxonname': inputs['taxonname'][i] if isinstance(inputs.get('taxonname'), list) else inputs['taxonname'],
-                 'labnumber': None if isinstance(inputs.get('labnumber'), list) and inputs['labnumber'][i] == ''
+                 'labnumber': None if 'labnumber' not in inputs or (isinstance(inputs.get('labnumber'), list) and inputs['labnumber'][i] == '')
                                    else inputs['labnumber'][i] if isinstance(inputs.get('labnumber'), list) 
                                    else inputs['labnumber']}
         if 'taxonname' in entry and isinstance(entry['taxonname'], str):

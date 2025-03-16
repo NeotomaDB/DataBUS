@@ -52,7 +52,6 @@ def insert_speleothem(cur, yml_dict, csv_file, uploader):
         response.validAll = False
         response.message.append(f"Speleothem elements in the CSV file are not properly defined.\n"
                                 f"Please verify the CSV file.")
-        inputs = {}
     kwargs = {}
     kwargs['siteid']=uploader['sites'].siteid
     kwargs['entityid']=inputs['entityid']

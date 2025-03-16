@@ -14,11 +14,25 @@ def insert_publication(cur, yml_dict, csv_file, uploader):
     Returns:
         Response: An object containing messages, validity status, and publication ID if applicable.
     """
+    def list_flattener(original_list, delim =', '):
+        flattened_list = []
+        if not original_list:
+            return None
+        for item in original_list:
+            if delim in item:
+                flattened_list.extend(item.split(delim))
+            else:
+                flattened_list.append(item)
+        flattened_list = list(set(flattened_list))
+        return flattened_list
+    
     response = Response()
     params = ["doi", "publicationid", "citation"]
     inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.publications")
-    inputs['citation'] = list(set(inputs['citation']))
-
+    inputs['doi'] = list_flattener(inputs['doi'])
+    inputs['publicationid'] = list_flattener(inputs['publicationid'])
+    inputs['citation'] = list_flattener(inputs['citation'],  delim=' | ')
+    
     if inputs["publicationid"]:
         inputs["publicationid"] = [value if value != "NA" else None for value in inputs["publicationid"]]
         inputs["publicationid"] = inputs["publicationid"][0]
@@ -31,6 +45,13 @@ def insert_publication(cur, yml_dict, csv_file, uploader):
                ORDER BY similarity(LOWER(citation), %(cit)s) DESC
                LIMIT 1; """
     
+    doi_q = """SELECT *, similarity(LOWER(doi), %(doi)s) as SIM
+               FROM ndb.publications
+               WHERE doi IS NOT NULL
+                AND similarity(LOWER(doi), %(doi)s) > .65
+               ORDER BY similarity(LOWER(doi), %(doi)s) DESC
+               LIMIT 1; """
+    
     dataset_pub_q = """SELECT ts.insertdatasetpublication(%(datasetid)s, 
                                                           %(publicationid)s, 
                                                           %(primarypub)s)"""
@@ -39,7 +60,7 @@ def insert_publication(cur, yml_dict, csv_file, uploader):
         response.message.append(f"? No ID present")
         response.valid.append(True)
         if inputs['citation']:
-            for cit in inputs['citation']:
+            for i, cit in enumerate(inputs['citation']):
                 cur.execute(cit_q, {'cit': cit.lower()})
                 obs = cur.fetchone()
                 pub_id = obs if obs is not None else None
@@ -51,13 +72,28 @@ def insert_publication(cur, yml_dict, csv_file, uploader):
                                                 'publicationid': pub_id[0],
                                                 'primarypub': True})
                 else:
-                    response.message.append(f"✗  The publication does not exist in Neotoma: {cit}.")
-                    response.valid.append(False)
+                    if inputs['doi'][i]:
+                        cur.execute(doi_q, {'doi': inputs['doi'][i].lower()})
+                        obs = cur.fetchone()
+                        pub_id = obs if obs is not None else None
+                        if pub_id:
+                            response.message.append(f"✔  Found Publication: "
+                                                    f"{obs[3]} in Neotoma")
+                            response.valid.append(True)
+                            cur.execute(dataset_pub_q, {'datasetid': uploader["datasets"].datasetid,
+                                                        'publicationid': pub_id[0],
+                                                        'primarypub': True})
+                        else:
+                            response.message.append(f"✗  The publication does not exist in Neotoma: {cit}, {inputs['doi'][i]}.")
+                            response.valid.append(False)
+                    else:
+                            response.message.append(f"✗  The publication does not exist in Neotoma: {cit}.")
+                            response.valid.append(False)
     else:
         try:
             inputs['publicationid'] = int(inputs['publicationid'])
         except Exception as e:
-            response.message.append("")
+            response.message.append(f"?  Publication ID is not an integer.")
         if isinstance(inputs['publicationid'], int):
             pub_query = """
                         SELECT * FROM ndb.publications

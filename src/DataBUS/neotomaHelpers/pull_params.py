@@ -34,15 +34,17 @@ def pull_params(params, yml_dict, csv_template, table=None, name = None, values 
         for i in params:
             if values == False:
                 valor = retrieve_dict(yml_dict, table + i)
-                if i == 'j':
-                    raise ValueError
             else:
                 valor = subfields
             if len(valor) > 0: 
                 for count, val in enumerate(valor):
-                    clean_valor = clean_column(val.get("column"), 
+                    try:
+                        clean_valor = clean_column(val.get("column"), 
                                                csv_template, 
                                                clean=not val.get("rowwise"))
+                    except KeyError as k:
+                        print(f"Column not available in CSV: {k}. Continue.")
+                        continue
                     if clean_valor:
                         match val.get("type"):
                             case "date":
@@ -77,9 +79,9 @@ def pull_params(params, yml_dict, csv_template, table=None, name = None, values 
                                 if 'unitcolumn' in val:
                                     add_unit_inputs[val['taxonname']]['unitcolumn'] = val['unitcolumn']
                                 if 'uncertaintyunit' in val:
-                                    add_unit_inputs[val['taxonname']][f"{val['taxonname']}_uncertaintyunit"] = val['uncertaintyunit']
+                                    add_unit_inputs[val['taxonname']][f"uncertaintyunit"] = val['uncertaintyunit']
                                 if 'uncertaintybasis' in val:
-                                    add_unit_inputs[val['taxonname']][f"{val['taxonname']}_uncertaintybasis"] = val['uncertaintybasis']
+                                    add_unit_inputs[val['taxonname']][f"uncertaintybasis"] = val['uncertaintybasis']
                         else:
                             add_unit_inputs[i] = clean_valor
             else:

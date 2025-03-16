@@ -18,10 +18,8 @@ def insert_sample_age(cur, yml_dict, csv_file, uploader):
             - 'valid' (bool): Indicates if all insertions were successful.
     """
     response = Response()
-    params = ["age","chronologyid", "ageyounger", "ageolder", "uncertainty"]
-    agemodel = nh.pull_params(['agemodel'], yml_dict, csv_file, "ndb.chronologies")
-
     try:
+        params = ["age", "ageyounger", "ageolder", "agetype"]
         inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.sampleages")
     except Exception as e:
         error = str(e)
@@ -49,7 +47,7 @@ def insert_sample_age(cur, yml_dict, csv_file, uploader):
             response.message.append(f"Sample Age parameters cannot be properly extracted. {e}\n {inner_e}")
             return response
     
-    if agemodel['agemodel'].lower() == "collection date":
+    if isinstance(inputs.get('agetype', None), str) and inputs['agetype'].lower() == "collection date":
         if isinstance(inputs['age'], (float, int)):
             inputs['age'] = 1950 - inputs['age']
         elif isinstance(inputs['age'],datetime.datetime):
@@ -57,15 +55,20 @@ def insert_sample_age(cur, yml_dict, csv_file, uploader):
         elif isinstance(inputs['age'], list):
             inputs['age'] = [1950 - value.year if isinstance(value, datetime) else 1950 - value
                              for value in inputs['age']]
-    
+    del inputs['agetype']
+
     iterable_params = {k: v for k, v in inputs.items() if isinstance(v, list)}
     static_params = {k: v for k, v in inputs.items() if not isinstance(v, list)}
     iterable_params['sampleid'] = uploader['samples'].sampleid
-    static_params['chronologyid'] = uploader['chronology'].chronid
+    static_params['chronologyid'] = 2 #uploader['chronology'].chronid
     for values in zip(*iterable_params.values()):
         kwargs = dict(zip(iterable_params.keys(), values))
         kwargs.update(static_params)
-        if not(kwargs['ageyounger'] and kwargs['ageolder']):
+        if 'ageyounger' or 'ageolder' not in kwargs:
+            response.message.append("? No uncertainty to substract. Ageyounger/Ageolder will be None.")
+            inputs['ageyounger'] = None
+            inputs['ageolder'] = None 
+        elif not(kwargs['ageyounger'] and kwargs['ageolder']):
             if kwargs['uncertainty']:
                 inputs['ageyounger'] = inputs["age"] - inputs["uncertainty"]
                 inputs['ageolder'] = inputs["age"] + inputs["uncertainty"]
@@ -84,6 +87,7 @@ def insert_sample_age(cur, yml_dict, csv_file, uploader):
         except Exception as e:
             response.valid.append(False)
             response.message.append(f"✗ Samples ages cannot be created. {e}")
-    
+
+    response.message = list(set(response.message))
     response.validAll = all(response.valid)
     return response

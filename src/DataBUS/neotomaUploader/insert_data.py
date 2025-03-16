@@ -140,7 +140,6 @@ def insert_data(cur, yml_dict, csv_file, uploader, wide = False):
                               variableid=varid, 
                               value=i)
                 d_id = datum.insert_to_db(cur)
-                response.message.append(f"✔ Added Datum {d_id}")
                 response.valid.append(True)
                 response.data_id[key].append(d_id)
             except Exception as e:
@@ -152,5 +151,6 @@ def insert_data(cur, yml_dict, csv_file, uploader, wide = False):
 
     response.validAll = all(response.valid)
     if response.validAll:
-        response.message.append(f"✔  Datum inserted.")
+        response.message.append(f"✔  Data inserted.")
+    response.message = list(set(response.message))
     return response

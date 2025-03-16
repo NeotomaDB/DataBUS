@@ -38,10 +38,6 @@ class Chronology:
         self.recdatecreated = recdatecreated
         self.recdatemodified = recdatemodified
 
-        # to be defined from sample['age']
-        self.maxage = None
-        self.minage = None
-
     def insert_to_db(self, cur):
         chron_query = """
         SELECT ts.insertchronology(_collectionunitid := %(collunitid)s,
@@ -51,8 +47,8 @@ class Chronology:
                                _chronologyname := %(chronologyname)s,
                                _dateprepared := %(dateprepared)s,
                                _agemodel := %(agemodel)s,
-                               _ageboundyounger := %(maxage)s,
-                               _ageboundolder := %(minage)s)
+                               _ageboundyounger := %(ageboundyounger)s,
+                               _ageboundolder := %(ageboundolder)s)
                                """
         inputs = {
             "collunitid": self.collectionunitid,
@@ -61,9 +57,10 @@ class Chronology:
             "agetypeid": self.agetypeid,  # Comming from column X210Pb.Date.Units which should be linked to params3
             "dateprepared": self.dateprepared,
             "agemodel": self.agemodel,
-            "maxage": self.maxage,
-            "minage": self.minage,
+            "ageboundyounger": self.ageboundyounger,
+            "ageboundolder": self.ageboundolder,
         }
+        print(inputs)
         cur.execute(chron_query, inputs)
         self.chronologyid = cur.fetchone()[0]
         return self.chronologyid
