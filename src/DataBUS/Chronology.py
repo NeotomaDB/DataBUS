@@ -60,7 +60,6 @@ class Chronology:
             "ageboundyounger": self.ageboundyounger,
             "ageboundolder": self.ageboundolder,
         }
-        print(inputs)
         cur.execute(chron_query, inputs)
         self.chronologyid = cur.fetchone()[0]
         return self.chronologyid

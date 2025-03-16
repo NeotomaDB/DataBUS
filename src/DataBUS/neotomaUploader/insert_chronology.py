@@ -66,8 +66,12 @@ def insert_chronology(cur, yml_dict, csv_file, uploader):
                 inputs["ageboundolder"]= int(max(inputs["age"])) 
 
     if not (inputs["ageboundolder"] and inputs["ageboundyounger"]):
-        inputs["ageboundyounger"]= int(min(x for x in inputs["age"] if x is not None)) # Ask if this is OK or if it should be two different chronologies?
-        inputs["ageboundolder"]= int(max(x for x in inputs["age"] if x is not None))
+        if isinstance(inputs["age"], (float, int)):
+            inputs["ageboundyounger"]=None
+            inputs["ageboundolder"]=None
+        else:
+            inputs["ageboundyounger"]= int(min(x for x in inputs["age"] if x is not None)) # Ask if this is OK or if it should be two different chronologies?
+            inputs["ageboundolder"]= int(max(x for x in inputs["age"] if x is not None))
     # to add for lead models because they use more calendar format
     if inputs["agetype"]: 
         inputs["agetype"]=inputs["agetype"].replace("collection date", 'Calendar years BP')
@@ -79,7 +83,7 @@ def insert_chronology(cur, yml_dict, csv_file, uploader):
         cur.execute(agetype_query, {'agetype': inputs["agetype"].lower()})
         id = cur.fetchone()
         if id:
-            inputs["agetypeid"] = id#[0]
+            inputs["agetypeid"] = id[0]
             response.message.append("✔ The provided age type is correct.")
             response.valid.append(True)
         else:
@@ -107,4 +111,4 @@ def insert_chronology(cur, yml_dict, csv_file, uploader):
         chronid = chron.insert_to_db(cur)
         response.valid.append(False)
     response.validAll = all(response.valid)
-    return response
+    return response 

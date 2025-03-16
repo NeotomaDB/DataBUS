@@ -46,7 +46,6 @@ def insert_sample_age(cur, yml_dict, csv_file, uploader):
             response.validAll = False
             response.message.append(f"Sample Age parameters cannot be properly extracted. {e}\n {inner_e}")
             return response
-    
     if isinstance(inputs.get('agetype', None), str) and inputs['agetype'].lower() == "collection date":
         if isinstance(inputs['age'], (float, int)):
             inputs['age'] = 1950 - inputs['age']
@@ -56,11 +55,10 @@ def insert_sample_age(cur, yml_dict, csv_file, uploader):
             inputs['age'] = [1950 - value.year if isinstance(value, datetime) else 1950 - value
                              for value in inputs['age']]
     del inputs['agetype']
-
     iterable_params = {k: v for k, v in inputs.items() if isinstance(v, list)}
     static_params = {k: v for k, v in inputs.items() if not isinstance(v, list)}
     iterable_params['sampleid'] = uploader['samples'].sampleid
-    static_params['chronologyid'] = 2 #uploader['chronology'].chronid
+    static_params['chronologyid'] = uploader['chronology'].chronid
     for values in zip(*iterable_params.values()):
         kwargs = dict(zip(iterable_params.keys(), values))
         kwargs.update(static_params)

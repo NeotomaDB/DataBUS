@@ -1,5 +1,6 @@
 import DataBUS.neotomaHelpers as nh
 from DataBUS import Response, Datum, Variable
+#import traceback
  
 def insert_data(cur, yml_dict, csv_file, uploader, wide = False):
     """
@@ -43,25 +44,20 @@ def insert_data(cur, yml_dict, csv_file, uploader, wide = False):
                                   'variableelement', 'variablecontext'], 
                                   yml_dict, csv_file, "ndb.variables", 
                                   values=wide)
-        values = inputs['value']
-        taxa_d = taxa_in.get('taxon', None)    
-        variables = {"variableunits": taxa_in.get('variableunits', None),
-                     "variableelement": taxa_in.get('variableelement', None),
-                     "variablecontext": taxa_in.get('variablecontext', None)}
+        taxa_in['value'] = inputs['value']
+        
         taxa = {}   
-        for i, (taxon, value) in enumerate(zip(taxa_d, values)):
+        for i, taxon in enumerate(taxa_in['taxon']):
             if taxon not in taxa:
                 taxa[taxon] = {'value': [],
                                 'variablecontext': [],
                                 'variableelement': [], 
                                 'variableunits': []}
-            taxa[taxon]['value'].append(int(value))
-        for n, p in variables.items():
-            if isinstance(p, list):
-                taxa[taxon][f'{n}'].append(p[i])
-            else:
-                taxa[taxon][f'{n}'].append(p)
-
+            for v in ['value', 'variablecontext', 'variableelement', 'variableunits']:
+                if isinstance(taxa_in[v], list):
+                    taxa[taxon][f'{v}'].append(taxa_in[v][i])
+                else:
+                    taxa[taxon][f'{v}'].append(taxa_in[v])
     for key in taxa.keys():
         if wide == True:
             params = [v for k, v in taxa[key].items() if k != 'value']
@@ -74,7 +70,7 @@ def insert_data(cur, yml_dict, csv_file, uploader, wide = False):
         counter = 0
         for k,v in par.items():
             if k in inputs2:
-                if isinstance(inputs2[k], list):
+                if isinstance(inputs2[k], list) and inputs2[k]:
                     if inputs2[k][0]:
                         inputs2[k][0] = inputs2[k][0].lower()
                     cur.execute(v[0], {'element': inputs2[k][0]})
@@ -132,13 +128,17 @@ def insert_data(cur, yml_dict, csv_file, uploader, wide = False):
                                     f"variablecontextid: {varcontextid}, ID: {entries['variablecontextid']}\n")
             response.valid.append(True)
             varid = var.insert_to_db(cur)
-        for i in taxa[key]['value']:
+        for i, j in enumerate(taxa[key]['value']):
             if key not in response.data_id:
                 response.data_id[key]=[]
             try:
-                datum = Datum(sampleid=uploader['samples'].sampleid[0], 
+                if len(uploader['samples'].sampleid)>1:
+                    sampleid = uploader['samples'].sampleid[i]
+                else:
+                    sampleid = uploader['samples'].sampleid[0]
+                datum = Datum(sampleid=sampleid, 
                               variableid=varid, 
-                              value=i)
+                              value=j)
                 d_id = datum.insert_to_db(cur)
                 response.valid.append(True)
                 response.data_id[key].append(d_id)
