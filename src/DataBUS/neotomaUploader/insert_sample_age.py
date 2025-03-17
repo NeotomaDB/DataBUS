@@ -67,15 +67,10 @@ def insert_sample_age(cur, yml_dict, csv_file, uploader):
             inputs['ageyounger'] = None
             inputs['ageolder'] = None 
         elif not(kwargs['ageyounger'] and kwargs['ageolder']):
-            if kwargs['uncertainty']:
-                inputs['ageyounger'] = inputs["age"] - inputs["uncertainty"]
-                inputs['ageolder'] = inputs["age"] + inputs["uncertainty"]
-            else:
-                response.message.append("? No uncertainty to substract. Ageyounger/Ageolder will be None.")
-                inputs['ageyounger'] = None
-                inputs['ageolder'] = None 
+            response.message.append("? No uncertainty to substract. Ageyounger/Ageolder will be None.")
+            inputs['ageyounger'] = None
+            inputs['ageolder'] = None 
         try:
-            kwargs.pop('uncertainty', None)
             sample_age = SampleAge(**kwargs)
             response.valid.append(True)
             try:
