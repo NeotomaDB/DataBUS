@@ -15,8 +15,6 @@ def valid_sample_age(cur, yml_dict, csv_file, validator):
     """
     response = Response()
     params = ["age", "ageyounger", "ageolder", "agetype"]
-    agemodel = nh.pull_params(['agemodel'], yml_dict, csv_file, "ndb.chronologies")
-
     try:
         inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.sampleages")
     except Exception as e:
@@ -92,4 +90,5 @@ def valid_sample_age(cur, yml_dict, csv_file, validator):
     response.validAll = all(response.valid)
     if response.validAll:
         response.message.append(f"✔ Sample ages can be created.")
+    response.message = list(set(response.message))
     return response
