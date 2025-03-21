@@ -23,4 +23,3 @@ def insert_geochroncontrols(cur, yml_dict, csv_file, uploader):
     response.message = list(set(response.message))
     response.validAll = all(response.valid)
     return response
-``
