@@ -1,18 +1,16 @@
 class ChronControl:
-    def __init__(
-        self,
-        chroncontrolid=None,
-        chronologyid=None,
-        chroncontroltypeid=None,
-        depth=None,
-        thickness=None,
-        age=None,
-        agelimityounger=None,
-        agelimitolder=None,
-        notes=None,
-        analysisunitid=None,
-        agetypeid=None,
-    ):
+    def __init__(self,
+                 chroncontrolid=None,
+                chronologyid=None,
+                chroncontroltypeid=None,
+                depth=None,
+                thickness=None,
+                age=None,
+                agelimityounger=None,
+                agelimitolder=None,
+                notes=None,
+                analysisunitid=None,
+                agetypeid=None):
         self.chroncontrolid = chroncontrolid
         self.chronologyid = chronologyid
         self.chroncontroltypeid = chroncontroltypeid

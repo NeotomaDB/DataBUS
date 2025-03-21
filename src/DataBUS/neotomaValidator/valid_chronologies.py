@@ -52,7 +52,7 @@ def valid_chronologies(cur, yml_dict, csv_file):
                                     f"{str(inner_e)}")
             return response
 
-    if inputs['agemodel'] == "collection date":
+    if 'agemodel' in inputs and inputs['agemodel'] == "collection date":
         if isinstance(inputs['age'], (float, int)):
             inputs['age'] = 1950 - inputs['age']
         elif isinstance(inputs['age'], datetime):
@@ -101,4 +101,5 @@ def valid_chronologies(cur, yml_dict, csv_file):
         response.valid.append(False)
         response.message.append(f"✗  Chronology cannot be created: {e}")
     response.validAll = all(response.valid)
+    response.message = list(set(response.message))   
     return response

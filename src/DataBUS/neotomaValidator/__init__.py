@@ -16,6 +16,7 @@ from .valid_analysisunit import valid_analysisunit
 from .valid_chronologies import valid_chronologies
 from .valid_chroncontrols import valid_chroncontrols
 from .valid_dataset import valid_dataset
+from .valid_geochron_dataset import valid_geochron_dataset
 from .validGeoPol import validGeoPol
 from .valid_horizon import valid_horizon
 from .valid_dataset_repository import valid_dataset_repository
@@ -30,3 +31,5 @@ from .valid_pbmodel import valid_pbmodel
 from .valid_datauncertainty import valid_datauncertainty
 from .valid_publication import valid_publication
 from .valid_speleothem import valid_speleothem
+from .valid_geochron import valid_geochron
+from .valid_geochroncontrol import valid_geochroncontrol

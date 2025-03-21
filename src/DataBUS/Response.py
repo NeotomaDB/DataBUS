@@ -12,6 +12,7 @@ class Response:
         self.sampleid = []
         self.data_id = {}
         self.uncertaintyinputs = []
+        self.id = []
         
 
     def __str__(self):

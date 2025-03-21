@@ -14,8 +14,9 @@ from .insert_geopolitical_units import insert_geopolitical_units
 from .insert_collunit import insert_collunit
 from .insert_collector import insert_collector
 from .insert_chronology import insert_chronology
-from .insert_chron_control import insert_chron_control
+from .insert_chroncontrols import insert_chroncontrols
 from .insert_dataset import insert_dataset
+from .insert_geochron_dataset import insert_geochron_dataset
 from .insert_dataset_pi import insert_dataset_pi
 from .insert_data_processor import insert_data_processor
 from .insert_dataset_repository import insert_dataset_repository
@@ -28,3 +29,5 @@ from .insert_datauncertainty import insert_datauncertainty
 from .insert_pbmodel import insert_pbmodel
 from .insert_speleothem import insert_speleothem
 from .insert_publication import insert_publication
+from .insert_geochron import insert_geochron
+from .insert_geochroncontrols import insert_geochroncontrols

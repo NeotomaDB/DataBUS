@@ -81,4 +81,5 @@ def valid_contact(cur, csv_file, yml_dict):
                 for i in person["match"]:
                     response.message.append(f"   * {i[1]}")
     response.validAll = all(response.valid)
+    response.message = list(set(response.message)) 
     return response

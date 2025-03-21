@@ -37,7 +37,6 @@ def insert_datauncertainty(cur, yml_dict, csv_file, uploader, wide = False):
         taxa = inputs.copy()
     else:
         taxa = {'value': inputs['value']}
-
     for key in taxa.keys():
         if 'unitcolumn' in taxa[key]:
             param = taxa[key]['unitcolumn']

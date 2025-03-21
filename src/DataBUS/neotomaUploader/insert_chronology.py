@@ -66,7 +66,7 @@ def insert_chronology(cur, yml_dict, csv_file, uploader):
                 inputs["ageboundolder"]= int(max(inputs["age"])) 
 
     if not (inputs["ageboundolder"] and inputs["ageboundyounger"]):
-        if isinstance(inputs["age"], (float, int)):
+        if not isinstance(inputs["age"], (float, int)):
             inputs["ageboundyounger"]=None
             inputs["ageboundolder"]=None
         else:

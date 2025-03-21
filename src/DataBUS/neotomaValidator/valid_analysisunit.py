@@ -47,4 +47,5 @@ def valid_analysisunit(yml_dict, csv_file):
     response.validAll = all(response.valid)
     if response.validAll:
         response.message.append("✔ AnalysisUnit can be created")
+    response.message = list(set(response.message))
     return response

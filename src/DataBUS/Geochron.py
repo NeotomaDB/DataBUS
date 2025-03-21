@@ -1,5 +1,5 @@
 class Geochron:
-    def __init__(self, sampleid, 
+    def __init__(self, sampleid,
                  geochrontypeid, 
                  agetypeid, age, 
                  errorolder, erroryounger, 

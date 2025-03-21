@@ -159,4 +159,5 @@ def valid_site(cur, yml_dict, csv_file):
                 else:
                     response.message.append("✔  Coordinates match")
     response.validAll = all(response.valid)
+    response.message = list(set(response.message))
     return response

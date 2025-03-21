@@ -54,7 +54,7 @@ def insert_sample(cur, yml_dict, csv_file, uploader):
                 s_id = sample.insert_to_db(cur)
                 response.sampleid.append(s_id)
                 response.valid.append(True)
-                response.message.append(f"✔  Added Sample {s_id}.")
+                response.message.append(f"✔  Added Samples.")
             except Exception as e:
                 s_id = sample.insert_to_db(cur)
                 response.sampleid.append(s_id)
@@ -68,4 +68,5 @@ def insert_sample(cur, yml_dict, csv_file, uploader):
     if not len(uploader["anunits"].auid) == len(response.sampleid):
         response.message.append("✗  Analysis Units and Samples do not have same length.")
     response.validAll = all(response.valid)
+    response.message = list(set(response.message))
     return response
