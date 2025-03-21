@@ -3,7 +3,6 @@ class AnalysisUnit:
 
     def __init__(
         self,
-        analysisunitid=None,
         collectionunitid=None,
         analysisunitname=None,
         depth=None,
@@ -15,7 +14,7 @@ class AnalysisUnit:
         recdatecreated=None,
         recdatemodified=None):
         
-        self.analysisunitid = analysisunitid  # int
+        self.analysisunitid = []  # int
         self.collectionunitid = collectionunitid  # int
         self.analysisunitname = analysisunitname  # str
         self.depth = depth  # float

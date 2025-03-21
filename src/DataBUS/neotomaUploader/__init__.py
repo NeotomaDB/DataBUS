@@ -31,3 +31,4 @@ from .insert_speleothem import insert_speleothem
 from .insert_publication import insert_publication
 from .insert_geochron import insert_geochron
 from .insert_geochroncontrols import insert_geochroncontrols
+from .insert_sample_geochron import insert_sample_geochron

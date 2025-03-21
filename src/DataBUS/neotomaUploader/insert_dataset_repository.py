@@ -33,7 +33,6 @@ def insert_dataset_repository(cur, yml_dict, csv_file, uploader):
                 )
                 response.valid.append(True)
             except Exception as e:
-                print(e)
                 response.message.append(f"✗ Repo cannot be inserted: {e}.")
                 response.valid.append(False)
     else:

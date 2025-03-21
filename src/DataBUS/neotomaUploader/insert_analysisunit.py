@@ -69,7 +69,7 @@ def insert_analysisunit(cur, yml_dict, csv_file, uploader):
         except Exception as e:
             response.message.append(f"✗ Cannot insert Analysis Unit, " 
                                     f"verify entries: \n {e}")
-            auid =3
+            auid =3 #placeholder
             response.valid.append(False)
         response.auid.append(auid)
     response.validAll = all(response.valid)

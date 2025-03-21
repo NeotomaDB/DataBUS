@@ -18,20 +18,17 @@ def insert_geochron_dataset(cur, yml_dict, csv_file, uploader, name=None):
     """
     response = Response()
 
-    inputs = {}
-    inputs['datasettypeid'] = 1
-    inputs['collectionunitid'] = uploader['collunitid'].cuid
-
-    ds = Dataset(**inputs)
+    d = Dataset(datasettypeid = 1,
+                 collectionunitid = uploader['collunitid'].cuid)
     try:
-        response.datasetid = ds.insert_to_db(cur)
+        response.datasetid = d.insert_to_db(cur)
         response.valid.append(True)
         response.message.append(f"✔ Added Dataset {response.datasetid}.")
     except Exception as e:
-        response.datasetid = ds.insert_to_db(cur)
-        response.valid.append(True)
+        response.datasetid = d.insert_to_db(cur)
+        response.valid.append(False)
         response.message.append(
-            f"✗ Cannot add Dataset {response.datasetid}." f"Using temporary ID."
+            f"✗ Cannot add Dataset {e}" f"Using temporary ID."
         )
 
     response.validAll = all(response.valid)
