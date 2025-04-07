@@ -191,4 +191,5 @@ def valid_collunit(cur, yml_dict, csv_file):
         response.message.append(f"No given coordinates for CU. Cannot find nearby CUs")
         response.valid.append(True)
     response.validAll = all(response.valid)
+    response.message = list(set(response.message)) 
     return response

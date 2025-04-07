@@ -20,10 +20,8 @@ def insert_chronology(cur, yml_dict, csv_file, uploader):
     """
     response = ChronResponse()
 
-    params = ["chronologyid", "collectionunitid", "contactid",
-              "isdefault", "chronologyname", "dateprepared", 
-              "agemodel", "ageboundyounger", "ageboundolder", 
-              "notes", "recdatecreated", "recdatemodified",
+    params = ["contactid", "isdefault", "chronologyname", "dateprepared", 
+              "agemodel", "ageboundyounger", "ageboundolder", "notes", 
               "age", "agetype"]
 
     try:
@@ -54,8 +52,8 @@ def insert_chronology(cur, yml_dict, csv_file, uploader):
             response.message.append("Chronology parameters cannot be properly extracted. {e}\n")
             response.message.append(str(inner_e))
             return response
-
-    if inputs['agemodel'] == "collection date":
+        
+    if inputs.get('agemodel', '') == "collection date":
         if isinstance(inputs['age'], (float, int)):
             inputs['age'] = 1950 - inputs['age']
         elif isinstance(inputs['age'], datetime):
@@ -66,15 +64,22 @@ def insert_chronology(cur, yml_dict, csv_file, uploader):
             if not (inputs["ageboundolder"] and inputs["ageboundyounger"]):
                 inputs["ageboundyounger"]= int(min(inputs["age"])) 
                 inputs["ageboundolder"]= int(max(inputs["age"])) 
-    
+
+    if not (inputs["ageboundolder"] and inputs["ageboundyounger"]):
+        if not isinstance(inputs["age"], (float, int)):
+            inputs["ageboundyounger"]=None
+            inputs["ageboundolder"]=None
+        else:
+            inputs["ageboundyounger"]= int(min(x for x in inputs["age"] if x is not None)) # Ask if this is OK or if it should be two different chronologies?
+            inputs["ageboundolder"]= int(max(x for x in inputs["age"] if x is not None))
     # to add for lead models because they use more calendar format
-    
     if inputs["agetype"]: 
         inputs["agetype"]=inputs["agetype"].replace("collection date", 'Calendar years BP')
         if not inputs['chronologyname']:
             inputs["chronologyname"] = inputs["agetype"]
         agetype_query = """SELECT agetypeid FROM ndb.agetypes
                            WHERE LOWER(agetype) = %(agetype)s"""
+
         cur.execute(agetype_query, {'agetype': inputs["agetype"].lower()})
         id = cur.fetchone()
         if id:
@@ -89,13 +94,11 @@ def insert_chronology(cur, yml_dict, csv_file, uploader):
         response.message.append("? No age type provided.")
         response.valid.append(True)
         inputs["agetypeid"] = None
-
+    
     del inputs["agetype"], inputs["age"]
-
     inputs['collectionunitid']=uploader["collunitid"].cuid
     chron= Chronology(**inputs)
-    
-    #  to add for lead models because they use more calendar format
+
     try:
         chronid = chron.insert_to_db(cur)
         response.chronid = chronid
@@ -108,4 +111,4 @@ def insert_chronology(cur, yml_dict, csv_file, uploader):
         chronid = chron.insert_to_db(cur)
         response.valid.append(False)
     response.validAll = all(response.valid)
-    return response
+    return response 

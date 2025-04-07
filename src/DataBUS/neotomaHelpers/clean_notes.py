@@ -1,3 +1,4 @@
+import re
 """Function to clean notes"""
 
 def reorder_dict(d, name = "Name In Publication"):
@@ -25,9 +26,10 @@ def clean_notes(notes = None, name = None):
         single_vals.update(mapped_vals)
         
         result = reorder_dict(single_vals, name)
+        result = " | ".join(f"{key}: {value}" for key, value in result.items())
         result = f"{result}"
         result = result.replace("Notes:", "")
-        result = result.replace("'", "")
+        result = re.sub(r"[{}\[\]']", "", result)
 
     else:
         result = None

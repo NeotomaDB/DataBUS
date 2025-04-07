@@ -1,7 +1,7 @@
 import DataBUS.neotomaHelpers as nh
 from DataBUS import SampleAge, Response
 from datetime import datetime
-
+ 
 def valid_sample_age(cur, yml_dict, csv_file, validator):
     """
     Validates and processes sample age data for ostracode samples.
@@ -14,10 +14,7 @@ def valid_sample_age(cur, yml_dict, csv_file, validator):
         Response: An object containing validation results and messages.
     """
     response = Response()
-    params = ["age", "sampleid", "chronologyid", 
-              "ageyounger", "ageolder", "uncertainty"]
-    agemodel = nh.pull_params(['agemodel'], yml_dict, csv_file, "ndb.chronologies")
-
+    params = ["age", "ageyounger", "ageolder", "agetype"]
     try:
         inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.sampleages")
     except Exception as e:
@@ -45,15 +42,15 @@ def valid_sample_age(cur, yml_dict, csv_file, validator):
             response.validAll = False
             response.message.append(f"Sample Age parameters cannot be properly extracted. {e}\n {inner_e}")
             return response
-    if agemodel['agemodel'].lower() == "collection date":
+    if isinstance(inputs.get('agetype', None), str) and inputs['agetype'].lower() == "collection date":
         if isinstance(inputs['age'], (float, int)):
             inputs['age'] = 1950 - inputs['age']
-        elif isinstance(inputs['age'], datetime):
+        elif isinstance(inputs['age'],datetime.datetime):
             inputs['age'] = 1950 - inputs['age'].year
         elif isinstance(inputs['age'], list):
             inputs['age'] = [1950 - value.year if isinstance(value, datetime) else 1950 - value
                              for value in inputs['age']]
-    
+    del inputs['agetype']
     iterable_params = {k: v for k, v in inputs.items() if isinstance(v, list)}
     static_params = {k: v for k, v in inputs.items() if not isinstance(v, list)}
     static_params['sampleid'] = 2
@@ -62,14 +59,14 @@ def valid_sample_age(cur, yml_dict, csv_file, validator):
         for values in zip(*iterable_params.values()):
             kwargs = dict(zip(iterable_params.keys(), values))  # Create dictionary with lists
             kwargs.update(static_params) 
-            if not(kwargs['ageyounger'] and kwargs['ageolder']):
-                if kwargs['uncertainty']:
-                    inputs['ageyounger'] = inputs["age"] - inputs["uncertainty"]
-                    inputs['ageolder'] = inputs["age"] + inputs["uncertainty"]
-                else:
-                    response.message.append("? No uncertainty to substract. Ageyounger/Ageolder will be None.")
-                    inputs['ageyounger'] = None
-                    inputs['ageolder'] = None 
+            if 'ageyounger' or 'ageolder' not in kwargs:
+                response.message.append("? No uncertainty to substract. Ageyounger/Ageolder will be None.")
+                inputs['ageyounger'] = None
+                inputs['ageolder'] = None 
+            elif not(kwargs['ageyounger'] and kwargs['ageolder']):
+                response.message.append("? No uncertainty to substract. Ageyounger/Ageolder will be None.")
+                inputs['ageyounger'] = None
+                inputs['ageolder'] = None
             # Assess if they are a list, then make it so that we take the max/min values of the list.
             # Need to ask if it is OK to have multiple ages and since they are linked with the geochronology
             # if I also need to create multiple chronologies (one for each sample age)
@@ -93,4 +90,5 @@ def valid_sample_age(cur, yml_dict, csv_file, validator):
     response.validAll = all(response.valid)
     if response.validAll:
         response.message.append(f"✔ Sample ages can be created.")
+    response.message = list(set(response.message))
     return response

@@ -16,9 +16,15 @@ def clean_column(column, template, clean=True):
             setlist = setlist[0]
         elif len(setlist) == 0:
             setlist = None
+        elif len(setlist) == 2:
+            if any(value in ['', None] for value in setlist) and any(value is not None for value in setlist):
+                setlist = next(value for value in setlist if value not in ['', None])
+            else:
+                raise ValueError(f"There are multiple values in a not rowwiseelement {column}."
+                                 " Correct the template or the data.")
         else:
             raise ValueError(f"There are multiple values in a not rowwiseelement {column}."
-                             " Correct the template or the data.")
+                             " Correct the template or the data.") 
     else:
         setlist = list(map(lambda x: x[column], template))
         if not setlist:

@@ -59,4 +59,5 @@ def valid_dataset(cur, yml_dict, csv_file, name=None):
         response.valid.append(False)
 
     response.validAll = all(response.valid)
+    response.message = list(set(response.message)) 
     return response

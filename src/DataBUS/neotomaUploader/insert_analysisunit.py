@@ -50,7 +50,7 @@ def insert_analysisunit(cur, yml_dict, csv_file, uploader):
                     kwargs['faciesid'][0]
                 au = AnalysisUnit(**kwargs)
                 auid = au.insert_to_db(cur)
-                response.message.append(f"✔ Added Analysis Unit {auid}.")
+                response.message.append(f"✔ Added Analysis Units.")
                 response.valid.append(True)
             except Exception as e:
                 response.message.append(f"✗ Could not insert Analysis Unit, " 
@@ -73,4 +73,5 @@ def insert_analysisunit(cur, yml_dict, csv_file, uploader):
             response.valid.append(False)
         response.auid.append(auid)
     response.validAll = all(response.valid)
+    response.message = list(set(response.message))
     return response

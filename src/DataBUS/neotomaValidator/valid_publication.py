@@ -1,131 +1,73 @@
 import DataBUS.neotomaHelpers as nh
-from DataBUS import Publication, Response
-import requests
-import re
- 
-def valid_publication(cur, yml_dict, csv_file):
+from DataBUS import Geochron, Response
+from datetime import datetime
+
+def valid_geochron(cur, yml_dict, csv_file):
     """
-    Validates a publication based on given parameters and updates the response object accordingly.
-    Parameters:
-        cur (psycopg2.cursor): Database cursor to execute SQL queries.
-        yml_dict (dict): Dictionary containing YAML configuration data.
-        csv_file (str): Path to the CSV file containing publication data.
-    Returns:
-        Response: An object containing validation messages and status.
     """
     response = Response()
 
-    params = ["doi", "publicationid", "citation"]
-    inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.publications")
-    if inputs["publicationid"]:
-        inputs["publicationid"] = [value if value != "NA" else None for value in inputs["publicationid"]]
-        inputs["publicationid"] = inputs["publicationid"][0]
+    params = ["sampleid", "geochrontypeid", "agetype", 
+              "age", "errorolder", "erroryounger",
+              "infinite", "delta13c", "labnumber", 
+              "materialdated", "notes"]
 
-    doi_pattern = r"^10\.\d{4,9}/[-._;()/:A-Z0-9]+$"
-    cit_q = """
-            SELECT *
-            FROM ndb.publications
-            WHERE citation IS NOT NULL
-            ORDER BY similarity(LOWER(citation), %(cit)s) DESC
-            LIMIT 1; """
-    if inputs['publicationid'] is None:
-        response.message.append(f"? No DOI present")
-        response.valid.append(True)
-        if inputs['citation']:
-            if isinstance(inputs['citation'], str): 
-                cur.execute(cit_q, {'cit': inputs['citation'].lower()})
-                obs = cur.fetchall()
-                pub_id = obs[0] if obs is not None else None
-                if pub_id:
-                    response.message.append(f"✔  Found Publication: "
-                                            f"{obs[0][3]} in Neotoma")
-                    response.valid.append(True)
-            elif isinstance(inputs['citation'], list):
-                inputs['citation'] = list(set(inputs['citation']))
-                counter = 0
-                for cit in inputs['citation']:
-                    cur.execute(cit_q, {'cit': cit.lower()})
-                    obs = cur.fetchall()
-                    pub_id = obs[0] if obs is not None else None
-                    if pub_id:
-                        response.message.append(f"✔  Found Publication: "
-                                                f"{obs[0][3]} in Neotoma")
-                        response.valid.append(True)
-    else:
+    # SISAL TERMS
+    sisal_t = {'MC-ICP-MS U/Th': 'Uranium series',
+               'ICP-MS U/Th Other': 'Uranium series',
+               'Alpha U/Th': 'Uranium series',
+               'TIMS': 'Thermal Ionization Mass Spectrometry',
+               'U/Th unspecified': 'Uranium series',
+               'C14': 'Carbon-14'}
+    inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.geochronology")
+    inputs = {k: [v for v in value if v is not None and (not isinstance(v, str) or 'hiatus' not in v)
+                  ] if isinstance(value, list) else value for k, value in inputs.items()
+                  if value is not None and (not isinstance(value, list) or any(v is not None for v in value))}
+    
+    geochron_q = """SELECT geochrontypeid FROM ndb.geochrontypes
+                    WHERE LOWER(geochrontype) = LOWER(%(geochrontype)s)"""
+    agetype_q = """SELECT agetypeid FROM ndb.agetypes
+                   WHERE LOWER(agetype) = LOWER(%(agetype)s)"""
+    
+    for i in range(len(inputs['geochrontypeid'])):
+        entries={}
+        entries['sampleid'] = 1 # Placeholder
+        if inputs['geochrontypeid'][i] in sisal_t:
+            inputs['geochrontypeid'][i] = sisal_t[inputs['geochrontypeid'][i]]
+        cur.execute(geochron_q, {"geochrontype": inputs['geochrontypeid'][i]})
+        geochronid = cur.fetchone()
+        cur.execute(agetype_q, {"agetype": inputs['agetype']})
+        agetypeid = cur.fetchone()
+        if agetypeid:
+            entries['agetypeid'] = agetypeid[0]
+            response.valid.append(True)
+        else:
+            entries['agetypeid'] = None
+            response.valid.append(False)
+            response.message.append(f"Age Type {inputs['agetype'][i]} not found in database")
+        if geochronid:
+            entries['geochrontypeid'] = geochronid[0]
+            response.valid.append(True)
+        else:
+            entries['geochrontypeid'] = None
+            response.valid.append(False)
+            response.message.append(f"Geochron Type {inputs['geochrontypeid'][i]} not found in database")
+        
+        entries['age'] = inputs['age'][i] if 'age' in inputs else None
+        entries['errorolder'] = inputs['errorolder'][i] if 'errorolder' in inputs else None
+        entries['erroryounger'] = inputs['erroryounger'][i] if 'erroryounger' in inputs else None
+        entries['infinite'] = inputs['infinite'][i] if 'infinite' in inputs else None
+        entries['delta13c'] = inputs['delta13c'][i] if 'delta13c' in inputs else None
+        entries['labnumber'] = inputs['labnumber'][i] if 'labnumber' in inputs else None
+        entries['materialdated'] = inputs['materialdated'][i] if 'materialdated' in inputs else None
+        entries['notes'] = inputs['notes'][i] if 'notes' in inputs else None
+
         try:
-            inputs['publicationid'] = int(inputs['publicationid'])
+            Geochron(**entries)
+            response.valid.append(True)
+            response.message.append("✔  Geochronology can be created")
         except Exception as e:
-            response.message.append("Cannot coerce publication ID to integer. Trying as DOI.")
-        if isinstance(inputs['publicationid'], int):
-            pub_query = """
-                        SELECT * FROM ndb.publications
-                        WHERE publicationid = %(pubid)s
-                        """
-            cur.execute(pub_query, {'pubid': inputs['publicationid']})
-            pub = cur.fetchone()
-            if pub:
-                response.message.append(f"✔  Found Publication: "
-                                        f"{pub[3]} in Neotoma")
-                response.valid.append(True)
-            else:
-                response.message.append("✗  The publication does not exist in Neotoma.")
-                response.valid.append(False)
-        elif isinstance(inputs['publicationid'], str):
-            if re.match(doi_pattern, inputs['publicationid'], re.IGNORECASE):
-                response.message.append(f"✔  Reference is correctly formatted as DOI.")
-                response.valid.append(True)
-                url = f"https://api.crossref.org/works/{inputs['doi'][0]}"
-                request = requests.get(url)
-                if request.status_code == 200:
-                    response.message.append(f"✔  DOI {inputs['doi']} found in CrossRef")
-                    response.valid.append(True)
-                    data = request.json()
-                    data = data['message']
-                else:
-                    response.message.append(f"✗  No DOI {inputs['doi']} found in CrossRef")
-                    data = None
-                try:
-                    pub_type = data['type']
-                    sql_neotoma = """SELECT pubtypeid FROM ndb.publicationtypes
-                                    WHERE LOWER(REPLACE(pubtype, ' ', '-')) LIKE %(pub_type)s
-                                    LIMIT 1"""
-                    cur.execute(sql_neotoma, {'pub_type': pub_type.lower()})
-                    pubtypeid = cur.fetchone()
-                    if pubtypeid:
-                        pubtypeid = pubtypeid[0]
-
-                    pub = Publication(pubtypeid = pubtypeid,
-                                    year = None,
-                                    citation = None,
-                                    title = data['title'][0],
-                                    journal = data['container-title'][0],
-                                    vol = data['volume'],
-                                    issue = data['journal-issue']['issue'],
-                                    pages = data['page'],
-                                    citnumber = str(data['is-referenced-by-count']),
-                                    doi = data['DOI'],
-                                    booktitle = None,
-                                    numvol = data['volume'],
-                                    edition = None,
-                                    voltitle = None,
-                                    sertitle = None,
-                                    servol = None,
-                                    publisher = data['publisher'],
-                                    url = data['URL'],
-                                    city = None,
-                                    state = None,
-                                    country = None,
-                                    origlang = data['language'],
-                                    notes = None)
-                    response.valid.append(True)
-                except Exception as e:
-                    response.valid.append(False)
-                    response.message.append("✗  Publication cannot be created {e}")
-                    #pub = Publication()
-            else:
-                response.message.append(f"? Text found in reference column but "
-                                        f"it does not meet DOI standards"
-                                        f"of citation not given."
-                                        f"Publication info will not be uploaded.")
+            response.valid.append(False)
+            response.message.append(f"✗  Geochronology cannot be created: {e}")
     response.validAll = all(response.valid)
     return response

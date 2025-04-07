@@ -34,15 +34,17 @@ def pull_params(params, yml_dict, csv_template, table=None, name = None, values 
         for i in params:
             if values == False:
                 valor = retrieve_dict(yml_dict, table + i)
-                if i == 'j':
-                    raise ValueError
             else:
                 valor = subfields
             if len(valor) > 0: 
                 for count, val in enumerate(valor):
-                    clean_valor = clean_column(val.get("column"), 
+                    try:
+                        clean_valor = clean_column(val.get("column"), 
                                                csv_template, 
                                                clean=not val.get("rowwise"))
+                    except KeyError as k:
+                        print(f"Column not available in CSV: {k}. Continue.")
+                        continue
                     if clean_valor:
                         match val.get("type"):
                             case "date":
@@ -61,9 +63,14 @@ def pull_params(params, yml_dict, csv_template, table=None, name = None, values 
                                     clean_valor = float(clean_valor)
                             case "coordinates (lat,long)":
                                 clean_valor = [float(num) for num in clean_valor[0].split(",")]
-                            case "string":
+                            case "string" | "str":
                                 clean_valor = list(map(str, clean_valor)) if val.get("rowwise") else str(clean_valor)
-                                clean_valor = None if all(item == '' for item in clean_valor) and clean_valor else clean_valor
+                                if isinstance(clean_valor, list):
+                                    #clean_valor = None if clean_valor.strip() in ("", "NA") else clean_valor
+                                    clean_valor = [None if isinstance(value, str) and value.strip() in ("", "NA") 
+                                               else str(value) if not isinstance(value, list) else value 
+                                               for value in clean_valor]
+                                    clean_valor = None if all(item in [None, ''] for item in clean_valor) and clean_valor else clean_valor
                         if i == 'notes':
                             if'notes' in add_unit_inputs:
                                 add_unit_inputs[i].append({f"{val.get('column')}": clean_valor})
@@ -77,9 +84,9 @@ def pull_params(params, yml_dict, csv_template, table=None, name = None, values 
                                 if 'unitcolumn' in val:
                                     add_unit_inputs[val['taxonname']]['unitcolumn'] = val['unitcolumn']
                                 if 'uncertaintyunit' in val:
-                                    add_unit_inputs[val['taxonname']][f"{val['taxonname']}_uncertaintyunit"] = val['uncertaintyunit']
+                                    add_unit_inputs[val['taxonname']][f"uncertaintyunit"] = val['uncertaintyunit']
                                 if 'uncertaintybasis' in val:
-                                    add_unit_inputs[val['taxonname']][f"{val['taxonname']}_uncertaintybasis"] = val['uncertaintybasis']
+                                    add_unit_inputs[val['taxonname']][f"uncertaintybasis"] = val['uncertaintybasis']
                         else:
                             add_unit_inputs[i] = clean_valor
             else:
