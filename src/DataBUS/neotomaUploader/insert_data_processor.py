@@ -18,22 +18,21 @@ def insert_data_processor(cur, yml_dict, csv_file, uploader):
             - 'valid' (bool): Indicates if all insertions were successful.
     """
     response = Response()
-    inputs = nh.pull_params(["contactid", "contactname"], yml_dict, csv_file, "ndb.sampleanalysts")
-
+    inputs = nh.pull_params(["contactid", "contactname"], yml_dict, csv_file, "ndb.datasetprocessor")
     if not inputs['contactid']:
-        if isinstance(inputs['contactname'], list):
+        if isinstance(inputs.get("contactname", None), list):
             seen = set()
             inputs['contactname'] = [x for x in inputs['contactname'] if not (x in seen or seen.add(x))]
             inputs['contactname'] = [value for item in inputs['contactname'] for value in item.split("|")]
             seen = set()
             inputs['contactname'] = [x for x in inputs['contactname'] if not (x in seen or seen.add(x))] # preserve order
-        elif isinstance(inputs['contactname'], str):
+        elif isinstance(inputs.get('contactname', None), str):
             inputs['contactname'] = inputs['contactname'].split("|")
     else:
         inputs["contactid"] = list(dict.fromkeys(inputs["contactid"]))
 
     contids = []
-    if not inputs["contactid"] and inputs["contactid"]:
+    if not inputs["contactid"] and "contactname" in inputs:
         cont_name = nh.get_contacts(cur, inputs["contactname"])
         for agent in cont_name:
             if agent['id'] is None:

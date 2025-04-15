@@ -42,7 +42,8 @@ def insert_site(cur, yml_dict, csv_file):
         response.valid = False
         response.message.append(str(e))
         inputs["geog"]  = None
-
+    if inputs.get('sitedescription', None):
+        inputs['sitedescription'] = inputs['sitedescription'][0].upper() + inputs['sitedescription'][1:]
     try:
         site = Site(**inputs)
         response.valid.append(True)

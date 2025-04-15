@@ -1,7 +1,7 @@
 import re
 """Function to clean notes"""
 
-def reorder_dict(d, name = "Name In Publication"):
+def reorder_dict(d, name = "Name in record"):
     priority = {"Original sample number": 0, name : 1}
     sorted_items = sorted(d.items(), key=lambda x: priority.get(x[0], float('inf')))
     return dict(sorted_items)
@@ -29,6 +29,7 @@ def clean_notes(notes = None, name = None):
         result = " | ".join(f"{key}: {value}" for key, value in result.items())
         result = f"{result}"
         result = result.replace("Notes:", "")
+        result = result.replace("notes:", "")
         result = re.sub(r"[{}\[\]']", "", result)
 
     else:

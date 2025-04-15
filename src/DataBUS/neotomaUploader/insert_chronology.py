@@ -54,11 +54,11 @@ def insert_chronology(cur, yml_dict, csv_file, uploader):
             return response
         
     if inputs.get('agemodel', '') == "collection date":
-        if isinstance(inputs['age'], (float, int)):
+        if isinstance(inputs.get('age', None), (float, int)):
             inputs['age'] = 1950 - inputs['age']
-        elif isinstance(inputs['age'], datetime):
+        elif isinstance(inputs.get('age', None), datetime):
             inputs['age'] = 1950 - inputs['age'].year
-        elif isinstance(inputs['age'], list):
+        elif isinstance(inputs.get('age', None), list):
             inputs['age'] = [1950 - value.year if isinstance(value, datetime) else 1950 - value
                              for value in inputs['age']]
             if not (inputs["ageboundolder"] and inputs["ageboundyounger"]):
@@ -66,12 +66,13 @@ def insert_chronology(cur, yml_dict, csv_file, uploader):
                 inputs["ageboundolder"]= int(max(inputs["age"])) 
 
     if not (inputs["ageboundolder"] and inputs["ageboundyounger"]):
-        if not isinstance(inputs["age"], (float, int)):
+        if isinstance(inputs.get("age", None), (float, int)):
             inputs["ageboundyounger"]=None
             inputs["ageboundolder"]=None
-        else:
+        elif isinstance(inputs.get("age", None), list):
             inputs["ageboundyounger"]= int(min(x for x in inputs["age"] if x is not None)) # Ask if this is OK or if it should be two different chronologies?
             inputs["ageboundolder"]= int(max(x for x in inputs["age"] if x is not None))
+
     # to add for lead models because they use more calendar format
     if inputs["agetype"]: 
         inputs["agetype"]=inputs["agetype"].replace("collection date", 'Calendar years BP')
@@ -95,7 +96,9 @@ def insert_chronology(cur, yml_dict, csv_file, uploader):
         response.valid.append(True)
         inputs["agetypeid"] = None
     
-    del inputs["agetype"], inputs["age"]
+    del inputs["agetype"]
+    if 'age' in inputs:
+        del inputs["age"]
     inputs['collectionunitid']=uploader["collunitid"].cuid
     chron= Chronology(**inputs)
 

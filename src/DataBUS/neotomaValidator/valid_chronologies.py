@@ -42,7 +42,8 @@ def valid_chronologies(cur, yml_dict, csv_file):
                 else:
                     new_date = None
             
-            params.remove('age')
+            if 'age' in params:
+                params.remove('age')
             inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.chronologies")
             inputs['age'] = new_date
             response.valid.append(True)
@@ -52,17 +53,18 @@ def valid_chronologies(cur, yml_dict, csv_file):
                                     f"{str(inner_e)}")
             return response
 
-    if 'agemodel' in inputs and inputs['agemodel'] == "collection date":
-        if isinstance(inputs['age'], (float, int)):
+    if inputs['agemodel'] == "collection date":
+        if isinstance(inputs.get('age', None), (float, int)):
             inputs['age'] = 1950 - inputs['age']
-        elif isinstance(inputs['age'], datetime):
+        elif isinstance(inputs.get('age', None), datetime):
             inputs['age'] = 1950 - inputs['age'].year
-        elif isinstance(inputs['age'], list):
+        elif isinstance(inputs.get('age', None), list):
             inputs['age'] = [1950 - value.year if isinstance(value, datetime) else 1950 - value
                              for value in inputs['age']]
-            if not (inputs["ageboundolder"] and inputs["ageboundyounger"]):
-                inputs["ageboundyounger"]= int(min(inputs["age"])) 
-                inputs["ageboundolder"]= int(max(inputs["age"])) 
+            if 'age' in inputs:
+                if not (inputs["ageboundolder"] and inputs["ageboundyounger"]):
+                    inputs["ageboundyounger"]= int(min(inputs["age"])) 
+                    inputs["ageboundolder"]= int(max(inputs["age"])) 
     
     # to add for lead models because they use more calendar format
 
@@ -101,5 +103,4 @@ def valid_chronologies(cur, yml_dict, csv_file):
         response.valid.append(False)
         response.message.append(f"✗  Chronology cannot be created: {e}")
     response.validAll = all(response.valid)
-    response.message = list(set(response.message))   
     return response

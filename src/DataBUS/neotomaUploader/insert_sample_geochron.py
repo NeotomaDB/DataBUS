@@ -19,8 +19,8 @@ def insert_sample_geochron(cur, yml_dict, csv_file, uploader):
     response = Response()
     inputs = {}
     inputs['anunits'] = uploader['anunits'].auid
-    age = nh.pull_params(["age"], yml_dict, csv_file, "ndb.geochronology")
 
+    age = nh.pull_params(["age"], yml_dict, csv_file, "ndb.sampleages")['age']
     indices = [i for i, value in enumerate(age) if value is not None]
     inputs = {k: [v for i, v in enumerate(inputs[k]) if i in indices] if isinstance(inputs[k], list) else value for k, value in inputs.items()}
 

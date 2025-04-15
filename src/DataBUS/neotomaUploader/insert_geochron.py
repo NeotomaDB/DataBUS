@@ -19,9 +19,10 @@ def insert_geochron(cur, yml_dict, csv_file, uploader):
                'U/Th unspecified': 'Uranium series',
                'C14': 'Carbon-14'}
     inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.geochronology")
-    inputs['sampleid'] = uploader['sample_geochron'].sampleid[0]
+
     indices = [i for i, value in enumerate(inputs['age']) if value is not None]
     inputs = {k: [v for i, v in enumerate(inputs[k]) if i in indices] if isinstance(inputs[k], list) else value for k, value in inputs.items()}
+    inputs['sampleid'] = uploader['sample_geochron'].sampleid
     geochron_q = """SELECT geochrontypeid FROM ndb.geochrontypes
                     WHERE LOWER(geochrontype) = LOWER(%(geochrontype)s)"""
     agetype_q = """SELECT agetypeid FROM ndb.agetypes
@@ -29,7 +30,7 @@ def insert_geochron(cur, yml_dict, csv_file, uploader):
     try:
         for i in range(len(inputs['age'])):
             entries={}
-            entries['sampleid'] = inputs['sampleid']
+            entries['sampleid'] = inputs['sampleid'][i]
             if inputs['geochrontypeid'][i] in sisal_t:
                 inputs['geochrontypeid'][i] = sisal_t[inputs['geochrontypeid'][i]]
             cur.execute(geochron_q, {"geochrontype": inputs['geochrontypeid'][i]})
@@ -59,7 +60,6 @@ def insert_geochron(cur, yml_dict, csv_file, uploader):
             entries['labnumber'] = inputs['labnumber'][i] if inputs.get('labnumber') is not None else None
             entries['materialdated'] = inputs['materialdated'][i] if inputs.get('materialdated') is not None else None
             entries['notes'] = inputs['notes'][i] if inputs.get('notes') is not None else None
-
             try:
                 gc = Geochron(**entries)
                 id = gc.insert_to_db(cur)
