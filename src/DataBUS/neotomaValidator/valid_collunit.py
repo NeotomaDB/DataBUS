@@ -87,7 +87,7 @@ def valid_collunit(cur, yml_dict, csv_file):
         try:
             inputs['geog'] = Geog((inputs["geog"][0], inputs["geog"][1]))
             response.message.append(
-                f"? This set is expected to be " f"in the {geog.hemisphere} hemisphere."
+                f"? This set is expected to be " f"in the {inputs['geog'].hemisphere} hemisphere."
             )
         except (TypeError, WrongCoordinates) as e:
             response.valid.append(False)
