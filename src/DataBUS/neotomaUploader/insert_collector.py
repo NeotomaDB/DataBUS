@@ -18,24 +18,29 @@ def insert_collector(cur, yml_dict, csv_file, uploader):
     """
     response = Response()
     inputs = nh.pull_params(["contactid", "contactname"], yml_dict, csv_file, "ndb.collectors")
-
     if not inputs['contactid']:
-        if isinstance(inputs['contactname'], list):
+        if isinstance(inputs.get('contactname', None), list):
             seen = set()
             inputs['contactname'] = [x for x in inputs['contactname'] if not (x in seen or seen.add(x))]
             inputs['contactname'] = [value for item in inputs['contactname'] for value in item.split("|")]
             seen = set()
             inputs['contactname'] = [x for x in inputs['contactname'] if not (x in seen or seen.add(x))] # preserve order
-        elif isinstance(inputs['contactname'], str):
+        elif isinstance(inputs.get('contactname', None), str):
             inputs['contactname'] = inputs['contactname'].split("|")
     else:
         inputs["contactid"] = list(dict.fromkeys(inputs["contactid"]))
     contids = []
+    
     if not inputs["contactid"]:
+        if "contactname" not in inputs:
+            
+            response.validAll = True
+            response.message.append("? No contact information provided.")
+            return response
         cont_name = nh.get_contacts(cur, inputs["contactname"])
         for agent in cont_name:
             try: 
-                contact = Contact(contactid=agent["id"])
+                contact = Contact(contactid=agent["id"], order = agent["order"])
                 response.valid.append(True)
                 contids.append(agent['id'])
                 try:

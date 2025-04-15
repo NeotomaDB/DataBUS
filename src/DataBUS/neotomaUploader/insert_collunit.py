@@ -86,7 +86,7 @@ def insert_collunit(cur, yml_dict, csv_file, uploader):
 
     overwrite = nh.pull_overwrite(params, yml_dict, "ndb.collectionunits")
 
-    if inputs["depenvtid"]:
+    if inputs.get("depenvtid", None):
         query = """SELECT depenvtid FROM ndb.depenvttypes
                    WHERE LOWER(depenvt) = %(depenvt)s"""
         cur.execute(query, {"depenvt": inputs["depenvtid"].lower()})

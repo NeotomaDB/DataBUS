@@ -1,7 +1,7 @@
 import DataBUS.neotomaHelpers as nh
 from DataBUS import Sample, Response
 
-def insert_sample(cur, yml_dict, csv_file, uploader):
+def insert_sample_geochron(cur, yml_dict, csv_file, uploader):
     """
     Inserts sample data into Neotoma.
 
@@ -20,53 +20,27 @@ def insert_sample(cur, yml_dict, csv_file, uploader):
     params = ["sampledate", "samplename", "analysisdate",
              "labnumber", "prepmethod", "notes", "taxonname"]
     inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.samples")
-    
     get_taxonid = """SELECT * FROM ndb.taxa WHERE taxonname %% %(taxonname)s;"""
 
-    for i, unit in enumerate(uploader["anunits"].auid):
-        entry = {'analysisunitid': unit,
-                 'datasetid': uploader["datasets"].datasetid,
-                 'sampledate': inputs['sampledate'][i] if isinstance(inputs.get('sampledate'), list) else inputs['sampledate'],
-                 'samplename': inputs['samplename'][i] if isinstance(inputs.get('samplename'), list) else inputs['samplename'],
-                 'analysisdate': inputs['analysisdate'][i] if isinstance(inputs.get('analysisdate'), list) else inputs['analysisdate'],
-                 'taxonname': inputs['taxonname'][i] if isinstance(inputs.get('taxonname'), list) else inputs['taxonname'],
-                 'labnumber': None if 'labnumber' not in inputs or (isinstance(inputs.get('labnumber'), list) and inputs['labnumber'][i] == '')
-                                   else inputs['labnumber'][i] if isinstance(inputs.get('labnumber'), list) 
-                                   else inputs['labnumber']}
-        if 'taxonname' in entry and isinstance(entry['taxonname'], str):
-            entry['taxonname']=entry['taxonname'].lower()
-            cur.execute(get_taxonid, {"taxonname": entry["taxonname"]})
-            entry['taxonid'] = cur.fetchone()
-            if entry['taxonid']:
-                entry['taxonid'] = int(entry['taxonid'][0])
-            else:
-                entry['taxonid'] = None
-                entry['taxonid']
-        elif 'taxonid' in entry and isinstance(entry['taxonid'], int):
-            entry['taxonid'] = int(entry['taxonid'][0])
-        else:
-            entry['taxonid'] = None
+    entry = {'datasetid': uploader["geochrondatasets"].datasetid}
+    try:
+        sample = Sample(**entry)
+        response.valid.append(True)
         try:
-            entry.pop('taxonname', None)
-            sample = Sample(**entry)
+            s_id = sample.insert_to_db(cur)
+            response.sampleid.append(s_id)
             response.valid.append(True)
-            try:
-                s_id = sample.insert_to_db(cur)
-                response.sampleid.append(s_id)
-                response.valid.append(True)
-                response.message.append(f"✔  Added Samples.")
-            except Exception as e:
-                s_id = sample.insert_to_db(cur)
-                response.sampleid.append(s_id)
-                response.valid.append(True)
-                response.message.append(f"✗  Cannot add sample: {e}.")
+            response.message.append(f"✔  Added Samples.")
         except Exception as e:
-            sample = Sample()
-            response.message.append(f"✗ Samples data is not correct: {e}")
-            response.valid.append(False)
+            s_id = sample.insert_to_db(cur)
+            response.sampleid.append(s_id)
+            response.valid.append(True)
+            response.message.append(f"✗  Cannot add sample: {e}.")
+    except Exception as e:
+        sample = Sample()
+        response.message.append(f"✗ Samples data is not correct: {e}")
+        response.valid.append(False)
 
-    if not len(uploader["anunits"].auid) == len(response.sampleid):
-        response.message.append("✗  Analysis Units and Samples do not have same length.")
     response.validAll = all(response.valid)
     response.message = list(set(response.message))
     return response

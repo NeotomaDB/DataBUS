@@ -32,16 +32,16 @@ def insert_publication(cur, yml_dict, csv_file, uploader):
     inputs['doi'] = list_flattener(inputs['doi'])
     inputs['publicationid'] = list_flattener(inputs['publicationid'])
     inputs['citation'] = list_flattener(inputs['citation'],  delim=' | ')
-    
+
     if inputs["publicationid"]:
         inputs["publicationid"] = [value if value != "NA" else None for value in inputs["publicationid"]]
         inputs["publicationid"] = inputs["publicationid"][0]
         
     doi_pattern = r"^10\.\d{4,9}/[-._;()/:A-Z0-9]+$"
-    cit_q = """SELECT *, similarity(LOWER(citation), %(cit)s) as SIM
+    cit_q = """SELECT publicationid, citation, similarity(LOWER(citation), %(cit)s) as SIM
                FROM ndb.publications
                WHERE citation IS NOT NULL
-                AND similarity(LOWER(citation), %(cit)s) > .65
+               AND similarity(LOWER(citation), %(cit)s) >= .6
                ORDER BY similarity(LOWER(citation), %(cit)s) DESC
                LIMIT 1; """
     
@@ -55,24 +55,23 @@ def insert_publication(cur, yml_dict, csv_file, uploader):
     dataset_pub_q = """SELECT ts.insertdatasetpublication(%(datasetid)s, 
                                                           %(publicationid)s, 
                                                           %(primarypub)s)"""
-
-    if inputs['publicationid'] is None:
+    if inputs.get('publicationid', None) is None:
         response.message.append(f"? No ID present")
         response.valid.append(True)
-        if inputs['citation']:
+        if inputs.get('citation', None):
             for i, cit in enumerate(inputs['citation']):
                 cur.execute(cit_q, {'cit': cit.lower()})
                 obs = cur.fetchone()
                 pub_id = obs if obs is not None else None
                 if pub_id:
                     response.message.append(f"✔  Found Publication: "
-                                            f"{obs[3]} in Neotoma")
+                                            f"{obs[1]} in Neotoma")
                     response.valid.append(True)
                     cur.execute(dataset_pub_q, {'datasetid': uploader["datasets"].datasetid,
                                                 'publicationid': pub_id[0],
                                                 'primarypub': True})
                 else:
-                    if inputs['doi'][i]:
+                    if inputs.get('doi', None):
                         cur.execute(doi_q, {'doi': inputs['doi'][i].lower()})
                         obs = cur.fetchone()
                         pub_id = obs if obs is not None else None

@@ -70,7 +70,7 @@ def valid_collunit(cur, yml_dict, csv_file):
             response.message.append(f"No substrate {inputs['substrateid']} found")
             inputs["substrateid"] = None
             
-    if inputs["depenvtid"]:
+    if inputs.get("depenvtid", None):
         query = """SELECT depenvtid FROM ndb.depenvttypes
                     WHERE LOWER(depenvt) = %(depenvt)s"""
         cur.execute(query, {"depenvt": inputs["depenvtid"].lower()})
@@ -191,5 +191,4 @@ def valid_collunit(cur, yml_dict, csv_file):
         response.message.append(f"No given coordinates for CU. Cannot find nearby CUs")
         response.valid.append(True)
     response.validAll = all(response.valid)
-    response.message = list(set(response.message)) 
     return response

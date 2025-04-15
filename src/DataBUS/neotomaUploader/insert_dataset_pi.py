@@ -33,7 +33,7 @@ def insert_dataset_pi(cur, yml_dict, csv_file, uploader):
 
     contids = []
     marker = False
-    if not inputs["contactid"]:
+    if not inputs["contactid"] and "contactname" in inputs:
         cont_name = nh.get_contacts(cur, inputs["contactname"])
         for agent in cont_name:
             if agent['id'] is None:
@@ -60,13 +60,16 @@ def insert_dataset_pi(cur, yml_dict, csv_file, uploader):
                 else:
                     response.message.append(f"✗ Data PI information is not correct.")
                     response.valid.append(False)
-    else:
+    elif inputs["contactid"]:
         for id in inputs["contactid"]:
             contids.append(id)
             contact = Contact(contactid=id)
             contact.insert_pi(cur,
                               collunitid=uploader["collunitid"].cuid)
             response.valid.append(True)
+    else:
+        response.valid.append(True)
+        response.message.append(f"? No contacts to be added.")
 
     response.datasetpi = contids
     response.validAll = all(response.valid)

@@ -101,6 +101,7 @@ def insert_chroncontrols(cur, yml_dict, csv_file, uploader):
                 inputs["chroncontrolid"] = None
             try:
                 cc = ChronControl(
+                    analysisunitid=uploader['anunits'].auid[i],
                     chronologyid = inputs['chronologyid'],
                     chroncontroltypeid=inputs["chroncontrolid"],
                     depth=inputs["depth"][i],
@@ -111,6 +112,7 @@ def insert_chroncontrols(cur, yml_dict, csv_file, uploader):
                     notes=inputs["notes"],
                     agetypeid=inputs["agetypeid"],
                 )
+
                 ccid = cc.insert_to_db(cur)
                 response.ccid.append(ccid)
                 response.message.append(f"✔ Added Chron Control {ccid}.")
@@ -132,6 +134,7 @@ def insert_chroncontrols(cur, yml_dict, csv_file, uploader):
                 response.valid.append(False)
                 inputs["chroncontrolid"] = None
             cc = ChronControl(
+                        analysisunitid=uploader['anunits'].auid[0],
                         chronologyid=inputs['chronologyid'],
                         chroncontroltypeid=inputs["chroncontrolid"],
                         depth=inputs["depth"],
