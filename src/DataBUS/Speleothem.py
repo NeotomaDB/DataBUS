@@ -1,51 +1,81 @@
-class Geochron:
-    def __init__(self, sampleid, 
-                 geochrontypeid, 
-                 agetypeid, age, 
-                 errorolder, erroryounger, 
-                 infinite, delta13c, 
-                 labnumber, materialdated, notes):
-        self.sampleid = sampleid
-        self.geochrontypeid = geochrontypeid
-        self.agetypeid = agetypeid
-        self.age = age
-        self.errorolder = errorolder
-        self.erroryounger = erroryounger
-        self.infinite = infinite
-        self.delta13c = delta13c
-        self.labnumber = labnumber
-        self.materialdated = materialdated
-        self.notes = notes
-        
-    def insert_to_db(self, cur):
-        geochron_query = """
-        SELECT ts.insertgeochron(_sampleid := %(sampleid)s,
-                                    _geochrontypeid := %(geochrontypeid)s,
-                                    _agetypeid := %(agetypeid)s,
-                                    _age := %(age)s,
-                                    _errorolder := %(errorolder)s,
-                                    _erroryounger := %(erroryounger)s,
-                                    _infinite := %(infinite)s,
-                                    _delta13c := %(delta13c)s,
-                                    _labnumber := %(labnumber)s,
-                                    _materialdated := %(materialdated)s,
-                                    _notes := %(notes)s)
-                                    """
-        inputs = {
-            "sampleid": self.sampleid,
-            "geochrontypeid": self.geochrontypeid,
-            "agetypeid": self.agetypeid,
-            "age": self.age,
-            "errorolder": self.errorolder,
-            "erroryounger": self.erroryounger,
-            "infinite": self.infinite,
-            "delta13c": self.delta13c,
-            "labnumber": self.labnumber,
-            "materialdated": self.materialdated,
-            "notes": self.notes}
-        cur.execute(geochron_query, inputs)
-        self.geochronid = cur.fetchone()[0]
-        return self.geochronid
-
+import importlib.resources
+with importlib.resources.open_text("DataBUS.sqlHelpers", 
+                                   "insert_speleothem.sql") as sql_file:
+    insert_speleothem = sql_file.read()
+with importlib.resources.open_text("DataBUS.sqlHelpers", 
+                                   "insert_speleothem_cu.sql") as sql_file:
+    insert_speleothem_cu = sql_file.read()
+    
+class Speleothem:
+    def __init__(
+        self,
+        siteid=None,
+        entityid=None,
+        entityname=None,
+        monitoring=None,
+        rockageid=None,
+        entrancedistance=None,
+        entrancedistanceunits=None,
+        speleothemtypeid=None,
+        entitystatusid=None,
+        speleothemgeologyid=None,
+        speleothemdriptypeid=None):
+        self.siteid = siteid
+        self.entityid = entityid
+        self.entityname = entityname
+        self.monitoring = monitoring
+        self.rockageid=rockageid
+        self.entrancedistance=entrancedistance
+        self.entrancedistanceunits=entrancedistanceunits
+        self.speleothemtypeid=speleothemtypeid
+        self.entitystatusid=entitystatusid
+        self.speleothemgeologyid=speleothemgeologyid
+        self.speleothemdriptypeid=speleothemdriptypeid
+    
     def __str__(self):
-        pass
+        statement = (
+            f"SiteID: {self.siteid}, Entity: {self.entityid}")
+        return statement
+
+    def insert_to_db(self, cur):
+        cur.execute(insert_speleothem)
+        query = """
+        SELECT insert_speleothem(_siteid := %(siteid)s,
+                                _entityid := %(entityid)s,
+                                _entityname := %(entityname)s,
+                                _monitoring := %(monitoring)s,
+                                _rockageid := %(rockageid)s,
+                                _entrancedistance := %(entrancedistance)s,
+                                _entrancedistanceunits := %(entrancedistanceunits)s,
+                                _speleothemtypeid := %(speleothemtypeid)s)
+                                """
+        # ,
+        #                         _entitystatusid := %(entitystatusid)s,
+        #                         _speleothemgeologyid := %(speleothemgeologyid)s,
+        #                         _speleothemdriptypeid := %(speleothemdriptypeid)s)
+        #                 """
+        inputs = {
+            "siteid": self.siteid,
+            "entityid": self.entityid,
+            "entityname": self.entityname,
+            "monitoring": self.monitoring,
+            "rockageid": self.rockageid,
+            "entrancedistance": self.entrancedistance,
+            "entrancedistanceunits": self.entrancedistanceunits,
+            "speleothemtypeid": self.speleothemtypeid}
+            # "entitystatusid": self.entitystatusid,
+            # "speleothemgeologyid": self.speleothemgeologyid,
+            # "speleothemdriptypeid": self.speleothemdriptypeid}
+        cur.execute(query, inputs)
+        return
+    
+    def insert_cu_speleothem_to_db(self, cur, cuid):
+        cur.execute(insert_speleothem_cu)
+        query = """
+        SELECT insert_speleothem_cu(_entityid := %(entityid)s,
+                                   _collectionunitid := %(collectionunitid)s)
+                                """
+        inputs = {"entityid": self.entityid,
+                  "collectionunitid": cuid}
+        cur.execute(query, inputs)
+        return
