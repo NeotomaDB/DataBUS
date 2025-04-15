@@ -41,9 +41,11 @@ def insert_collunit(cur, yml_dict, csv_file, uploader):
                     if len(new_date) == 7 and new_date[4] == '-' and new_date[5:7].isdigit():
                         new_date = f"{new_date}-01"
                         new_date = new_date.replace('/', '-')
-                        datetime.strptime(date_string, "%Y-%m-%d")
+                        new_date = datetime.datetime.strptime(new_date, "%Y-%m-%d")
                         notes = notes + f""
                     elif new_date.endswith("--") or new_date.endswith("//"):
+                        new_date = new_date.replace('--', '')
+                        new_date = new_date.replace('//', '')
                         notes = f"Collection Date seems to be: {new_date}"
                         new_date = None
                     else:
@@ -86,7 +88,7 @@ def insert_collunit(cur, yml_dict, csv_file, uploader):
 
     overwrite = nh.pull_overwrite(params, yml_dict, "ndb.collectionunits")
 
-    if inputs.get("depenvtid", None):
+    if inputs["depenvtid"]:
         query = """SELECT depenvtid FROM ndb.depenvttypes
                    WHERE LOWER(depenvt) = %(depenvt)s"""
         cur.execute(query, {"depenvt": inputs["depenvtid"].lower()})
