@@ -2,7 +2,7 @@ import DataBUS.neotomaHelpers as nh
 from DataBUS import Chronology, ChronResponse
 from datetime import datetime
 
-def insert_chronology(cur, yml_dict, csv_file, uploader):
+def insert_chronology(cur, yml_dict, csv_file, uploader, multiple = False):
     """
     Inserts chronology data into Neotoma.
 
@@ -20,12 +20,10 @@ def insert_chronology(cur, yml_dict, csv_file, uploader):
     """
     response = ChronResponse()
 
-    params = ["contactid", "isdefault", "chronologyname", "dateprepared", 
-              "agemodel", "ageboundyounger", "ageboundolder", "notes", 
-              "age", "agetype"]
-
+    params = ['age', 'ageboundolder', 'ageboundyounger', 'chronologyname', 'agemodel', 
+              'agetype', 'contactid', 'isdefault', 'dateprepared', 'notes']
     try:
-        inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.chronologies")
+        inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.chronologies", values = False)
     except Exception as e:
         error_message = str(e)
         try:
@@ -52,35 +50,11 @@ def insert_chronology(cur, yml_dict, csv_file, uploader):
             response.message.append("Chronology parameters cannot be properly extracted. {e}\n")
             response.message.append(str(inner_e))
             return response
-        
-    if inputs.get('agemodel', '') == "collection date":
-        if isinstance(inputs.get('age', None), (float, int)):
-            inputs['age'] = 1950 - inputs['age']
-        elif isinstance(inputs.get('age', None), datetime):
-            inputs['age'] = 1950 - inputs['age'].year
-        elif isinstance(inputs.get('age', None), list):
-            inputs['age'] = [1950 - value.year if isinstance(value, datetime) else 1950 - value
-                             for value in inputs['age']]
-            if not (inputs["ageboundolder"] and inputs["ageboundyounger"]):
-                inputs["ageboundyounger"]= int(min(inputs["age"])) 
-                inputs["ageboundolder"]= int(max(inputs["age"])) 
-
-    if not (inputs["ageboundolder"] and inputs["ageboundyounger"]):
-        if isinstance(inputs.get("age", None), (float, int)):
-            inputs["ageboundyounger"]=None
-            inputs["ageboundolder"]=None
-        elif isinstance(inputs.get("age", None), list):
-            inputs["ageboundyounger"]= int(min(x for x in inputs["age"] if x is not None)) # Ask if this is OK or if it should be two different chronologies?
-            inputs["ageboundolder"]= int(max(x for x in inputs["age"] if x is not None))
-
-    # to add for lead models because they use more calendar format
-    if inputs["agetype"]: 
-        inputs["agetype"]=inputs["agetype"].replace("collection date", 'Calendar years BP')
-        if not inputs['chronologyname']:
-            inputs["chronologyname"] = inputs["agetype"]
+    
+    if inputs.get("agetype"): 
+        inputs["agetype"].replace("cal yr BP", 'Calendar years BP')
         agetype_query = """SELECT agetypeid FROM ndb.agetypes
-                           WHERE LOWER(agetype) = %(agetype)s"""
-
+                            WHERE LOWER(agetype) = %(agetype)s"""
         cur.execute(agetype_query, {'agetype': inputs["agetype"].lower()})
         id = cur.fetchone()
         if id:
@@ -91,27 +65,75 @@ def insert_chronology(cur, yml_dict, csv_file, uploader):
             response.message.append("✗ The provided age type does not exist in Neotoma DB.")
             response.valid.append(False)
             inputs["agetypeid"] = None
+        del inputs["agetype"]
     else:
         response.message.append("? No age type provided.")
         response.valid.append(True)
         inputs["agetypeid"] = None
-    
-    del inputs["agetype"]
-    if 'age' in inputs:
-        del inputs["age"]
-    inputs['collectionunitid']=uploader["collunitid"].cuid
-    chron= Chronology(**inputs)
 
-    try:
-        chronid = chron.insert_to_db(cur)
-        response.chronid = chronid
-        response.valid.append(True)
-        response.message.append(f"✔ Added Chronology {chronid}.")
-    except Exception as e:
-        response.message.append(f"✗  Chronology Data is not correct. "
+    if multiple == True:
+        response.message.append("✔ File with multiple chronologies")
+        response.chronologies = list(inputs['chronologies'].keys())
+        for chron in inputs['chronologies']:
+            c = {'agetypeid': inputs.get('agetypeid'),
+                 'contactid': inputs.get('contactid'),
+                 'isdefault': inputs.get('isdefault'),
+                 'chronologyname': chron,
+                 'dateprepared': inputs.get('dateprepared'),
+                 'agemodel': inputs.get('agemodel'),
+                 'ageboundyounger': inputs['chronologies'][chron].get('ageboundyounger'),
+                 'ageboundolder': inputs['chronologies'][chron].get('ageboundolder'),
+                 'notes': inputs.get('notes'),
+                 'recdatecreated': inputs.get('recdatecreated'),
+                 'recdatemodified': inputs.get('recdatemodified')}
+            try:
+                if not (c.get("ageboundolder") and c.get("ageboundyounger")):
+                    c["ageboundolder"]= int(max([num for num in inputs['chronologies'][chron].get('age') if num is not None]))
+                    c["ageboundyounger"]= int(min([num for num in inputs['chronologies'][chron].get('age') if num is not None]))
+                else:
+                    c["ageboundolder"]= int(max([num for num in inputs['chronologies'][chron].get('ageboundolder') if num is not None]))
+                    c["ageboundyounger"]= int(min([num for num in inputs['chronologies'][chron].get('ageboundyounger') if num is not None]))
+                ch = Chronology(**c)
+                response.valid.append(True)
+                try:
+                    chronid = ch.insert_to_db(cur)
+                    response.chronid.append(chronid) # change to id attribute and just append all ids
+                    response.valid.append(True)
+                    response.message.append(f"✔ Added Chronology {chronid}.")
+                except Exception as e:
+                    response.message.append(f"✗  Chronology Data is not correct. "
+                                            f"Error message: {e}")
+                    ch = Chronology(collectionunitid=uploader["collunitid"].cuid, agetypeid=1)
+                    chronid = ch.insert_to_db(cur)
+                    response.valid.append(False)
+            except Exception as e:
+                response.valid.append(False)
+                response.message.append(f"✗  Chronology cannot be created: {e}")
+    else: 
+        if inputs.get('agemodel') == "collection date":
+            if isinstance(inputs.get('age', None), (float, int)):
+                inputs['age'] = 1950 - inputs['age']
+            elif isinstance(inputs.get('age', None), datetime):
+                inputs['age'] = 1950 - inputs['age'].year
+            elif isinstance(inputs.get('age', None), list):
+                inputs['age'] = [1950 - value.year if isinstance(value, datetime) else 1950 - value
+                                for value in inputs['age']]
+                if 'age' in inputs:
+                    if not (inputs["ageboundolder"] and inputs["ageboundyounger"]):
+                        inputs["ageboundyounger"]= int(min(inputs["age"])) 
+                        inputs["ageboundolder"]= int(max(inputs["age"])) 
+                    del inputs['age']
+        try:
+            ch = Chronology(**inputs)
+            response.chronid = chronid
+            response.valid.append(True)
+            response.message.append(f"✔ Added Chronology {chronid}.")
+        except Exception as e:
+            response.valid.append(False)
+            response.message.append(f"✗  Chronology Data is not correct. "
                                 f"Error message: {e}")
-        chron = Chronology(collectionunitid=uploader["collunitid"].cuid, agetypeid=1)
-        chronid = chron.insert_to_db(cur)
-        response.valid.append(False)
+            chron = Chronology(collectionunitid=uploader["collunitid"].cuid, agetypeid=1)
+            chronid = chron.insert_to_db(cur)
+            response.valid.append(False)
     response.validAll = all(response.valid)
     return response 
