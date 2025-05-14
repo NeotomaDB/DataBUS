@@ -32,3 +32,6 @@ from .insert_publication import insert_publication
 from .insert_geochron import insert_geochron
 from .insert_geochroncontrols import insert_geochroncontrols
 from .insert_sample_geochron import insert_sample_geochron
+from .insert_uth_series import insert_uth_series
+from .insert_final import insert_final
+from .insert_hiatus import insert_hiatus
