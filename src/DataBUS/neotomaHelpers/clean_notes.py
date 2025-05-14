@@ -10,11 +10,11 @@ def clean_notes(notes = None, name = None):
     if isinstance(notes, list):
         if len(notes) == 1:
             if not list(notes[0].values())[0]:
-                notes = None
+                notes = ""
     if notes:
         # List values
         list_dict = {k: v for d in notes for k, v in d.items() if isinstance(v, list)}
-        mapped_vals = ("; ".join(items) for items in zip(*list_dict.values()))
+        mapped_vals = ("; ".join(str(i) for i in items if i is not None) for items in zip(*list_dict.values()))
 
         mapped_vals = list(set(mapped_vals))
         if not name:
@@ -33,5 +33,5 @@ def clean_notes(notes = None, name = None):
         result = re.sub(r"[{}\[\]']", "", result)
 
     else:
-        result = None
+        result = ""
     return result

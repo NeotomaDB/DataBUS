@@ -3,7 +3,6 @@ import re
 import DataBUS.neotomaHelpers as nh
 from DataBUS import Geog, WrongCoordinates, CollectionUnit, CUResponse
 
-
 def valid_collunit(cur, yml_dict, csv_file):
     """
     Validates whether the specified collection unit can be registered as a new unit in the Neotoma database.
@@ -35,9 +34,11 @@ def valid_collunit(cur, yml_dict, csv_file):
                 assert len(new_date) == 1, "There should only be one date"
                 new_date = new_date[0]
                 if isinstance(new_date, str) and len(new_date) > 4:
+                    new_date = new_date.replace('/', '-')
+                    new_date = new_date.replace('--', '')
                     if len(new_date) == 7 and new_date[4] == '-' and new_date[5:7].isdigit():
                         new_date = f"{new_date}-01"
-                    elif new_date.endswith("--"):
+                    else:
                         new_date = None
             params.remove("colldate")
             inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.collectionunits")
@@ -49,16 +50,16 @@ def valid_collunit(cur, yml_dict, csv_file):
             response.message.append(str(inner_e))
             return response
  
-    if inputs["colltypeid"]:
+    if inputs.get("colltypeid"):
         colltype_query = """SELECT colltypeid FROM ndb.collectiontypes 
                             WHERE LOWER(colltype) = %(colltype)s"""
         cur.execute(colltype_query, {'colltype': inputs['colltypeid'].lower()})
         inputs["colltypeid"] = cur.fetchone()
 
-    if inputs["colltypeid"]:
+    if inputs.get("colltypeid"):
         inputs["colltypeid"] = inputs["colltypeid"][0]
 
-    if inputs['substrateid']:
+    if inputs.get('substrateid'):
         query = """SELECT rocktypeid FROM ndb.rocktypes
                     WHERE LOWER(rocktype) = %(rocktype)s"""
         cur.execute(query, {"rocktype": inputs["substrateid"].lower()})
@@ -70,7 +71,7 @@ def valid_collunit(cur, yml_dict, csv_file):
             response.message.append(f"No substrate {inputs['substrateid']} found")
             inputs["substrateid"] = None
             
-    if inputs.get("depenvtid", None):
+    if inputs.get("depenvtid"):
         query = """SELECT depenvtid FROM ndb.depenvttypes
                     WHERE LOWER(depenvt) = %(depenvt)s"""
         cur.execute(query, {"depenvt": inputs["depenvtid"].lower()})
@@ -83,7 +84,7 @@ def valid_collunit(cur, yml_dict, csv_file):
                                     f"Depositional environment will be added to Notes.")
             inputs["depenvtid"] = None
     
-    if inputs['geog']:
+    if inputs.get('geog'):
         try:
             inputs['geog'] = Geog((inputs["geog"][0], inputs["geog"][1]))
             response.message.append(
@@ -105,7 +106,7 @@ def valid_collunit(cur, yml_dict, csv_file):
         cu = CollectionUnit(handle="Placeholder")
 
     response.message.append(f"Handlename: {cu.handle}")
-    if inputs["handle"] != cu.handle:
+    if inputs.get("handle") != cu.handle:
         response.message.append(f"? Handlename not given. Handle created"
                                 f" from core code.")
     cur.execute(
@@ -167,7 +168,7 @@ def valid_collunit(cur, yml_dict, csv_file):
                 response.message.append(e)
                 response.valid.append(False)
     
-    if inputs['geog']:
+    if inputs.get('geog'):
         close_handles = cu.find_close_collunits(cur)
         if len(close_handles) > 0:
             goodcols = [i[-2] for i in close_handles]

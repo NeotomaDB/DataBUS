@@ -14,7 +14,6 @@ def valid_analysisunit(yml_dict, csv_file):
         response.validAll = False
         response.message.append(f"AU Elements in the CSV file are not properly inserted. Please verify the CSV file")
         inputs = {}
-    inputs['analysisunitid']=None
     inputs['collectionunitid']=None
 
     for k in inputs:
@@ -24,7 +23,7 @@ def valid_analysisunit(yml_dict, csv_file):
         else:
             response.message.append(f"✔ {k} has values.")
             response.valid.append(True)
-    if inputs["depth"] and isinstance(inputs['depth'], list):
+    if isinstance(inputs.get("depth", None), list):
         response.aucounter = 0
         iterable_params = {k: v for k, v in inputs.items() if isinstance(v, list)}
         static_params = {k: v for k, v in inputs.items() if not isinstance(v, list)}

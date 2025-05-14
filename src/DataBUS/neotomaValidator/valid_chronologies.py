@@ -2,7 +2,6 @@ import DataBUS.neotomaHelpers as nh
 from DataBUS import Chronology, ChronResponse
 from datetime import datetime
 
-# Updated from Sisal
 def valid_chronologies(cur, yml_dict, csv_file, multiple = False):
     """
         Validates chronologies based on provided parameters and data.
@@ -18,11 +17,8 @@ def valid_chronologies(cur, yml_dict, csv_file, multiple = False):
     """
     response = ChronResponse()
 
-    if multiple == True:
-        params = ['age', 'ageolder', 'ageyounger']
-    else:
-        params = ['chronologyname', 'agemodel', 'ageboundolder', 'ageboundyounger', 
-                  'agetype', 'contactid', 'isdefault', 'dateprepared', 'notes']
+    params = ['age', 'ageboundolder', 'ageboundyounger', 'chronologyname', 'agemodel', 
+              'agetype', 'contactid', 'isdefault', 'dateprepared', 'notes']
     try:
         inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.chronologies", values = False)
     except Exception as e:
@@ -52,32 +48,53 @@ def valid_chronologies(cur, yml_dict, csv_file, multiple = False):
             response.message.append(f"Chronology parameters cannot be properly extracted. {e}\n"
                                     f"{str(inner_e)}")
             return response
+    
+    if inputs.get("agetype"): 
+        inputs["agetype"].replace("cal yr BP", 'Calendar years BP')
+        agetype_query = """SELECT agetypeid FROM ndb.agetypes
+                            WHERE LOWER(agetype) = %(agetype)s"""
+        cur.execute(agetype_query, {'agetype': inputs["agetype"].lower()})
+        id = cur.fetchone()
+        if id:
+            inputs["agetypeid"] = id[0]
+            response.message.append("✔ The provided age type is correct.")
+            response.valid.append(True)
+        else:
+            response.message.append("✗ The provided age type does not exist in Neotoma DB.")
+            response.valid.append(False)
+            inputs["agetypeid"] = None
+        del inputs["agetype"]
+    else:
+        response.message.append("? No age type provided.")
+        response.valid.append(True)
+        inputs["agetypeid"] = None
+ 
     if multiple == True:
         response.message.append("✔ File with multiple chronologies")
-        for chron in inputs:
-            c = {'agetypeid': inputs[chron].get('agetypeid'),
-                 'contactid': inputs[chron].get('contactid'),
-                 'isdefault': inputs[chron].get('isdefault'),
+        response.chronologies = list(inputs['chronologies'].keys())
+        for chron in inputs['chronologies']:
+            c = {'agetypeid': inputs.get('agetypeid'),
+                 'contactid': inputs.get('contactid'),
+                 'isdefault': inputs.get('isdefault'),
                  'chronologyname': chron,
-                 'dateprepared': inputs[chron].get('dateprepared'),
-                 'agemodel': inputs[chron].get('agemodel'),
-                 'ageboundyounger': inputs[chron].get('ageboundyounger'),
-                 'ageboundolder': inputs[chron].get('ageboundolder'),
-                 'notes': inputs[chron].get('notes'),
-                 'recdatecreated': inputs[chron].get('recdatecreated'),
-                 'recdatemodified': inputs[chron].get('recdatemodified')}
+                 'dateprepared': inputs.get('dateprepared'),
+                 'agemodel': inputs.get('agemodel'),
+                 'ageboundyounger': inputs['chronologies'][chron].get('ageboundyounger'),
+                 'ageboundolder': inputs['chronologies'][chron].get('ageboundolder'),
+                 'notes': inputs.get('notes'),
+                 'recdatecreated': inputs.get('recdatecreated'),
+                 'recdatemodified': inputs.get('recdatemodified')}
             try:
                 if not (c.get("ageboundolder") and c.get("ageboundyounger")):
-                    c["ageboundolder"]= int(max(inputs[chron].get('age')))
-                    c["ageboundyounger"]= int(min(inputs[chron].get('age')))
+                    c["ageboundolder"]= int(max([num for num in inputs['chronologies'][chron].get('age') if num is not None]))
+                    c["ageboundyounger"]= int(min([num for num in inputs['chronologies'][chron].get('age') if num is not None]))
                 else:
-                    c["ageboundolder"]= int(max(c["ageboundolder"]))
-                    c["ageboundyounger"]= int(min(c["ageboundyounger"]))
+                    c["ageboundolder"]= int(max([num for num in inputs['chronologies'][chron].get('ageboundolder') if num is not None]))
+                    c["ageboundyounger"]= int(min([num for num in inputs['chronologies'][chron].get('ageboundyounger') if num is not None]))
                 Chronology(**c)
                 response.valid.append(True)
                 response.message.append("✔  Chronology can be created")
             except Exception as e:
-                print("Chronology error", e)
                 response.valid.append(False)
                 response.message.append(f"✗  Chronology cannot be created: {e}")
     else: 
@@ -95,27 +112,6 @@ def valid_chronologies(cur, yml_dict, csv_file, multiple = False):
                         inputs["ageboundolder"]= int(max(inputs["age"])) 
         
         # to add for lead models because they use more calendar format
-        if inputs.get("agetype"): 
-            inputs["agetype"].replace("cal yr BP", 'Calendar years BP')
-            agetype_query = """SELECT agetypeid FROM ndb.agetypes
-                            WHERE LOWER(agetype) = %(agetype)s"""
-            cur.execute(agetype_query, {'agetype': inputs["agetype"].lower()})
-            id = cur.fetchone()
-            if id:
-                inputs["agetypeid"] = id[0]
-                response.message.append("✔ The provided age type is correct.")
-                response.valid.append(True)
-            else:
-                response.message.append("✗ The provided age type does not exist in Neotoma DB.")
-                response.valid.append(False)
-                inputs["agetypeid"] = None
-        else:
-            response.message.append("? No age type provided.")
-            response.valid.append(True)
-            inputs["agetypeid"] = None
-
-        if "agetype" in inputs:
-            del inputs["agetype"]
         if "age" in inputs:
             del inputs["age"]
         for k in inputs:
@@ -131,6 +127,7 @@ def valid_chronologies(cur, yml_dict, csv_file, multiple = False):
         except Exception as e:
             response.valid.append(False)
             response.message.append(f"✗  Chronology cannot be created: {e}")
-        response.validAll = all(response.valid)
+    
+    response.validAll = all(response.valid)
     response.message = list(set(response.message))
     return response

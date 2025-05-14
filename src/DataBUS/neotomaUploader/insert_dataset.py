@@ -1,7 +1,7 @@
 import DataBUS.neotomaHelpers as nh
 from DataBUS import Dataset, Response
 
-def insert_geochron_dataset(cur, yml_dict, csv_file, uploader, name=None):
+def insert_dataset(cur, yml_dict, csv_file, uploader, name=None):
     """
     Inserts a dataset associated with a collection unit into a database.
 
@@ -17,11 +17,41 @@ def insert_geochron_dataset(cur, yml_dict, csv_file, uploader, name=None):
             'valid' (bool): Indicates if insertions were successful.
     """
     response = Response()
-
+    params = [("datasettypeid", "ndb.datasettypes.datasettypeid"),
+              ("datasettype", "ndb.datasettypes.datasettype")]
     inputs = {}
-    inputs['datasettypeid'] = 1
-    inputs['collectionunitid'] = uploader['collunitid'].cuid
+    inputs['datasetname'] = nh.pull_params(['datasetname'], yml_dict, csv_file, "ndb.datasets")['datasetname']
+    
+    for param in params:
+        val = nh.retrieve_dict(yml_dict, param[1])
+        if val:
+            try:
+                inputs[param[0]] = val[0]['value']
+            except Exception as e:
+                response.valid.append(False)
+                response.message.append(f"✗ {param[0]} value is missing in template")
+        else:
+            inputs[param[0]] = None
 
+    query = """SELECT datasettypeid 
+               FROM ndb.datasettypes 
+               WHERE LOWER(datasettype) = %(ds_type)s"""
+    
+    if inputs['datasettype'] and not(inputs['datasettypeid']):
+        cur.execute(query, {"ds_type": f"{inputs['datasettype'].lower()}"})
+        datasettypeid = cur.fetchone()
+        del inputs['datasettype']
+
+    if datasettypeid:
+        inputs["datasettypeid"] = datasettypeid[0]
+        response.valid.append(True)
+    else:
+        inputs["datasettypeid"] = None
+        response.message.append(f"✗ Dataset type is not known to Neotoma and needs to be created first")
+        response.valid.append(False)
+    inputs["notes"] = nh.pull_params(["notes"], yml_dict, csv_file, "ndb.datasets", name)['notes']
+    inputs['collectionunitid'] = uploader['collunitid'].cuid
+    print(inputs)
     ds = Dataset(**inputs)
     try:
         response.datasetid = ds.insert_to_db(cur)

@@ -18,8 +18,8 @@ def insert_sample_age(cur, yml_dict, csv_file, uploader):
             - 'valid' (bool): Indicates if all insertions were successful.
     """
     response = Response()
+    params = ["age", "ageyounger", "ageolder", "agetype"]
     try:
-        params = ["age", "ageyounger", "ageolder", "agetype"]
         inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.sampleages")
     except Exception as e:
         error = str(e)
@@ -38,7 +38,7 @@ def insert_sample_age(cur, yml_dict, csv_file, uploader):
                         new_date = None
                 else:
                     new_date = None
-            if "age" in inputs:
+            if 'age' in params:
                 params.remove('age')
             inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.sampleages")
             inputs['age'] = new_date

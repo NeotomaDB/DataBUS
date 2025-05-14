@@ -46,7 +46,7 @@ def valid_sample_age(cur, yml_dict, csv_file, validator):
             response.validAll = False
             response.message.append(f"Sample Age parameters cannot be properly extracted. {e}\n {inner_e}")
             return response
-    if agemodel['agemodel'].lower() == "collection date":
+    if agemodel.get('agemodel') == "collection date":
         if isinstance(inputs.get('age', None), (float, int)):
             inputs['age'] = 1950 - inputs['age']
         elif isinstance(inputs.get('age', None), datetime):
@@ -94,4 +94,5 @@ def valid_sample_age(cur, yml_dict, csv_file, validator):
     response.validAll = all(response.valid)
     if response.validAll:
         response.message.append(f"✔ Sample ages can be created.")
+    response.message = list(set(response.message))
     return response

@@ -64,19 +64,19 @@ def insert_collunit(cur, yml_dict, csv_file, uploader):
                                     f"{inner_e}")
             return response
     
-    if inputs["colltypeid"]:
+    if inputs.get("colltypeid"):
         query1 = """SELECT colltypeid FROM ndb.collectiontypes 
                     WHERE LOWER(colltype) = %(colltype)s"""
         cur.execute(query1, {'colltype': inputs['colltypeid'].lower()})
         inputs["colltypeid"] = cur.fetchone()
-        if inputs["colltypeid"]:
+        if inputs.get("colltypeid"):
             inputs["colltypeid"] = inputs["colltypeid"][0]
     
     if 'geog.latitude' and 'geog.longitude' in inputs:
         inputs['geog'] = (inputs["geog.latitude"], inputs["geog.longitude"])
         del inputs["geog.latitude"], inputs["geog.longitude"]
     
-    if inputs['geog']:
+    if inputs.get('geog'):
         try:
             inputs['geog'] = Geog((inputs["geog"][0], inputs["geog"][1]))
         except (TypeError, WrongCoordinates) as e:
@@ -88,7 +88,7 @@ def insert_collunit(cur, yml_dict, csv_file, uploader):
 
     overwrite = nh.pull_overwrite(params, yml_dict, "ndb.collectionunits")
 
-    if inputs["depenvtid"]:
+    if inputs.get("depenvtid"):
         query = """SELECT depenvtid FROM ndb.depenvttypes
                    WHERE LOWER(depenvt) = %(depenvt)s"""
         cur.execute(query, {"depenvt": inputs["depenvtid"].lower()})
@@ -96,19 +96,19 @@ def insert_collunit(cur, yml_dict, csv_file, uploader):
         if depenv:
             inputs["depenvtid"] = depenv[0]
         else:
-            if inputs["notes"]:
-                inputs["notes"] = inputs["notes"] + f"Dep. Env.{inputs['depenvtid']}"
+            if inputs.get("notes"):
+                inputs["notes"] = inputs["notes"] + f"Dep. Env.{inputs.get('depenvtid')}"
                 inputs["depenvtid"] = None
             else:
-                inputs["notes"] = f"Dep. Env.{inputs['depenvtid']}"
+                inputs["notes"] = f"Dep. Env.{inputs.get('depenvtid')}"
                 inputs["depenvtid"] = None
-    if isinstance(inputs["handle"], list):
+    if isinstance(inputs.get("handle"), list):
         response.handle = inputs["handle"][0]
     else:
-        response.handle = inputs["handle"]
+        response.handle = inputs.get("handle")
     try:
         inputs['siteid'] = uploader["sites"].siteid
-        if isinstance(inputs['colldate'], datetime.datetime):
+        if isinstance(inputs.get('colldate'), datetime.datetime):
             inputs['colldate'] = inputs['colldate'].strftime('%Y-%m-%d %H:%M:%S')
         inputs['handle'] = inputs['handle'][:10]
         cu = CollectionUnit(**inputs)

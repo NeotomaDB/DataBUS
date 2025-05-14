@@ -20,20 +20,20 @@ def insert_dataset_pi(cur, yml_dict, csv_file, uploader):
     response = Response()
     inputs = nh.pull_params(["contactid", "contactname"], yml_dict, csv_file, "ndb.datasetpis")
     if not inputs['contactid']:
-        if isinstance(inputs['contactname'], list):
+        if isinstance(inputs.get('contactname'), list):
             seen = set()
             inputs['contactname'] = [x for x in inputs['contactname'] if not (x in seen or seen.add(x))]
             inputs['contactname'] = [value for item in inputs['contactname'] for value in item.split("|")]
             seen = set()
             inputs['contactname'] = [x for x in inputs['contactname'] if not (x in seen or seen.add(x))] # preserve order
-        elif isinstance(inputs['contactname'], str):
+        elif isinstance(inputs.get('contactname'), str):
             inputs['contactname'] = inputs['contactname'].split("|")
     else:
         inputs["contactid"] = list(dict.fromkeys(inputs["contactid"]))
 
     contids = []
     marker = False
-    if not inputs["contactid"] and "contactname" in inputs:
+    if not inputs.get("contactid") and inputs.get('contactname'):
         cont_name = nh.get_contacts(cur, inputs["contactname"])
         for agent in cont_name:
             if agent['id'] is None:
@@ -60,7 +60,7 @@ def insert_dataset_pi(cur, yml_dict, csv_file, uploader):
                 else:
                     response.message.append(f"✗ Data PI information is not correct.")
                     response.valid.append(False)
-    elif inputs["contactid"]:
+    elif inputs.get("contactid"):
         for id in inputs["contactid"]:
             contids.append(id)
             contact = Contact(contactid=id)

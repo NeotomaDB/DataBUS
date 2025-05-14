@@ -3,7 +3,7 @@ from DataBUS import Publication, Response
 import requests
 import re
 
-def valid_publication(cur, yml_dict, csv_file, uploader):
+def valid_publication(cur, yml_dict, csv_file):
     """
     Validates a publication for the database.
     Parameters:

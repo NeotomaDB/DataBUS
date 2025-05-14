@@ -42,8 +42,7 @@ def pull_params(params, yml_dict, csv_template, table=None, name = None, values 
                         clean_valor = clean_column(val.get("column"), 
                                                csv_template, 
                                                clean=not val.get("rowwise"))
-                    except KeyError as k:
-                        print(f"Column not available in CSV: {k}. Continue.")
+                    except KeyError:
                         continue
                     if clean_valor:
                         match val.get("type"):
@@ -77,6 +76,18 @@ def pull_params(params, yml_dict, csv_template, table=None, name = None, values 
                             else:
                                 add_unit_inputs[i] = []
                                 add_unit_inputs[i].append({f"{val.get('column')}": clean_valor})
+                        elif 'chronologies' in table:
+                            if 'chronologies' not in add_unit_inputs:
+                                add_unit_inputs['chronologies'] = {}
+                            if not all(x is None for x in clean_valor): 
+                                if 'chronologyname' in val:
+                                    if not add_unit_inputs['chronologies'].get(val['chronologyname']):
+                                        add_unit_inputs['chronologies'][val['chronologyname']] = {}
+                                if i in ('age', 'ageboundolder', 'ageboundyounger'):
+                                    add_unit_inputs['chronologies'][val['chronologyname']][i] = clean_valor
+                                else: 
+                                    k = val['neotoma'].split('.')[-1]
+                                    add_unit_inputs[k] = clean_valor  
                         elif 'taxonname' in val:
                             if not all(x is None for x in clean_valor): 
                                 add_unit_inputs[val['taxonname']] = {}

@@ -27,3 +27,5 @@ from .Publication import Publication
 from .Speleothem import Speleothem
 from .Geochron import Geochron
 from .GeochronControl import GeochronControl
+from .Hiatus import Hiatus
+from .UThSeries import UThSeries

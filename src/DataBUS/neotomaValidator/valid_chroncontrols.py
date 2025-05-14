@@ -1,8 +1,7 @@
 import DataBUS.neotomaHelpers as nh
 from DataBUS import ChronControl, ChronResponse
 
-
-def valid_chroncontrols(yml_dict, csv_file, cur):
+def valid_chroncontrols(yml_dict, csv_file, cur, validator):
     """_Validating Chron Controls_"""
     response = ChronResponse()
     params = ['chronologyid', 'chroncontroltypeid', 
@@ -20,6 +19,7 @@ def valid_chroncontrols(yml_dict, csv_file, cur):
        'C14': 'Radiocarbon, calibrated', 
        'Multiple methods':'Complex (mixture of types)', 
        'other (see notes)':',Other dating methods'}
+    
     try:
         inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.chroncontrols")
         indices = [i for i, value in enumerate(inputs['age']) if value is not None]
@@ -35,7 +35,7 @@ def valid_chroncontrols(yml_dict, csv_file, cur):
     chroncontrol_q = """SELECT chroncontroltypeid FROM ndb.chroncontroltypes
                 WHERE LOWER(chroncontroltype) = LOWER(%(chroncontroltype)s)"""
     try:
-        if inputs["agetype"]:
+        if inputs.get("agetype"):
             cur.execute(agetype_q , {"agetype": inputs["agetype"]})
             agetype = cur.fetchone()
             if agetype:
@@ -46,6 +46,7 @@ def valid_chroncontrols(yml_dict, csv_file, cur):
                 response.message.append("✗ The provided age type is incorrect..")
                 response.valid.append(False)
                 inputs["agetypeid"] = None
+            del inputs["agetype"]
         else:
             response.message.append("? No age type provided.")
             response.valid.append(True)
@@ -73,60 +74,33 @@ def valid_chroncontrols(yml_dict, csv_file, cur):
             response.message.append(f"✔ {k} looks valid.")
             response.valid.append(True)
 
-    if inputs['depth']:
-        for i in range(0, len(inputs["depth"])):
-            if inputs['chroncontroltypeid'][i] in sisal_t:
-                inputs['chroncontroltypeid'][i] = sisal_t[inputs['chroncontroltypeid'][i]]
-            cur.execute(chroncontrol_q, {"chroncontroltype": inputs["chroncontroltypeid"][i]})
+    if inputs.get('chroncontroltypeid'):
+        inputs['chroncontroltypeid'] = [sisal_t.get(item, item) for item in inputs['chroncontroltypeid']]
+        elements = set(inputs['chroncontroltypeid'])
+        chroncontroltypes = {}
+        for e in elements:
+            cur.execute(chroncontrol_q, {"chroncontroltype": e})
             chroncontrol = cur.fetchone()
             if chroncontrol:
-                inputs["chroncontrolid"] = chroncontrol[0]
-                response.valid.append(True)
+                chroncontroltypes[e] = chroncontrol[0]
             else:
-                response.message.append(f"✗  Chron control type {inputs['chroncontroltypeid'][i]} not found in database")
+                response.message.append(f"✗  Chron control type {e} not found in database")
                 response.valid.append(False)
-                inputs["chroncontrolid"] = None
-            try:
-                ChronControl(
-                    chroncontroltypeid=inputs["chroncontrolid"],
-                    depth=inputs["depth"][i],
-                    thickness=inputs["thickness"][i],
-                    age=inputs["age"][i],
-                    agelimityounger=inputs['agelimityounger'][i],
-                    agelimitolder=inputs['agelimitolder'][i],
-                    notes=inputs["notes"],
-                    agetypeid=inputs["agetypeid"],
-                )
-                response.valid.append(True)
-            except Exception as e:
-                response.message.append(f"✗  Could not create chron control {e}")
-                response.valid.append(False)
-    else:
-        if inputs.get('chroncontroltypeid') and inputs['chroncontroltypeid'] in sisal_t:
-            inputs['chroncontroltypeid']  = sisal_t[inputs['chroncontroltypeid'][0]]
+                chroncontroltypes[e] = None
+
+    if inputs.get('chroncontroltypeid') is not None:
+        inputs['chroncontroltypeid'] = [chroncontroltypes.get(item, item) for item in inputs.get('chroncontroltypeid',[])]
+
+    iterable_params = {k: v for k, v in inputs.items() if isinstance(v, list)}
+    static_params = {k: v for k, v in inputs.items() if not isinstance(v, list)}
+    for values in zip(*iterable_params.values()):
         try:
-            cur.execute(chroncontrol_q, {"chroncontroltype": inputs["chroncontroltypeid"]})
-            chroncontrol = cur.fetchone()
-            if chroncontrol:
-                inputs["chroncontrolid"] = chroncontrol[0]
-                response.valid.append(True)
-            else:
-                response.message.append(f"✗  Chron control type {inputs['chroncontroltypeid']} not found in database")
-                response.valid.append(False)
-                inputs["chroncontrolid"] = None
-            ChronControl(
-                        chroncontroltypeid=inputs["chroncontrolid"],
-                        depth=inputs["depth"],
-                        thickness=inputs["thickness"],
-                        age=inputs["age"],
-                        agelimityounger=inputs['agelimityounger'],
-                        agelimitolder=inputs['agelimitolder'],
-                        notes=inputs["notes"],
-                        agetypeid=inputs["agetypeid"],
-                    )
+            kwargs = dict(zip(iterable_params.keys(), values))
+            kwargs.update(static_params) 
+            ChronControl(**kwargs)
             response.valid.append(True)
         except Exception as e:
-            response.message.append(f"✗  Could not create 1 chron control {e}")
+            response.message.append(f"✗  Could not create chron control {e}")
             response.valid.append(False)
 
     response.validAll = all(response.valid)

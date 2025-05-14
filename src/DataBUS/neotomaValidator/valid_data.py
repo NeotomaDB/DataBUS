@@ -1,5 +1,5 @@
 import DataBUS.neotomaHelpers as nh
-from DataBUS import Response, Datum, Variable
+from DataBUS import Response, Variable, Datum
 
 def valid_data(cur, yml_dict, csv_file, wide = False):
     """
@@ -14,7 +14,7 @@ def valid_data(cur, yml_dict, csv_file, wide = False):
     """
     inputs = nh.pull_params(["value"], yml_dict, csv_file, "ndb.data", values = False)
     response = Response()
-    if 'value' in inputs:
+    if 'value' in inputs: 
         if not inputs['value']:
             response.message.append("? No Values to validate.")
             response.validAll = False
@@ -97,7 +97,7 @@ def valid_data(cur, yml_dict, csv_file, wide = False):
                         entries[v[1]] = None 
                     else:
                         entries[v[1]] = entries[v[1]][0]
-                else:
+                else: 
                     entries[v[1]] = None
                     response.message.append(f"?  {inputs2[k]} ID not given. ")
                     response.valid.append(True)
@@ -118,16 +118,15 @@ def valid_data(cur, yml_dict, csv_file, wide = False):
             varid = varid[0]
             response.valid.append(True)
         else:
-            varunits = inputs2['variableunits'][0] if isinstance(inputs2.get('variableunits'), list) else inputs2.get('variableunits')
-            varcontextid = inputs2['variablecontext'][0] if isinstance(inputs2.get('variablecontext'), list) else inputs2.get('variablecontext')
-            varelement = inputs2['variableelement'][0] if isinstance(inputs2.get('variableelement'), list) else inputs2.get('variableelement')
+            varunits = inputs2['variableunits'][0] if isinstance(inputs2.get('variableunits', None), list) else inputs2.get('variableunits')
+            varcontextid = inputs2['variablecontext'][0] if isinstance(inputs2.get('variablecontext', None), list) else inputs2.get('variablecontext')
+            varelement = inputs2['variableelement'][0] if isinstance(inputs2.get('variableelement', None), list) else inputs2.get('variableelement')
             response.message.append(f"? Var ID not found for: \n "
                                     f"variableunitsid: {varunits}, ID: {entries['variableunitsid']},\n"
                                     f"taxon: {key.lower()}, ID: {entries['taxonid']},\n"
                                     f"variableelement: {varelement}, ID: {entries['variableelementid']},\n"
                                     f"variablecontextid: {varcontextid}, ID: {entries['variablecontextid']}\n")
             response.valid.append(True)
-        
         for i in taxa[key]['value']:
             try:
                 Datum(sampleid=int(3), variableid=varid, value=i)

@@ -30,12 +30,11 @@ def valid_contact(cur, csv_file, yml_dict):
                 id['contactname'] = list(set(id["contactname"]))
                 id['contactname'] = [value for item in id['contactname'] for value in item.split("|")]
                 id['contactname'] = list(set(id["contactname"]))
-            elif isinstance(get('contactname', None), str):
+            elif isinstance(id.get('contactname', None), str):
                 id['contactname'] = id['contactname'].split("|")
         else:
             id["contactid"] = list(set(id["contactid"]))
         id["table"] = table[i]
-
     for element in inputs:
         response.message.append(f"  === Checking Against Database - Table: {element['table']}.contactid ===")
         agentname = element.get('contactname', None)
@@ -57,29 +56,29 @@ def valid_contact(cur, csv_file, yml_dict):
                     cur.execute(nameQuery, {"name": name.lower()})
                     result = {"name": name, "match": cur.fetchall()}
                     namematch.append(result)
-        for person in namematch:
-            if len(person["match"]) == 0:
-                response.message.append(f"  ✗ No approximate matches found for "
-                                        f"{person['name']}. Have they been added to Neotoma?")
-                response.valid.append(False)
-            elif any([person["name"] == i[1] for i in person["match"]]):
-                id = next(
-                    (number for number, name, sim in person["match"]
-                     if name == person["name"]),None)
-                response.message.append(f"  ✔ Exact match found for {person['name']}.")
-                response.valid.append("True")
-                try:
-                    Contact(contactid=id, contactname=person["name"], order=None)
-                    response.valid.append(True)
-                except Exception as e:
-                    response.valid.append(False)
-                    response.message.append(f"  ✗ Cannot create Contact object: {e}")
-            else:
-                response.message.append(
-                    f"  ? No exact match found for {person['name']}, but several potential matches follow:"
-                )
-                for i in person["match"]:
-                    response.message.append(f"   * {i[1]}")
+                for person in namematch:
+                    if len(person["match"]) == 0:
+                        response.message.append(f"  ✗ No approximate matches found for "
+                                                f"{person['name']}. Have they been added to Neotoma?")
+                        response.valid.append(False)
+                    elif any([person["name"] == i[1] for i in person["match"]]):
+                        id = next(
+                            (number for number, name, sim in person["match"]
+                            if name == person["name"]),None)
+                        response.message.append(f"  ✔ Exact match found for {person['name']}.")
+                        response.valid.append("True")
+                        try:
+                            Contact(contactid=id, contactname=person["name"], order=None)
+                            response.valid.append(True)
+                        except Exception as e:
+                            response.valid.append(False)
+                            response.message.append(f"  ✗ Cannot create Contact object: {e}")
+                    else:
+                        response.message.append(
+                            f"  ? No exact match found for {person['name']}, but several potential matches follow:"
+                        )
+                        for i in person["match"]:
+                            response.message.append(f"   * {i[1]}")
     response.validAll = all(response.valid)
     response.message = list(set(response.message)) 
     return response
