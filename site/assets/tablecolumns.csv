@@ -1,0 +1,665 @@
+table_schema,table_name,column_name,data_type
+ndb,accumulationrates,accumulationrate,double precision
+ndb,accumulationrates,analysisunitid,integer
+ndb,accumulationrates,chronologyid,integer
+ndb,accumulationrates,variableunitsid,integer
+ndb,agetypes,agetype,character varying
+ndb,agetypes,agetypeid,integer
+ndb,agetypes,precedence,integer
+ndb,agetypes,shortagetype,character varying
+ndb,aggregatechronologies,ageboundolder,integer
+ndb,aggregatechronologies,ageboundyounger,integer
+ndb,aggregatechronologies,agetypeid,integer
+ndb,aggregatechronologies,aggregatechronid,integer
+ndb,aggregatechronologies,aggregatedatasetid,integer
+ndb,aggregatechronologies,chronologyname,character varying
+ndb,aggregatechronologies,isdefault,boolean
+ndb,aggregatechronologies,notes,text
+ndb,aggregatedatasets,aggregatedatasetid,integer
+ndb,aggregatedatasets,aggregatedatasetname,character varying
+ndb,aggregatedatasets,aggregateordertypeid,integer
+ndb,aggregatedatasets,notes,text
+ndb,aggregateordertypes,aggregateordertype,character varying
+ndb,aggregateordertypes,aggregateordertypeid,integer
+ndb,aggregateordertypes,notes,text
+ndb,aggregatesampleages,aggregatechronid,integer
+ndb,aggregatesampleages,aggregatedatasetid,integer
+ndb,aggregatesampleages,sampleageid,integer
+ndb,aggregatesamples,aggregatedatasetid,integer
+ndb,aggregatesamples,sampleid,integer
+ndb,analysisunitaltdepths,altdepth,double precision
+ndb,analysisunitaltdepths,altdepthscaleid,integer
+ndb,analysisunitaltdepths,analysisunitid,integer
+ndb,analysisunitaltdepthscales,altdepthid,integer
+ndb,analysisunitaltdepthscales,altdepthname,character varying
+ndb,analysisunitaltdepthscales,altdepthscaleid,integer
+ndb,analysisunitaltdepthscales,notes,text
+ndb,analysisunitaltdepthscales,variableunitsid,integer
+ndb,analysisunitlithostrat,analysisunitid,integer
+ndb,analysisunitlithostrat,lithostratid,integer
+ndb,analysisunits,analysisunitid,integer
+ndb,analysisunits,analysisunitname,character varying
+ndb,analysisunits,collectionunitid,integer
+ndb,analysisunits,depth,double precision
+ndb,analysisunits,faciesid,integer
+ndb,analysisunits,igsn,character varying
+ndb,analysisunits,mixed,boolean
+ndb,analysisunits,notes,text
+ndb,analysisunits,thickness,double precision
+ndb,calibrationcurves,calibrationcurve,character varying
+ndb,calibrationcurves,calibrationcurveid,integer
+ndb,calibrationcurves,publicationid,integer
+ndb,calibrationprograms,calibrationprogram,character varying
+ndb,calibrationprograms,calibrationprogramid,integer
+ndb,calibrationprograms,version,character varying
+ndb,chroncontrolaccuracydirections,accuracydirection,character varying
+ndb,chroncontrolaccuracydirections,accuracydirectionid,integer
+ndb,chroncontrolaccuracydistributions,accuracydistribution,character varying
+ndb,chroncontrolaccuracydistributions,accuracydistributionid,integer
+ndb,chroncontrolaccuracyranks,accuracyrank,character varying
+ndb,chroncontrolaccuracyranks,accuracyrankid,integer
+ndb,chroncontrolprecisionranks,precisionrank,character varying
+ndb,chroncontrolprecisionranks,precisionrankid,integer
+ndb,chroncontrolranks,accuracydirectionid,integer
+ndb,chroncontrolranks,accuracydistributionid,integer
+ndb,chroncontrolranks,accuracyrankid,integer
+ndb,chroncontrolranks,chroncontrolid,integer
+ndb,chroncontrolranks,chroncontrolrankid,integer
+ndb,chroncontrolranks,outlier,boolean
+ndb,chroncontrolranks,precisionrankid,integer
+ndb,chroncontrols,age,double precision
+ndb,chroncontrols,agelimitolder,double precision
+ndb,chroncontrols,agelimityounger,double precision
+ndb,chroncontrols,agetypeid,integer
+ndb,chroncontrols,analysisunitid,integer
+ndb,chroncontrols,chroncontrolid,integer
+ndb,chroncontrols,chroncontroltypeid,integer
+ndb,chroncontrols,chronologyid,integer
+ndb,chroncontrols,depth,double precision
+ndb,chroncontrols,notes,text
+ndb,chroncontrols,thickness,double precision
+ndb,chroncontrolscal14c,calibrationcurveid,integer
+ndb,chroncontrolscal14c,calibrationprogramid,integer
+ndb,chroncontrolscal14c,chroncontrolid,integer
+ndb,chroncontroltypes,chroncontroltype,character varying
+ndb,chroncontroltypes,chroncontroltypeid,integer
+ndb,chroncontroltypes,higherchroncontroltypeid,integer
+ndb,chronologies,ageboundolder,integer
+ndb,chronologies,ageboundyounger,integer
+ndb,chronologies,agemodel,character varying
+ndb,chronologies,agetypeid,integer
+ndb,chronologies,chronologyid,integer
+ndb,chronologies,chronologyname,character varying
+ndb,chronologies,collectionunitid,integer
+ndb,chronologies,contactid,integer
+ndb,chronologies,dateprepared,date
+ndb,chronologies,isdefault,boolean
+ndb,chronologies,notes,text
+ndb,collectiontypes,colltype,character varying
+ndb,collectiontypes,colltypeid,integer
+ndb,collectionunits,colldate,date
+ndb,collectionunits,colldevice,character varying
+ndb,collectionunits,collectionunitid,integer
+ndb,collectionunits,colltypeid,integer
+ndb,collectionunits,collunitname,character varying
+ndb,collectionunits,depenvtid,integer
+ndb,collectionunits,gpsaltitude,double precision
+ndb,collectionunits,gpserror,double precision
+ndb,collectionunits,gpslatitude,double precision
+ndb,collectionunits,gpslongitude,double precision
+ndb,collectionunits,handle,character varying
+ndb,collectionunits,location,character varying
+ndb,collectionunits,notes,text
+ndb,collectionunits,siteid,integer
+ndb,collectionunits,slopeangle,integer
+ndb,collectionunits,slopeaspect,integer
+ndb,collectionunits,substrateid,integer
+ndb,collectionunits,waterdepth,double precision
+ndb,collectors,collectionunitid,integer
+ndb,collectors,collectorid,integer
+ndb,collectors,collectororder,integer
+ndb,collectors,contactid,integer
+ndb,constituentdatabases,contactid,integer
+ndb,constituentdatabases,databaseid,integer
+ndb,constituentdatabases,databasename,character varying
+ndb,constituentdatabases,url,character varying
+ndb,contactreferences,contactid,integer
+ndb,contactreferences,exdatabaseid,integer
+ndb,contactreferences,identifier,text
+ndb,contacts,address,text
+ndb,contacts,aliasid,integer
+ndb,contacts,contactid,integer
+ndb,contacts,contactname,character varying
+ndb,contacts,contactstatusid,integer
+ndb,contacts,email,character varying
+ndb,contacts,familyname,character varying
+ndb,contacts,fax,character varying
+ndb,contacts,givennames,character varying
+ndb,contacts,leadinginitials,character varying
+ndb,contacts,notes,text
+ndb,contacts,phone,character varying
+ndb,contacts,suffix,character varying
+ndb,contacts,title,character varying
+ndb,contacts,url,character varying
+ndb,contactstatuses,contactstatus,character varying
+ndb,contactstatuses,contactstatusid,integer
+ndb,contactstatuses,statusdescription,character varying
+ndb,contextsdatasettypes,datasettypeid,integer
+ndb,contextsdatasettypes,variablecontextid,integer
+ndb,data,dataid,integer
+ndb,data,sampleid,integer
+ndb,data,value,double precision
+ndb,data,variableid,integer
+ndb,dataprocessors,contactid,integer
+ndb,dataprocessors,datasetid,integer
+ndb,datasetdatabases,databaseid,integer
+ndb,datasetdatabases,datasetid,integer
+ndb,datasetdoi,datasetid,integer
+ndb,datasetdoi,doi,character varying
+ndb,datasetpis,contactid,integer
+ndb,datasetpis,datasetid,integer
+ndb,datasetpis,piorder,integer
+ndb,datasetpublications,datasetid,integer
+ndb,datasetpublications,primarypub,boolean
+ndb,datasetpublications,publicationid,integer
+ndb,datasets,collectionunitid,integer
+ndb,datasets,datasetid,integer
+ndb,datasets,datasetname,character varying
+ndb,datasets,datasettypeid,integer
+ndb,datasets,embargoid,integer
+ndb,datasets,notes,text
+ndb,datasetsubmissions,contactid,integer
+ndb,datasetsubmissions,databaseid,integer
+ndb,datasetsubmissions,datasetid,integer
+ndb,datasetsubmissions,notes,text
+ndb,datasetsubmissions,submissiondate,date
+ndb,datasetsubmissions,submissionid,integer
+ndb,datasetsubmissions,submissiontypeid,integer
+ndb,datasetsubmissiontypes,submissiontype,character varying
+ndb,datasetsubmissiontypes,submissiontypeid,integer
+ndb,datasettaxagrouptypes,datasettypeid,integer
+ndb,datasettaxagrouptypes,taxagroupid,character varying
+ndb,datasettaxonnotes,contactid,integer
+ndb,datasettaxonnotes,datasetid,integer
+ndb,datasettaxonnotes,date,date
+ndb,datasettaxonnotes,notes,text
+ndb,datasettaxonnotes,taxonid,integer
+ndb,datasettypes,datasettype,character varying
+ndb,datasettypes,datasettypeid,integer
+ndb,datasetvariables,datasetid,integer
+ndb,datasetvariables,datasetvariableid,integer
+ndb,datasetvariables,variableid,integer
+ndb,datataxonnotes,contactid,integer
+ndb,datataxonnotes,dataid,integer
+ndb,datataxonnotes,datataxonnotesid,integer
+ndb,datataxonnotes,date,date
+ndb,datataxonnotes,notes,text
+ndb,depagents,analysisunitid,integer
+ndb,depagents,depagentid,integer
+ndb,depagenttypes,depagent,character varying
+ndb,depagenttypes,depagentid,integer
+ndb,depenvttypes,depenvt,character varying
+ndb,depenvttypes,depenvthigherid,integer
+ndb,depenvttypes,depenvtid,integer
+ndb,dsageranges,agetypeid,integer
+ndb,dsageranges,datasetid,integer
+ndb,dsageranges,older,double precision
+ndb,dsageranges,younger,double precision
+ndb,dsdatasample,dataid,integer
+ndb,dsdatasample,datasetid,integer
+ndb,dsdatasample,sampleid,integer
+ndb,dsdatasample,variableid,integer
+ndb,dslinks,collectionunitid,integer
+ndb,dslinks,datasetid,integer
+ndb,dslinks,siteid,integer
+ndb,dssampdata,datasetid,integer
+ndb,dssampdata,observations,bigint
+ndb,dssampdata,samples,bigint
+ndb,ecolgroups,ecolgroupid,character varying
+ndb,ecolgroups,ecolsetid,integer
+ndb,ecolgroups,taxonid,integer
+ndb,ecolgrouptypes,ecolgroup,character varying
+ndb,ecolgrouptypes,ecolgroupid,character varying
+ndb,ecolsettypes,ecolsetid,integer
+ndb,ecolsettypes,ecolsetname,character varying
+ndb,elementdatasettaxagroups,datasettypeid,integer
+ndb,elementdatasettaxagroups,elementtypeid,integer
+ndb,elementdatasettaxagroups,taxagroupid,character varying
+ndb,elementmaturities,maturity,character varying
+ndb,elementmaturities,maturityid,integer
+ndb,elementportions,portion,character varying
+ndb,elementportions,portionid,integer
+ndb,elementsymmetries,symmetry,character varying
+ndb,elementsymmetries,symmetryid,integer
+ndb,elementtaxagroupmaturities,elementtaxagroupid,integer
+ndb,elementtaxagroupmaturities,maturityid,integer
+ndb,elementtaxagroupportions,elementtaxagroupid,integer
+ndb,elementtaxagroupportions,portionid,integer
+ndb,elementtaxagroups,elementtaxagroupid,integer
+ndb,elementtaxagroups,elementtypeid,integer
+ndb,elementtaxagroups,taxagroupid,character varying
+ndb,elementtaxagroupsymmetries,elementtaxagroupid,integer
+ndb,elementtaxagroupsymmetries,symmetryid,integer
+ndb,elementtypes,elementtype,character varying
+ndb,elementtypes,elementtypeid,integer
+ndb,embargo,embargodate,date
+ndb,embargo,embargoid,integer
+ndb,embargo,embargopw,character varying
+ndb,eventchronology,analysisunitid,integer
+ndb,eventchronology,chroncontrolid,integer
+ndb,eventchronology,eventchronologyid,integer
+ndb,eventchronology,eventid,integer
+ndb,eventchronology,notes,text
+ndb,eventpublications,eventid,integer
+ndb,eventpublications,publicationid,integer
+ndb,events,c14age,double precision
+ndb,events,c14ageolder,double precision
+ndb,events,c14ageyounger,double precision
+ndb,events,calage,double precision
+ndb,events,calageolder,double precision
+ndb,events,calageyounger,double precision
+ndb,events,eventid,integer
+ndb,events,eventname,character varying
+ndb,events,eventtypeid,integer
+ndb,events,notes,text
+ndb,eventtypes,chroncontroltypeid,integer
+ndb,eventtypes,eventtype,character varying
+ndb,eventtypes,eventtypeid,integer
+ndb,externaldatabases,extdatabaseid,integer
+ndb,externaldatabases,extdatabasename,character varying
+ndb,externaldatabases,url,character varying
+ndb,externaldatabases,urlmask,character varying
+ndb,externalpublications,extdatabaseid,integer
+ndb,externalpublications,extpublicationid,integer
+ndb,externalpublications,publicationid,integer
+ndb,externaltaxa,extdatabaseid,integer
+ndb,externaltaxa,exttaxonid,character varying
+ndb,externaltaxa,taxonid,integer
+ndb,externaltaxa,url,character varying
+ndb,faciestypes,facies,character varying
+ndb,faciestypes,faciesid,integer
+ndb,formtaxa,affinityid,integer
+ndb,formtaxa,formtaxonid,integer
+ndb,formtaxa,publicationid,integer
+ndb,formtaxa,systematicdescription,boolean
+ndb,formtaxa,taxonid,integer
+ndb,fractiondated,fraction,character varying
+ndb,fractiondated,fractionid,integer
+ndb,geochroncontrols,chroncontrolid,integer
+ndb,geochroncontrols,geochronid,integer
+ndb,geochronology,age,double precision
+ndb,geochronology,agetypeid,integer
+ndb,geochronology,delta13c,double precision
+ndb,geochronology,errorolder,double precision
+ndb,geochronology,erroryounger,double precision
+ndb,geochronology,geochronid,integer
+ndb,geochronology,geochrontypeid,integer
+ndb,geochronology,infinite,boolean
+ndb,geochronology,labnumber,character varying
+ndb,geochronology,materialdated,character varying
+ndb,geochronology,notes,text
+ndb,geochronology,sampleid,integer
+ndb,geochronpublications,geochronid,integer
+ndb,geochronpublications,publicationid,integer
+ndb,geochrontypes,geochrontype,character varying
+ndb,geochrontypes,geochrontypeid,integer
+ndb,geopaths,geoin,bigint
+ndb,geopaths,geoout,ARRAY
+ndb,geopoldepth,geopoliticalid,integer
+ndb,geopoldepth,geopoliticalname,character varying
+ndb,geopoldepth,geopoliticalunit,character varying
+ndb,geopoldepth,path,ARRAY
+ndb,geopoldepth,rank,integer
+ndb,geopoliticalunits,geopoliticalid,integer
+ndb,geopoliticalunits,geopoliticalname,character varying
+ndb,geopoliticalunits,geopoliticalunit,character varying
+ndb,geopoliticalunits,highergeopoliticalid,integer
+ndb,geopoliticalunits,rank,integer
+ndb,isobiomarkerbandtypes,isobiomarkerbandtype,character varying
+ndb,isobiomarkerbandtypes,isobiomarkerbandtypeid,integer
+ndb,isobiomarkerbandtypes,isobiomarkertypeid,integer
+ndb,isobiomarkertypes,isobiomarkertype,character varying
+ndb,isobiomarkertypes,isobiomarkertypeid,integer
+ndb,isoinstrumentation,datasetid,integer
+ndb,isoinstrumentation,insterrorlongtermpercent,double precision
+ndb,isoinstrumentation,insterrorpercent,double precision
+ndb,isoinstrumentation,insterrorrunsd,double precision
+ndb,isoinstrumentation,isoinstrumentationtypeid,integer
+ndb,isoinstrumentation,isosampleintrosystemtypeid,integer
+ndb,isoinstrumentation,notes,text
+ndb,isoinstrumentation,variableid,integer
+ndb,isoinstrumentationtypes,isoinstrumentationtype,character varying
+ndb,isoinstrumentationtypes,isoinstrumentationtypeid,integer
+ndb,isomatanalsubstrate,isomatanaltypeid,integer
+ndb,isomatanalsubstrate,isosubstratetypeid,integer
+ndb,isomaterialanalyzedtypes,isomatanaltypeid,integer
+ndb,isomaterialanalyzedtypes,isomaterialanalyzedtype,character varying
+ndb,isometadata,analystid,integer
+ndb,isometadata,atomicpercent,double precision
+ndb,isometadata,dataid,integer
+ndb,isometadata,isomatanaltypeid,integer
+ndb,isometadata,isometadataid,integer
+ndb,isometadata,isosubstratetypeid,integer
+ndb,isometadata,lab,character varying
+ndb,isometadata,labnumber,character varying
+ndb,isometadata,mass_mg,double precision
+ndb,isometadata,reps,integer
+ndb,isometadata,weightpercent,double precision
+ndb,isopretreatmenttypes,isopretreatmentqualifier,character varying
+ndb,isopretreatmenttypes,isopretreatmenttype,character varying
+ndb,isopretreatmenttypes,isopretreatmenttypeid,integer
+ndb,isosampleintrosystemtypes,isosampleintrosystemtype,character varying
+ndb,isosampleintrosystemtypes,isosampleintrosystemtypeid,integer
+ndb,isosampleorigintypes,isosampleorigintype,character varying
+ndb,isosampleorigintypes,isosampleorigintypeid,integer
+ndb,isosamplepretreatments,dataid,integer
+ndb,isosamplepretreatments,isopretreatmenttypeid,integer
+ndb,isosamplepretreatments,order,integer
+ndb,isosamplepretreatments,value,double precision
+ndb,isoscaletypes,isoscaleacronym,character varying
+ndb,isoscaletypes,isoscalename,character varying
+ndb,isoscaletypes,isoscaletypeid,integer
+ndb,isospecimendata,dataid,integer
+ndb,isospecimendata,isospecimendataid,integer
+ndb,isospecimendata,sd,double precision
+ndb,isospecimendata,specimenid,integer
+ndb,isosrmetadata,datasetid,integer
+ndb,isosrmetadata,srlocalgeolcontext,text
+ndb,isosrmetadata,srlocalvalue,double precision
+ndb,isosrmetadata,variableid,integer
+ndb,isostandards,datasetid,integer
+ndb,isostandards,isostandardid,integer
+ndb,isostandards,value,double precision
+ndb,isostandards,variableid,integer
+ndb,isostandardtypes,isostandardmaterial,character varying
+ndb,isostandardtypes,isostandardtype,character varying
+ndb,isostandardtypes,isostandardtypeid,integer
+ndb,isostratdata,dataid,integer
+ndb,isostratdata,elementtypeid,integer
+ndb,isostratdata,sd,double precision
+ndb,isostratdata,taxonid,integer
+ndb,isosubstratetypes,isosubstratetype,character varying
+ndb,isosubstratetypes,isosubstratetypeid,integer
+ndb,isovariablescaletypes,isoscaletypeid,integer
+ndb,isovariablescaletypes,variableid,integer
+ndb,keywords,keyword,character varying
+ndb,keywords,keywordid,integer
+ndb,lakeparameters,lakeparameterid,integer
+ndb,lakeparameters,siteid,integer
+ndb,lakeparameters,value,double precision
+ndb,lakeparametertypes,lakeparameter,character varying
+ndb,lakeparametertypes,lakeparametercode,character varying
+ndb,lakeparametertypes,lakeparameterid,integer
+ndb,lakeparametertypes,lakeparametershortname,character varying
+ndb,lithology,collectionunitid,integer
+ndb,lithology,depthbottom,double precision
+ndb,lithology,depthtop,double precision
+ndb,lithology,description,text
+ndb,lithology,lithologyid,integer
+ndb,lithology,lowerboundary,character varying
+ndb,lithostrat,higherlithostratid,integer
+ndb,lithostrat,lithostratid,integer
+ndb,lithostrat,lithostratname,character varying
+ndb,lithostrat,lithostratunitid,integer
+ndb,lithostratunits,lithostratunit,character varying
+ndb,lithostratunits,lithostratunitid,integer
+ndb,lithostratunits,rank,integer
+ndb,publicationauthors,authorid,integer
+ndb,publicationauthors,authororder,integer
+ndb,publicationauthors,contactid,integer
+ndb,publicationauthors,familyname,character varying
+ndb,publicationauthors,initials,character varying
+ndb,publicationauthors,publicationid,integer
+ndb,publicationauthors,suffix,character varying
+ndb,publicationeditors,editorid,integer
+ndb,publicationeditors,editororder,integer
+ndb,publicationeditors,familyname,character varying
+ndb,publicationeditors,initials,character varying
+ndb,publicationeditors,publicationid,integer
+ndb,publicationeditors,suffix,character varying
+ndb,publications,articletitle,text
+ndb,publications,booktitle,text
+ndb,publications,citation,text
+ndb,publications,citationnumber,character varying
+ndb,publications,city,character varying
+ndb,publications,country,character varying
+ndb,publications,doi,character varying
+ndb,publications,edition,character varying
+ndb,publications,issue,character varying
+ndb,publications,journal,text
+ndb,publications,notes,text
+ndb,publications,numvolumes,character varying
+ndb,publications,originallanguage,character varying
+ndb,publications,pages,character varying
+ndb,publications,publicationid,integer
+ndb,publications,publisher,character varying
+ndb,publications,pubtypeid,integer
+ndb,publications,seriestitle,text
+ndb,publications,seriesvolume,character varying
+ndb,publications,state,character varying
+ndb,publications,url,text
+ndb,publications,volume,character varying
+ndb,publications,volumetitle,text
+ndb,publications,year,character varying
+ndb,publicationtranslators,familyname,character varying
+ndb,publicationtranslators,initials,character varying
+ndb,publicationtranslators,publicationid,integer
+ndb,publicationtranslators,suffix,character varying
+ndb,publicationtranslators,translatorid,integer
+ndb,publicationtranslators,translatororder,integer
+ndb,publicationtypes,pubtype,character varying
+ndb,publicationtypes,pubtypeid,integer
+ndb,pubtsv,publicationid,integer
+ndb,pubtsv,pubtsv,tsvector
+ndb,radiocarbon,cnratio,double precision
+ndb,radiocarbon,delta13c,double precision
+ndb,radiocarbon,delta15n,double precision
+ndb,radiocarbon,geochronid,integer
+ndb,radiocarbon,masscmg,double precision
+ndb,radiocarbon,percentc,double precision
+ndb,radiocarbon,percentcollagen,double precision
+ndb,radiocarbon,percentn,double precision
+ndb,radiocarbon,radiocarbonmethodid,integer
+ndb,radiocarbon,reservoir,double precision
+ndb,radiocarboncalibration,c14yrbp,integer
+ndb,radiocarboncalibration,calyrbp,integer
+ndb,radiocarbonmethods,radiocarbonmethod,character varying
+ndb,radiocarbonmethods,radiocarbonmethodid,integer
+ndb,relativeagepublications,publicationid,integer
+ndb,relativeagepublications,relativeageid,integer
+ndb,relativeages,c14ageolder,double precision
+ndb,relativeages,c14ageyounger,double precision
+ndb,relativeages,calageolder,double precision
+ndb,relativeages,calageyounger,double precision
+ndb,relativeages,notes,text
+ndb,relativeages,relativeage,character varying
+ndb,relativeages,relativeageid,integer
+ndb,relativeages,relativeagescaleid,integer
+ndb,relativeages,relativeageunitid,integer
+ndb,relativeagescales,relativeagescale,character varying
+ndb,relativeagescales,relativeagescaleid,integer
+ndb,relativeageunits,relativeageunit,character varying
+ndb,relativeageunits,relativeageunitid,integer
+ndb,relativechronology,analysisunitid,integer
+ndb,relativechronology,chroncontrolid,integer
+ndb,relativechronology,notes,text
+ndb,relativechronology,relativeageid,integer
+ndb,relativechronology,relativechronid,integer
+ndb,repositoryinstitutions,acronym,character varying
+ndb,repositoryinstitutions,notes,text
+ndb,repositoryinstitutions,repository,character varying
+ndb,repositoryinstitutions,repositoryid,integer
+ndb,repositoryspecimens,datasetid,integer
+ndb,repositoryspecimens,notes,text
+ndb,repositoryspecimens,repositoryid,integer
+ndb,rocktypes,description,text
+ndb,rocktypes,higherrocktypeid,integer
+ndb,rocktypes,rocktype,character varying
+ndb,rocktypes,rocktypeid,integer
+ndb,sampleages,age,double precision
+ndb,sampleages,ageolder,double precision
+ndb,sampleages,ageyounger,double precision
+ndb,sampleages,chronologyid,integer
+ndb,sampleages,sampleageid,integer
+ndb,sampleages,sampleid,integer
+ndb,sampleanalysts,analystid,integer
+ndb,sampleanalysts,analystorder,integer
+ndb,sampleanalysts,contactid,integer
+ndb,sampleanalysts,sampleid,integer
+ndb,samplekeywords,keywordid,integer
+ndb,samplekeywords,sampleid,integer
+ndb,samples,analysisdate,date
+ndb,samples,analysisunitid,integer
+ndb,samples,datasetid,integer
+ndb,samples,labnumber,character varying
+ndb,samples,notes,text
+ndb,samples,preparationmethod,text
+ndb,samples,sampledate,date
+ndb,samples,sampleid,integer
+ndb,samples,samplename,character varying
+ndb,samples,taxonid,integer
+ndb,sitegeopolitical,geopoliticalid,integer
+ndb,sitegeopolitical,sitegeopoliticalid,integer
+ndb,sitegeopolitical,siteid,integer
+ndb,siteimages,caption,text
+ndb,siteimages,contactid,integer
+ndb,siteimages,credit,character varying
+ndb,siteimages,date,date
+ndb,siteimages,siteid,integer
+ndb,siteimages,siteimage,text
+ndb,siteimages,siteimageid,integer
+ndb,sites,altitude,double precision
+ndb,sites,area,double precision
+ndb,sites,geog,USER-DEFINED
+ndb,sites,latitudenorth,double precision
+ndb,sites,latitudesouth,double precision
+ndb,sites,longitudeeast,double precision
+ndb,sites,longitudewest,double precision
+ndb,sites,notes,text
+ndb,sites,sitedescription,text
+ndb,sites,siteid,integer
+ndb,sites,sitename,character varying
+ndb,sitestemp,altitude,double precision
+ndb,sitestemp,area,double precision
+ndb,sitestemp,geog,text
+ndb,sitestemp,latitudenorth,double precision
+ndb,sitestemp,latitudesouth,double precision
+ndb,sitestemp,longitudeeast,double precision
+ndb,sitestemp,longitudewest,double precision
+ndb,sitestemp,notes,text
+ndb,sitestemp,sitedescription,text
+ndb,sitestemp,siteid,integer
+ndb,sitestemp,sitename,character varying
+ndb,specimendates,elementtypeid,integer
+ndb,specimendates,fractionid,integer
+ndb,specimendates,geochronid,integer
+ndb,specimendates,notes,text
+ndb,specimendates,sampleid,integer
+ndb,specimendates,specimendateid,integer
+ndb,specimendates,specimenid,integer
+ndb,specimendates,taxonid,integer
+ndb,specimendatescal,calage,double precision
+ndb,specimendatescal,calageolder,double precision
+ndb,specimendatescal,calageyounger,double precision
+ndb,specimendatescal,calibrationcurveid,integer
+ndb,specimendatescal,calibrationprogramid,integer
+ndb,specimendatescal,datecalibrated,date
+ndb,specimendatescal,specimendatecalid,integer
+ndb,specimendatescal,specimendateid,integer
+ndb,specimendomesticstatustypes,domesticstatus,character varying
+ndb,specimendomesticstatustypes,domesticstatusid,integer
+ndb,specimengenbank,genbanknr,character varying
+ndb,specimengenbank,specimenid,integer
+ndb,specimens,arctosnr,character varying
+ndb,specimens,dataid,integer
+ndb,specimens,domesticstatusid,integer
+ndb,specimens,elementtypeid,integer
+ndb,specimens,fieldnr,character varying
+ndb,specimens,maturityid,integer
+ndb,specimens,nisp,double precision
+ndb,specimens,notes,text
+ndb,specimens,portionid,integer
+ndb,specimens,preservative,character varying
+ndb,specimens,repositoryid,integer
+ndb,specimens,sexid,integer
+ndb,specimens,specimenid,integer
+ndb,specimens,specimennr,character varying
+ndb,specimens,symmetryid,integer
+ndb,specimensextypes,sex,character varying
+ndb,specimensextypes,sexid,integer
+ndb,specimentaphonomy,specimenid,integer
+ndb,specimentaphonomy,taphonomictypeid,integer
+ndb,summarydatataphonomy,dataid,integer
+ndb,summarydatataphonomy,taphonomictypeid,integer
+ndb,synonyms,invalidtaxonid,integer
+ndb,synonyms,synonymid,integer
+ndb,synonyms,synonymtypeid,integer
+ndb,synonyms,validtaxonid,integer
+ndb,synonymtypes,synonymtype,character varying
+ndb,synonymtypes,synonymtypeid,integer
+ndb,synonymy,contactid,integer
+ndb,synonymy,datasetid,integer
+ndb,synonymy,datesynonymized,date
+ndb,synonymy,fromcontributor,boolean
+ndb,synonymy,notes,text
+ndb,synonymy,publicationid,integer
+ndb,synonymy,reftaxonid,integer
+ndb,synonymy,synonymyid,integer
+ndb,synonymy,taxonid,integer
+ndb,sysdiagrams,definition,bytea
+ndb,sysdiagrams,diagram_id,integer
+ndb,sysdiagrams,name,character varying
+ndb,sysdiagrams,principal_id,integer
+ndb,sysdiagrams,version,integer
+ndb,taphonomicsystems,notes,text
+ndb,taphonomicsystems,taphonomicsystem,character varying
+ndb,taphonomicsystems,taphonomicsystemid,integer
+ndb,taphonomicsystemsdatasettypes,datasettypeid,integer
+ndb,taphonomicsystemsdatasettypes,taphonomicsystemid,integer
+ndb,taphonomictypes,notes,text
+ndb,taphonomictypes,taphonomicsystemid,integer
+ndb,taphonomictypes,taphonomictype,character varying
+ndb,taphonomictypes,taphonomictypeid,integer
+ndb,taxa,author,character varying
+ndb,taxa,extinct,boolean
+ndb,taxa,highertaxonid,integer
+ndb,taxa,notes,text
+ndb,taxa,publicationid,integer
+ndb,taxa,taxagroupid,character varying
+ndb,taxa,taxoncode,character varying
+ndb,taxa,taxonid,integer
+ndb,taxa,taxonname,text
+ndb,taxa,valid,boolean
+ndb,taxa,validatedate,date
+ndb,taxa,validatorid,integer
+ndb,taxaalthierarchy,highertaxonid,integer
+ndb,taxaalthierarchy,taxaalthierarchytypeid,integer
+ndb,taxaalthierarchy,taxonid,integer
+ndb,taxaalthierarchytypes,taxaalthierarchydescript,text
+ndb,taxaalthierarchytypes,taxaalthierarchyname,character varying
+ndb,taxaalthierarchytypes,taxaalthierarchytypeid,integer
+ndb,taxagrouptypes,taxagroup,character varying
+ndb,taxagrouptypes,taxagroupid,character varying
+ndb,taxonpaths,taxonid,bigint
+ndb,taxonpaths,taxonout,ARRAY
+ndb,tephras,analysisunitid,integer
+ndb,tephras,eventid,integer
+ndb,tephras,notes,text
+ndb,tephras,tephraid,integer
+ndb,unitsdatasettypes,datasettypeid,integer
+ndb,unitsdatasettypes,variableunitsid,integer
+ndb,variablecontexts,variablecontext,character varying
+ndb,variablecontexts,variablecontextid,integer
+ndb,variableelements,elementtypeid,integer
+ndb,variableelements,maturityid,integer
+ndb,variableelements,portionid,integer
+ndb,variableelements,symmetryid,integer
+ndb,variableelements,variableelement,character varying
+ndb,variableelements,variableelementid,integer
+ndb,variables,taxonid,integer
+ndb,variables,variablecontextid,integer
+ndb,variables,variableelementid,integer
+ndb,variables,variableid,integer
+ndb,variables,variableunitsid,integer
+ndb,variableunits,variableunits,character varying
+ndb,variableunits,variableunitsid,integer
