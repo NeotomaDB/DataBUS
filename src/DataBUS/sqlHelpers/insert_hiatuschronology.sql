@@ -5,8 +5,7 @@ CREATE OR REPLACE FUNCTION insert_hiatuschronology(_hiatusid integer,
 RETURNS void
 LANGUAGE sql
 AS $function$
-    INSERT INTO ndb.hiatuseschronology(hiatusid, chronologyid,
+    INSERT INTO ndb.hiatuschronology(hiatusid, chronologyid,
                                        hiatuslength, hiatusuncertainty)
-    VALUES (_hiatusid, _chronologyid, _hiatuslength, _hiatusuncertainty)
-    RETURNING id;
-$function$;
+    VALUES (_hiatusid, _chronologyid, _hiatuslength, _hiatusuncertainty);
+$function$; 
