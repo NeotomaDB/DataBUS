@@ -1,0 +1,25 @@
+site_name: Neotoma DataBUS Documentation
+repo_url: https://github.com/NeotomaDB/DataBUS
+site_description: Documentation for the Neotoma Data Bulk Uploader System (DataBUS), including both function examples and documentation as well as the project overview and end-user guidance and onboarding.
+
+theme:
+  name: material
+  locale: en
+
+plugins:
+  - mkdocstrings
+
+nav:
+  - DataBUS Docs: index.md
+  - tutorials.md
+  - How-To Guides: how-to-guide.md
+  - reference.md
+  - explanation.md
+
+extra:
+  version: 1.0
+
+watch:
+  - docs
+  - img
+  - src
