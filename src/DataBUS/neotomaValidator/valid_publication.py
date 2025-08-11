@@ -16,14 +16,17 @@ def valid_publication(cur, yml_dict, csv_file):
     """
     def list_flattener(original_list, delim =', '):
         flattened_list = []
-        if not original_list:
-            return None
-        for item in original_list:
-            if delim in item:
-                flattened_list.extend(item.split(delim))
-            else:
-                flattened_list.append(item)
-        flattened_list = list(set(flattened_list))
+        if isinstance(original_list, list):
+            if not original_list:
+                return None
+            for item in original_list:
+                if delim in item:
+                    flattened_list.extend(item.split(delim))
+                else:
+                    flattened_list.append(item)
+            flattened_list = list(set(flattened_list))
+        elif isinstance(original_list, str):
+            flattened_list = [original_list]
         return flattened_list
     
     response = Response()
@@ -31,8 +34,7 @@ def valid_publication(cur, yml_dict, csv_file):
     inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.publications")
     inputs['doi'] = list_flattener(inputs['doi'])
     inputs['publicationid'] = list_flattener(inputs['publicationid'])
-    inputs['citation'] = list_flattener(inputs['citation'],  delim=' | ')
-
+    inputs['citation'] = list_flattener(inputs.get('citation', None),  delim=' | ')
     if inputs["publicationid"]:
         inputs["publicationid"] = [value if value != "NA" else None for value in inputs["publicationid"]]
         inputs["publicationid"] = inputs["publicationid"][0]
@@ -52,7 +54,7 @@ def valid_publication(cur, yml_dict, csv_file):
                ORDER BY similarity(LOWER(doi), %(doi)s) DESC
                LIMIT 1; """
 
-    if inputs.get('publicationid', None) is None:
+    if not inputs.get('publicationid', None):
         response.message.append(f"? No ID present")
         response.valid.append(True)
         if inputs.get('citation', None):
@@ -79,6 +81,9 @@ def valid_publication(cur, yml_dict, csv_file):
                     else:
                             response.message.append(f"✗  The publication does not exist in Neotoma: {cit}.")
                             response.valid.append(False)
+        else:
+            response.message.append("? No citation present. Publication info will not be uploaded.")
+            response.valid.append(True)
     else:
         try:
             inputs['publicationid'] = int(inputs['publicationid'])
