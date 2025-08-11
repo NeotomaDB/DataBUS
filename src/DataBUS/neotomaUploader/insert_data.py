@@ -1,6 +1,6 @@
 import DataBUS.neotomaHelpers as nh
 from DataBUS import Response, Datum, Variable
-#import traceback
+#import traceback 
  
 def insert_data(cur, yml_dict, csv_file, uploader, wide = False):
     """
@@ -105,7 +105,7 @@ def insert_data(cur, yml_dict, csv_file, uploader, wide = False):
             else:
                 response.message.append(f"?  {k} ID not given. ")
                 response.valid.append(True)
-                entries[v[1]] = counter
+                entries[v[1]] = None
         var = Variable(**entries)
         response.valid.append(True)
         try:

@@ -35,7 +35,7 @@ def insert_analysisunit(cur, yml_dict, csv_file, uploader):
                                 f" Placeholder `1` will be used to create log.")
         uploader['collunitid'].cuid = 1
 
-    if inputs['depth'] and isinstance(inputs['depth'], list):
+    if inputs.get('depth') and isinstance(inputs['depth'], list):
         iterable_params = {k: v for k, v in inputs.items() if isinstance(v, list)}
         static_params = {k: v for k, v in inputs.items() if not isinstance(v, list)}
         for values in zip(*iterable_params.values()):

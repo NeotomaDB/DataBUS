@@ -44,6 +44,7 @@ def insert_data_processor(cur, yml_dict, csv_file, uploader):
                                         order=int(agent["order"]))
                     contact.insert_data_processor(cur, 
                                                     datasetid=uploader["datasets"].datasetid)
+                    response.id.append(contact.contactid)
                     response.valid.append(True)
                     response.message.append(f"✔ Processor {agent['id']} inserted.")
                 except Exception as e:

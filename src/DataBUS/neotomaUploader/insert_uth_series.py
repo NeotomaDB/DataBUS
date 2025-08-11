@@ -46,7 +46,7 @@ def insert_uth_series(cur, yml_dict, csv_file, uploader):
     for i in range(len(indices)):
         try:
             #assert that the length of uploader[geochronid] is the same as the length of inputs[all other columns]
-            uth = UThSeries(geochronid=uploader['geochronid'][i],
+            uth = UThSeries(geochronid=uploader['geochron'].id[i],
                             decayconstantid=inputs['decayconstantid'][i],
                             ratio230th232th=inputs['ratio230th232th'][i],
                             ratiouncertainty230th232th=inputs['ratiouncertainty230th232th'][i],
@@ -61,10 +61,24 @@ def insert_uth_series(cur, yml_dict, csv_file, uploader):
                 uth.insert_to_db(cur)
                 response.valid.append(True)
                 response.message.append("✔ UThSeries has been inserted")
+                try:
+                    u = uploader['data'].data_id.get('238U')
+                    if u:
+                        uth.insert_uraniumseriesdata(u[i], cur)
+                        response.valid.append(True)
+                        response.message.append("✔ UraniumSeriesData has been inserted")
+                    else:
+                        response.valid.append(True)
+                        response.message.append("✔ No UraniumSeriesData to insert")
+                        continue
+                except Exception as e:
+                    response.valid.append(False)
+                    response.message.append(f"✗ Uranium Series Data cannot be inserted: {e}")
             except Exception as e:
                 response.valid.append(False)
                 response.message.append(f"✗ UThSeries cannot be inserted: {e}")
         except Exception as e:
+            response.message.append(f"✗ UThSeries cannot be created: {e}")
             response.valid.append(False)
 
     # For the insert, insert UraniumSeriesData ID and the geochronID associated with the UThSeries

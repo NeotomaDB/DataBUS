@@ -18,8 +18,8 @@ def insert_sample_age(cur, yml_dict, csv_file, uploader):
             - 'valid' (bool): Indicates if all insertions were successful.
     """
     response = Response()
-    params = ["age", "ageyounger", "ageolder", "agetype"]
     try:
+        params = ["age", "ageyounger", "ageolder", "agetype"]
         inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.sampleages")
     except Exception as e:
         error = str(e)
@@ -38,7 +38,7 @@ def insert_sample_age(cur, yml_dict, csv_file, uploader):
                         new_date = None
                 else:
                     new_date = None
-            if 'age' in params:
+            if "age" in inputs:
                 params.remove('age')
             inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.sampleages")
             inputs['age'] = new_date
@@ -59,7 +59,7 @@ def insert_sample_age(cur, yml_dict, csv_file, uploader):
     iterable_params = {k: v for k, v in inputs.items() if isinstance(v, list)}
     static_params = {k: v for k, v in inputs.items() if not isinstance(v, list)}
     iterable_params['sampleid'] = uploader['samples'].sampleid
-    static_params['chronologyid'] = uploader['chronology'].chronid
+    static_params['chronologyid'] = uploader['chronology'].id
     for values in zip(*iterable_params.values()):
         kwargs = dict(zip(iterable_params.keys(), values))
         kwargs.update(static_params)
