@@ -1,12 +1,9 @@
 import importlib.resources
-with importlib.resources.open_text("DataBUS.sqlHelpers", 
-                                   "insert_hiatus.sql") as sql_file:
+with importlib.resources.open_text("DataBUS.sqlHelpers", "insert_hiatus.sql") as sql_file:
     insert_hiatus = sql_file.read()
 
-with importlib.resources.open_text("DataBUS.sqlHelpers",
-                                   "insert_hiatuschronology.sql") as sql_file:
-    insert_hiatuschronology = sql_file.read()
-
+with importlib.resources.open_text("DataBUS.sqlHelpers", "insert_hiatuschronology.sql") as sql_file:
+    insert_hiatuschronology = sql_file.read() 
 class Hiatus:
     description = "Hiatus object in Neotoma"
 
@@ -50,6 +47,7 @@ class Hiatus:
         )
 
     def insert_to_db(self, cur):
+        cur.execute(insert_hiatus)
         hiatus_query = """SELECT insert_hiatus(_analysisunitstart := %(analysisunitstart)s,
                                                _analysisunitend := %(analysisunitend)s,
                                                _notes := %(notes)s)"""
@@ -64,6 +62,7 @@ class Hiatus:
         return self.hiatusid
     
     def insert_hiatus_chron_to_db(self, chronologyid, hiatuslength, hiatusuncertainty, cur):
+        cur.execute(insert_hiatuschronology)
         hiatus_query = """SELECT insert_hiatuschronology(_hiatusid := %(hiatusid)s,
                                                _chronologyid := %(chronologyid)s,
                                                _hiatuslength := %(hiatuslength)s,
