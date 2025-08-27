@@ -35,6 +35,7 @@ def insert_dataset_database(cur, yml_dict, uploader):
         try:
             db.insert_to_db(cur)
             response.valid.append(True)
+            response.id.append(db.databaseid)
             response.message.append(f"✔ Added Database ID {inputs['databaseid']}.")
         except Exception as e:
             response.message.append(f"✗ Cannot add DatasetDatabase: {e}")

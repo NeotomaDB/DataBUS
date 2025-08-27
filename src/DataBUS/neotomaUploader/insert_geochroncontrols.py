@@ -4,7 +4,7 @@ def insert_geochroncontrols(cur, yml_dict, csv_file, uploader):
     """Both elements are obtained from uploader. 
     Cannot validate as there are no inserts during the validation process."""
     
-    entries = {'chroncontrolid': uploader['chroncontrols'].ccid, 
+    entries = {'chroncontrolid': uploader['chroncontrols'].id, 
                'geochronid': uploader['geochron'].id}
     response = Response()
     for val in zip(*entries.values()):

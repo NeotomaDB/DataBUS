@@ -33,3 +33,5 @@ from .valid_publication import valid_publication
 from .valid_speleothem import valid_speleothem
 from .valid_geochron import valid_geochron
 from .valid_geochroncontrol import valid_geochroncontrol
+from .valid_uth_series import valid_uth_series
+from .valid_hiatus import valid_hiatus

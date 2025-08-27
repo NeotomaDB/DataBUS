@@ -16,14 +16,17 @@ def insert_publication(cur, yml_dict, csv_file, uploader):
     """
     def list_flattener(original_list, delim =', '):
         flattened_list = []
-        if not original_list:
-            return None
-        for item in original_list:
-            if delim in item:
-                flattened_list.extend(item.split(delim))
-            else:
-                flattened_list.append(item)
-        flattened_list = list(set(flattened_list))
+        if isinstance(original_list, list):
+            if not original_list:
+                return None
+            for item in original_list:
+                if delim in item:
+                    flattened_list.extend(item.split(delim))
+                else:
+                    flattened_list.append(item)
+            flattened_list = list(set(flattened_list))
+        elif isinstance(original_list, str):
+            flattened_list = [original_list]
         return flattened_list
     
     response = Response()

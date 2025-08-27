@@ -51,7 +51,6 @@ def insert_dataset(cur, yml_dict, csv_file, uploader, name=None):
         response.valid.append(False)
     inputs["notes"] = nh.pull_params(["notes"], yml_dict, csv_file, "ndb.datasets", name)['notes']
     inputs['collectionunitid'] = uploader['collunitid'].cuid
-    print(inputs)
     ds = Dataset(**inputs)
     try:
         response.datasetid = ds.insert_to_db(cur)

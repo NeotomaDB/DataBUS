@@ -27,6 +27,7 @@ def valid_site(cur, yml_dict, csv_file):
 
     inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.sites")
     overwrite = nh.pull_overwrite(params, yml_dict, "ndb.sites")
+
     if 'geog.latitude' and 'geog.longitude' in inputs:
         inputs['geog'] = (inputs["geog.latitude"], inputs["geog.longitude"])
         del inputs["geog.latitude"], inputs["geog.longitude"]
@@ -54,8 +55,7 @@ def valid_site(cur, yml_dict, csv_file):
     except (ValueError, TypeError, Exception) as e:
         response.valid.append(False)
         response.message.append(e)
-        site = Site(sitename="Placeholder",
-                    geog=Geog((0, 0)))
+        site = Site(sitename="Placeholder")
     if site.siteid is None:
         close_sites = site.find_close_sites(cur, limit=3)
         if close_sites:
