@@ -51,6 +51,10 @@ include-package-data = true
       "sqlHelpers/insert_data_uncertainty.sql",
       "sqlHelpers/insert_taxa_row.sql",
       "sqlHelpers/upsert_collunit.sql",
+      "sqlHelpers/insert_hiatus.sql",
+      "sqlHelpers/insert_hiatuschronology.sql",
+      "sqlHelpers/insert_uraniumseriesdata.sql",
+      "sqlHelpers/insert_uthseries.sql",
       "sqlHelpers/insert_speleothem.sql",
       "sqlHelpers/insert_speleothem_cu.sql"]
 
