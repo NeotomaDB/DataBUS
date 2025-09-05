@@ -1,12 +1,11 @@
-
 uv.lock
 
 src/DataBUS.egg-info/
-
 src/DataBUS/__pycache__/
 
 src/DataBUS/neotomaHelpers/__pycache__/
-
 src/DataBUS/neotomaValidator/__pycache__/
-
 src/DataBUS/sqlHelpers/__pycache__/
+
+.DS_Store
+build/

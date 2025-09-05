@@ -1,5 +1,5 @@
 import DataBUS.neotomaHelpers as nh
-from DataBUS import Chronology, ChronResponse
+from DataBUS import Chronology, Response
 from datetime import datetime
 
 def insert_chronology(cur, yml_dict, csv_file, uploader, multiple = False):
@@ -18,8 +18,8 @@ def insert_chronology(cur, yml_dict, csv_file, uploader, multiple = False):
             'chronology': ID of the inserted chronology.
             'valid': Boolean indicating if the insertion was successful.
     """
-    response = ChronResponse()
-
+    response = Response()
+    
     params = ['age', 'ageboundolder', 'ageboundyounger', 'chronologyname', 'agemodel', 
               'agetype', 'contactid', 'isdefault', 'dateprepared', 'notes']
     try:
@@ -75,12 +75,13 @@ def insert_chronology(cur, yml_dict, csv_file, uploader, multiple = False):
         response.message.append("✔ File with multiple chronologies")
         response.chronologies = list(inputs['chronologies'].keys())
         for chron in inputs['chronologies']:
-            c = {'agetypeid': inputs.get('agetypeid'),
+            c = {'collectionunitid':uploader["collunitid"].cuid,
+                 'agetypeid': inputs.get('agetypeid'),
                  'contactid': inputs.get('contactid'),
                  'isdefault': inputs.get('isdefault'),
                  'chronologyname': chron,
                  'dateprepared': inputs.get('dateprepared'),
-                 'agemodel': inputs.get('agemodel'),
+                 'agemodel': chron,
                  'ageboundyounger': inputs['chronologies'][chron].get('ageboundyounger'),
                  'ageboundolder': inputs['chronologies'][chron].get('ageboundolder'),
                  'notes': inputs.get('notes'),
@@ -97,7 +98,7 @@ def insert_chronology(cur, yml_dict, csv_file, uploader, multiple = False):
                 response.valid.append(True)
                 try:
                     chronid = ch.insert_to_db(cur)
-                    response.chronid.append(chronid) # change to id attribute and just append all ids
+                    response.id.append(chronid) # change to id attribute and just append all ids
                     response.valid.append(True)
                     response.message.append(f"✔ Added Chronology {chronid}.")
                 except Exception as e:
@@ -124,8 +125,12 @@ def insert_chronology(cur, yml_dict, csv_file, uploader, multiple = False):
                         inputs["ageboundolder"]= int(max(inputs["age"])) 
                     del inputs['age']
         try:
+            if 'age' in inputs:
+                del inputs['age']
+            inputs["collectionunitid"] = uploader["collunitid"].cuid
             ch = Chronology(**inputs)
-            response.chronid = chronid
+            chronid = ch.insert_to_db(cur)
+            response.id.append(chronid)
             response.valid.append(True)
             response.message.append(f"✔ Added Chronology {chronid}.")
         except Exception as e:
@@ -136,4 +141,4 @@ def insert_chronology(cur, yml_dict, csv_file, uploader, multiple = False):
             chronid = chron.insert_to_db(cur)
             response.valid.append(False)
     response.validAll = all(response.valid)
-    return response 
+    return response

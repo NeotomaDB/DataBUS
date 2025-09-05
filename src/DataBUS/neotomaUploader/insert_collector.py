@@ -30,10 +30,8 @@ def insert_collector(cur, yml_dict, csv_file, uploader):
     else:
         inputs["contactid"] = list(dict.fromkeys(inputs["contactid"]))
     contids = []
-    
     if not inputs["contactid"]:
         if "contactname" not in inputs:
-            
             response.validAll = True
             response.message.append("? No contact information provided.")
             return response
@@ -53,8 +51,7 @@ def insert_collector(cur, yml_dict, csv_file, uploader):
                     response.valid.append(False)
             except Exception as e:
                 response.valid.append(False)
-                response.message.append(f"Cannot create Collector: {e}")
-                
+                response.message.append(f"Cannot create Collector: {e}")     
     else:
         for id in inputs["contactid"]:
             contids.append(id)
@@ -62,7 +59,6 @@ def insert_collector(cur, yml_dict, csv_file, uploader):
             contact.insert_collector(cur,
                                      collunitid=uploader["collunitid"].cuid)
             response.valid.append(True)
-
     response.collector = contids
     response.validAll = all(response.valid)
     return response

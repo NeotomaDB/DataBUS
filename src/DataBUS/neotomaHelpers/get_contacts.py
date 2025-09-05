@@ -17,27 +17,34 @@ def match_abbreviation_to_full(abbreviated, full_name):
              bool(re.match(regex_pattern2, full_name, re.IGNORECASE)))
 
 def get_contacts(cur, contacts_list):
-    get_contact = (
-        """SELECT contactid, contactname, similarity(LOWER(contactname), %(name)s) AS sim_score
-                    FROM ndb.contacts
-                    WHERE LOWER(contactname) %% %(name)s
-                    ORDER BY sim_score DESC
-                    LIMIT 3;"""
-    )
     baseid = 1
     contids = list()
     if contacts_list:
         for i in contacts_list:
             i = i.strip()
-            cur.execute(get_contact, {"name": i.lower()})
+            familyname = i.split(",")[0].strip()
+            firstname = i.split(",")[1].strip() if len(i.split(",")) > 1 else ""
+            if '.' in firstname:
+                get_contact = """SELECT contactid, familyname || ', ' || leadinginitials AS fullname
+                                 FROM ndb.contacts
+                                 WHERE LOWER(familyname) = %(familyname)s AND
+                                       LOWER(leadinginitials) ILIKE %(leadinginitials)s;"""
+                cur.execute(get_contact, {"familyname": familyname.lower(),
+                                        "leadinginitials": str(firstname.lower()+'%')})
+            else:
+                get_contact = """SELECT contactid, familyname || ', ' || givennames AS fullname
+                                 FROM ndb.contacts
+                                 WHERE LOWER(familyname) = %(familyname)s AND
+                                       LOWER(givennames) ILIKE %(givennames)s;"""
+                cur.execute(get_contact, {"familyname": familyname.lower(),
+                                          "givennames": str(firstname.lower()+'%')})
             data = cur.fetchone()
             if data:
                 d_name = data[1].lower()
                 d_id = data[0]
-                simm = data[2]
                 result = d_name.startswith(i.lower().rstrip("."))
                 result_2 = match_abbreviation_to_full(d_name, i)
-                if (result or result_2 or (simm == 1)) == True:
+                if (result or result_2) == True:
                     contids.append({"name": d_name, "id": d_id, "order": baseid})
                 else:
                     contids.append({"name": i, "id": None, "order": baseid})

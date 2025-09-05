@@ -33,11 +33,11 @@ def insert_collunit(cur, yml_dict, csv_file, uploader):
         error_message = str(e)
         try:
             if "time data" in error_message.lower():
-                event_dates = [item.get('eventDate') for item in csv_file if 'eventDate' in item]
+                event_dates = [item.get('collection_date') for item in csv_file if 'collection_date' in item]
                 new_date = list(set(event_dates))
                 assert len(new_date) == 1, "There should only be one date"
                 new_date = new_date[0]
-                if isinstance(new_date, str) and len(new_date) > 4:
+                if isinstance(new_date, str) and len(new_date) >= 4:
                     if len(new_date) == 7 and new_date[4] == '-' and new_date[5:7].isdigit():
                         new_date = f"{new_date}-01"
                         new_date = new_date.replace('/', '-')
@@ -49,11 +49,12 @@ def insert_collunit(cur, yml_dict, csv_file, uploader):
                         notes = f"Collection Date seems to be: {new_date}"
                         new_date = None
                     else:
-                        notes = notes + f""
+                        notes = notes + f"Collection Date seems to be: {new_date}"
+                        new_date = None
             params.remove("colldate")
             inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.collectionunits")
             inputs["colldate"] = new_date
-            if not inputs["notes"]:
+            if "notes" not in inputs:
                 inputs["notes"] = notes
             else:
                 inputs["notes"] = inputs["notes"] + notes
@@ -72,6 +73,16 @@ def insert_collunit(cur, yml_dict, csv_file, uploader):
         if inputs.get("colltypeid"):
             inputs["colltypeid"] = inputs["colltypeid"][0]
     
+    if inputs.get("substrateid"):
+        query2 = """SELECT rocktypeid FROM ndb.rocktypes 
+                    WHERE LOWER(rocktype) = %(substrate)s"""
+        cur.execute(query2, {'substrate': inputs['substrateid'].lower()})
+        inputs["substrateid"] = cur.fetchone()
+        if inputs.get("substrateid"):
+            inputs["substrateid"] = inputs["substrateid"][0]
+        else:
+            inputs["substrateid"] = None
+
     if 'geog.latitude' and 'geog.longitude' in inputs:
         inputs['geog'] = (inputs["geog.latitude"], inputs["geog.longitude"])
         del inputs["geog.latitude"], inputs["geog.longitude"]
@@ -114,7 +125,7 @@ def insert_collunit(cur, yml_dict, csv_file, uploader):
         cu = CollectionUnit(**inputs)
         response.valid.append(True)
         response.message.append("✔  Added Collection Unit")
-    except Exception as e:  
+    except Exception as e:
         cu = CollectionUnit(
             siteid=uploader["sites"].siteid, handle="Placeholder", geog=inputs['geog']
         )

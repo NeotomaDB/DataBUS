@@ -38,7 +38,7 @@ def insert_sample_age(cur, yml_dict, csv_file, uploader):
                         new_date = None
                 else:
                     new_date = None
-            if "age" in inputs:
+            if "age" in params:
                 params.remove('age')
             inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.sampleages")
             inputs['age'] = new_date
@@ -47,19 +47,25 @@ def insert_sample_age(cur, yml_dict, csv_file, uploader):
             response.validAll = False
             response.message.append(f"Sample Age parameters cannot be properly extracted. {e}\n {inner_e}")
             return response
-    if isinstance(inputs.get('agetype', None), str) and inputs['agetype'].lower() == "collection date":
+    if inputs.get('agetype').lower() == "collection date":
         if isinstance(inputs.get('age', None), (float, int)):
             inputs['age'] = 1950 - inputs['age']
-        elif isinstance(inputs.get('age', None),datetime.datetime):
+        elif isinstance(inputs.get('age', None), datetime.datetime):
             inputs['age'] = 1950 - inputs['age'].year
         elif isinstance(inputs.get('age', None), list):
-            inputs['age'] = [1950 - value.year if isinstance(value, datetime) else 1950 - value
-                             for value in inputs['age']]
+            inputs['age'] = [1950 - value.year if isinstance(value, datetime.datetime) else 1950 - value
+                            for value in inputs['age']]
+            if 'age' in inputs:
+                if not (inputs["ageboundolder"] and inputs["ageboundyounger"]):
+                    inputs["ageboundyounger"]= int(min(inputs["age"])) 
+                    inputs["ageboundolder"]= int(max(inputs["age"])) 
+                del inputs['age']
+        
     del inputs['agetype']
     iterable_params = {k: v for k, v in inputs.items() if isinstance(v, list)}
     static_params = {k: v for k, v in inputs.items() if not isinstance(v, list)}
     iterable_params['sampleid'] = uploader['samples'].sampleid
-    static_params['chronologyid'] = uploader['chronology'].id
+    static_params['chronologyid'] = uploader['chronology'].id[0] # check that this is the lin_interp_age as per template
     for values in zip(*iterable_params.values()):
         kwargs = dict(zip(iterable_params.keys(), values))
         kwargs.update(static_params)

@@ -17,7 +17,6 @@ def valid_sample_age(cur, yml_dict, csv_file, validator):
     params = ["age", "sampleid", "chronologyid", 
               "ageyounger", "ageolder", "uncertainty"]
     agemodel = nh.pull_params(['agemodel'], yml_dict, csv_file, "ndb.chronologies")
-
     try:
         inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.sampleages")
     except Exception as e:
@@ -46,7 +45,7 @@ def valid_sample_age(cur, yml_dict, csv_file, validator):
             response.validAll = False
             response.message.append(f"Sample Age parameters cannot be properly extracted. {e}\n {inner_e}")
             return response
-    if agemodel.get('agemodel') == "collection date":
+    if agemodel.get('agemodel').lower() == "collection date":
         if isinstance(inputs.get('age', None), (float, int)):
             inputs['age'] = 1950 - inputs['age']
         elif isinstance(inputs.get('age', None), datetime):
@@ -54,7 +53,6 @@ def valid_sample_age(cur, yml_dict, csv_file, validator):
         elif isinstance(inputs.get('age', None), list):
             inputs['age'] = [1950 - value.year if isinstance(value, datetime) else 1950 - value
                              for value in inputs['age']]
-    
     iterable_params = {k: v for k, v in inputs.items() if isinstance(v, list)}
     static_params = {k: v for k, v in inputs.items() if not isinstance(v, list)}
     static_params['sampleid'] = 2
