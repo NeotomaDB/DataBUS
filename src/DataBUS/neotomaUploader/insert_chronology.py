@@ -141,4 +141,4 @@ def insert_chronology(cur, yml_dict, csv_file, uploader, multiple = False):
             chronid = chron.insert_to_db(cur)
             response.valid.append(False)
     response.validAll = all(response.valid)
-    return response
+    return response 

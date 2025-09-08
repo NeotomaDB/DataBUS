@@ -51,7 +51,7 @@ def pull_params(params, yml_dict, csv_template, table=None, name = None, values 
                                     clean_valor = list(map(lambda x: datetime.datetime.strptime(x.replace("/", "-"), "%Y-%m-%d").date(),
                                                            clean_valor))
                                 else:
-                                    clean_valor = datetime.datetime.strptime(clean_valor.replace("/", "-"), "%Y-%m-%d")
+                                    clean_valor = datetime.datetime.strptime(clean_valor.replace("/", "-"), "%Y-%m-%d").date()
                             case "int":
                                 clean_valor = list(map(int, clean_valor)) if val.get("rowwise") else int(clean_valor)
                             case "float":
@@ -76,7 +76,7 @@ def pull_params(params, yml_dict, csv_template, table=None, name = None, values 
                             else:
                                 add_unit_inputs[i] = []
                                 add_unit_inputs[i].append({f"{val.get('column')}": clean_valor})
-                        elif 'chronologies' in table:
+                        elif 'chronologies' in table and values == True:
                             if 'chronologies' not in add_unit_inputs:
                                 add_unit_inputs['chronologies'] = {}
                             if not all(x is None for x in clean_valor): 

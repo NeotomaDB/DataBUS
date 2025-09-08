@@ -1,6 +1,6 @@
 import DataBUS.neotomaHelpers as nh
 from DataBUS import Chronology, ChronResponse
-from datetime import datetime
+import datetime
 
 def valid_chronologies(cur, yml_dict, csv_file, multiple = False):
     """
@@ -17,10 +17,10 @@ def valid_chronologies(cur, yml_dict, csv_file, multiple = False):
     """
     response = ChronResponse()
 
-    params = ['age', 'ageboundolder', 'ageboundyounger', 'chronologyname', 'agemodel', 
-              'agetype', 'contactid', 'isdefault', 'dateprepared', 'notes']
+    params = ['ageboundolder', 'ageboundyounger', 'chronologyname', 'agemodel', 
+              'agetype', 'contactid', 'isdefault', 'dateprepared', 'notes', 'age']
     try:
-        inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.chronologies", values = False)
+        inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.chronologies", values = multiple)
     except Exception as e:
         error_message = str(e)
         try:
@@ -40,9 +40,9 @@ def valid_chronologies(cur, yml_dict, csv_file, multiple = False):
                     new_date = None
             if 'age' in params:
                 params.remove('age')
-            inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.chronologies")
-            inputs['age'] = new_date
-            response.valid.append(True)
+                inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.chronologies")
+                inputs['age'] = new_date
+                response.valid.append(True)
         except Exception as inner_e:
             response.validAll = False
             response.message.append(f"Chronology parameters cannot be properly extracted. {e}\n"

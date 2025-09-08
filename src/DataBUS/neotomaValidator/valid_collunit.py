@@ -1,4 +1,5 @@
 import itertools
+import datetime
 import re
 import DataBUS.neotomaHelpers as nh
 from DataBUS import Geog, WrongCoordinates, CollectionUnit, CUResponse
@@ -19,6 +20,7 @@ def valid_collunit(cur, yml_dict, csv_file):
             - culist (list): A list of dictionaries containing site and collection unit names that are valid within the specified site context.
     """
     response = CUResponse()
+    notes = ""
     params = ["handle", "core", "depenvtid", "collunitname",
               "colldate", "colldevice", "gpsaltitude", "gpserror",
               "waterdepth", "substrateid", "slopeaspect", "slopeangle",
@@ -29,24 +31,35 @@ def valid_collunit(cur, yml_dict, csv_file):
         error_message = str(e)
         try:
             if "time data" in error_message.lower():
-                event_dates = [item.get('eventDate') for item in csv_file if 'eventDate' in item]
+                event_dates = [item.get('collection_date') for item in csv_file if 'collection_date' in item]
                 new_date = list(set(event_dates))
                 assert len(new_date) == 1, "There should only be one date"
                 new_date = new_date[0]
-                if isinstance(new_date, str) and len(new_date) > 4:
-                    new_date = new_date.replace('/', '-')
-                    new_date = new_date.replace('--', '')
+                if isinstance(new_date, str) and len(new_date) >= 4:
                     if len(new_date) == 7 and new_date[4] == '-' and new_date[5:7].isdigit():
                         new_date = f"{new_date}-01"
+                        new_date = new_date.replace('/', '-')
+                        new_date = datetime.datetime.strptime(new_date, "%Y-%m-%d")
+                        notes = notes + f""
+                    elif new_date.endswith("--") or new_date.endswith("//"):
+                        new_date = new_date.replace('--', '')
+                        new_date = new_date.replace('//', '')
+                        notes = f"Collection Date seems to be: {new_date}"
+                        new_date = None
                     else:
+                        notes = notes + f"Collection Date seems to be: {new_date}"
                         new_date = None
             params.remove("colldate")
             inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.collectionunits")
             inputs["colldate"] = new_date
+            if "notes" not in inputs:
+                inputs["notes"] = notes
+            else:
+                inputs["notes"] = inputs["notes"] + notes
             response.valid.append(True)
         except Exception as inner_e:
             response.validAll = False
-            response.message.append("CU parameters cannot be properly extracted. {e}\n")
+            response.message.append(f"CU parameters cannot be properly extracted. {e}\n")
             response.message.append(str(inner_e))
             return response
  
