@@ -40,8 +40,8 @@ def insert_sample_age(cur, yml_dict, csv_file, uploader):
                     new_date = None
             if "age" in params:
                 params.remove('age')
-            inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.sampleages")
-            inputs['age'] = new_date
+                inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.sampleages")
+                inputs['age'] = new_date
             response.valid.append(True)
         except Exception as inner_e:
             response.validAll = False
@@ -50,7 +50,7 @@ def insert_sample_age(cur, yml_dict, csv_file, uploader):
     if inputs.get('agetype').lower() == "collection date":
         if isinstance(inputs.get('age', None), (float, int)):
             inputs['age'] = 1950 - inputs['age']
-        elif isinstance(inputs.get('age', None), datetime.datetime):
+        elif isinstance(inputs.get('age', None), (datetime.datetime, datetime.date)):
             inputs['age'] = 1950 - inputs['age'].year
         elif isinstance(inputs.get('age', None), list):
             inputs['age'] = [1950 - value.year if isinstance(value, datetime.datetime) else 1950 - value
