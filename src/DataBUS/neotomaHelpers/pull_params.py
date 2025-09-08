@@ -105,6 +105,11 @@ def pull_params(params, yml_dict, csv_template, table=None, name = None, values 
         
         if 'notes' in add_unit_inputs.keys():
             add_unit_inputs['notes']=clean_notes(add_unit_inputs['notes'], name)
+            add_unit_inputs['notes'] = add_unit_inputs['notes'].strip('  | ')
+            add_unit_inputs['notes'] = add_unit_inputs['notes'].replace("dataset", " ")
+            add_unit_inputs['notes'] = add_unit_inputs['notes'].replace("collunit", " ")
+            add_unit_inputs['notes'] = re.sub(r'\s+', ' ', add_unit_inputs['notes'])
+            add_unit_inputs['notes'] = add_unit_inputs['notes'].strip()
             return add_unit_inputs
         else:
             return add_unit_inputs
