@@ -90,17 +90,46 @@ def insert_site(cur, yml_dict, csv_file):
                 )
             response.siteid = site.insert_to_db(cur)
     else:
-        response.message.append(f"A new site ID will be generated")
-        try:
-            response.siteid = site.insert_to_db(cur)
-            response.sitelist.append(site)
-            response.valid.append(True)
-            response.message.append(f"✔  Added Site {response.siteid}")
-        except Exception as e:
-            response.message.append(f"✗  Cannot add Site: {e}")
-            temp_site = Site()
-            response.siteid = temp_site.insert_to_db(cur)
-            response.valid.append(False)
-            response.sitelist.append(temp_site)
-    response.validAll = all(response.valid)
+        close_sites = site.find_close_sites(cur, limit=1)
+        if close_sites:
+            for site_data in close_sites:
+                new_site = Site(
+                    siteid=site_data[0],
+                    sitename=site_data[1],
+                    geog=Geog((site_data[3], site_data[2])),
+                )
+                new_site.distance = round(site_data[13], 0)
+                site.distance = new_site.distance
+                if new_site.distance == 0 and new_site.sitename.lower().strip() == site.sitename.lower().strip():
+                    site.siteid = new_site.siteid
+                    response.siteid = new_site.siteid
+                    response.sitelist.append(site)
+                    response.valid.append(True)
+                    response.message.append(f"✔  Addig to existing site {response.siteid}")
+                else:
+                    try:
+                        response.siteid = site.insert_to_db(cur)
+                        response.sitelist.append(site)
+                        response.valid.append(True)
+                        response.message.append(f"✔  Added Site {response.siteid}")
+                    except Exception as e:
+                        response.message.append(f"✗  Cannot add Site: {e}")
+                        temp_site = Site()
+                        response.siteid = temp_site.insert_to_db(cur)
+                        response.valid.append(False)
+                        response.sitelist.append(temp_site)
+        else:
+            response.message.append(f"A new site ID will be generated")
+            try:
+                response.siteid = site.insert_to_db(cur)
+                response.sitelist.append(site)
+                response.valid.append(True)
+                response.message.append(f"✔  Added Site {response.siteid}")
+            except Exception as e:
+                response.message.append(f"✗  Cannot add Site: {e}")
+                temp_site = Site()
+                response.siteid = temp_site.insert_to_db(cur)
+                response.valid.append(False)
+                response.sitelist.append(temp_site)
+        response.validAll = all(response.valid)
     return response

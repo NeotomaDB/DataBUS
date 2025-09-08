@@ -144,18 +144,18 @@ def insert_collunit(cur, yml_dict, csv_file, uploader):
                 found_cu = CollectionUnit(
                     collectionunitid=int(coll_info[0]),
                     handle=str(coll_info[1]),
-                    siteid=nh.clean_numbers(coll_info[2]),
-                    colltypeid=nh.clean_numbers(coll_info[3]),
-                    depenvtid=nh.clean_numbers(coll_info[4]),
+                    siteid=int(coll_info[2]),
+                    colltypeid=(coll_info[3]),
+                    depenvtid=(coll_info[4]),
                     collunitname=str(coll_info[5]),
                     colldate=coll_info[6],
                     colldevice=str(coll_info[7]),
                     geog=Geog(
-                        (nh.clean_numbers(coll_info[8]), nh.clean_numbers(coll_info[9]))
+                        ((coll_info[8]), (coll_info[9]))
                     ),
-                    gpsaltitude=nh.clean_numbers(coll_info[10]),
+                    gpsaltitude=(coll_info[10]),
                     gpserror=coll_info[11],
-                    waterdepth=nh.clean_numbers(coll_info[12]),
+                    waterdepth=(coll_info[12]),
                     substrateid=coll_info[13],
                     slopeaspect=coll_info[14],
                     slopeangle=coll_info[15],
