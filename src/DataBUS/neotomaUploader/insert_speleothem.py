@@ -32,9 +32,9 @@ def insert_speleothem(cur, yml_dict, csv_file, uploader):
     driptype_q = """SELECT speleothemdriptypeid 
                     FROM ndb.speleothemdriptypes
                     WHERE LOWER(speleothemdriptype) = %(element)s;"""
-    entity_q = """SELECT speleothemgeologyid 
-                  FROM ndb.speleothementitygeology
-                  WHERE LOWER(speleothemgeology) = %(element)s;"""
+    entity_q = """SELECT rocktypeid 
+                  FROM ndb.rocktypes
+                  WHERE LOWER(rocktype) = %(element)s;"""
     entitystatus_q = """SELECT entitystatusid 
                         FROM ndb.speleothementitystatuses
                         WHERE LOWER(entitystatus) = %(element)s;"""
@@ -42,8 +42,7 @@ def insert_speleothem(cur, yml_dict, csv_file, uploader):
                            FROM ndb.speleothemtypes
                            WHERE LOWER(speleothemtype) = %(element)s;"""
     
-    par = {'speleothemdriptypeid': [driptype_q, 'speleothemdriptypeid'], 
-           'speleothemgeologyid': [entity_q, 'speleothemgeologyid'], 
+    par = {'speleothemdriptypeid': [driptype_q, 'speleothemdriptypeid'],
            'entitystatusid': [entitystatus_q, 'entitystatusid'],
            'speleothemtypeid': [speleothemtypes_q, 'speleothemtypeid']}
     try:
@@ -54,7 +53,7 @@ def insert_speleothem(cur, yml_dict, csv_file, uploader):
                                 f"Please verify the CSV file.")
     kwargs = {}
     kwargs['siteid']=uploader['sites'].siteid
-    kwargs['entityid']=inputs['entityid']
+    #kwargs['entityid']=inputs['entityid']
     counter = 0
     for k,v in par.items():
         if inputs[k]:
@@ -79,10 +78,19 @@ def insert_speleothem(cur, yml_dict, csv_file, uploader):
             response.message.append(f"?  {k} ID not given. ")
             response.valid.append(True)
             kwargs[v[1]] = counter
+    cur.execute(entity_q, {'element': inputs['speleothemgeologyid'].lower()})
+    spgeologyid = cur.fetchone()
+    if not spgeologyid:
+        spgeologyid = None
+    else:
+        spgeologyid = spgeologyid[0]
     sp = Speleothem(**kwargs)
     try:
-        sp.insert_to_db(cur)
-        sp.insert_cu_speleothem_to_db(cur, uploader['collunitid'].cuid)
+        id = sp.insert_to_db(cur)
+        sp.insert_cu_speleothem_to_db(cur, id = id, cuid = uploader['collunitid'].cuid)
+        sp.insert_entitygeology_to_db(cur, id = id, 
+                                           speleothemgeologyid = spgeologyid,
+                                           notes = None)
         response.valid.append(True)
     except Exception as e:
         response.valid.append(False)
