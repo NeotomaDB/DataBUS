@@ -2,6 +2,7 @@ import importlib.resources
 with importlib.resources.open_text("DataBUS.sqlHelpers", 
                                    "insert_speleothem.sql") as sql_file:
     insert_speleothem = sql_file.read()
+
 with importlib.resources.open_text("DataBUS.sqlHelpers", 
                                    "insert_speleothem_cu.sql") as sql_file:
     insert_speleothem_cu = sql_file.read()
@@ -9,7 +10,23 @@ with importlib.resources.open_text("DataBUS.sqlHelpers",
 with importlib.resources.open_text("DataBUS.sqlHelpers", 
                                 "insert_entitygeology.sql") as sql_file:
     insert_entitygeology = sql_file.read()
-    
+
+with importlib.resources.open_text("DataBUS.sqlHelpers", 
+                                   "insert_entityrelationship.sql") as sql_file:
+    insert_entityrelationship = sql_file.read()
+
+with importlib.resources.open_text("DataBUS.sqlHelpers", 
+                                   "insert_entitydripheight.sql") as sql_file:
+    insert_entitydripheight = sql_file.read()
+
+with importlib.resources.open_text("DataBUS.sqlHelpers", 
+                                   "insert_entitycovers.sql") as sql_file:
+    insert_entitycovers = sql_file.read()
+
+with importlib.resources.open_text("DataBUS.sqlHelpers", 
+                                   "insert_entitylandusecover.sql") as sql_file:
+    insert_entitylandusecover = sql_file.read()    
+
 class Speleothem:
     def __init__(
         self,
@@ -19,9 +36,7 @@ class Speleothem:
         rockageid=None,
         entrancedistance=None,
         entrancedistanceunits=None,
-        speleothemtypeid=None,
-        entitystatusid=None,
-        speleothemdriptypeid=None):
+        speleothemtypeid=None):
         self.siteid = siteid
         self.entityname = entityname
         self.monitoring = monitoring
@@ -29,8 +44,6 @@ class Speleothem:
         self.entrancedistance=entrancedistance
         self.entrancedistanceunits=entrancedistanceunits
         self.speleothemtypeid=speleothemtypeid
-        self.entitystatusid=entitystatusid
-        self.speleothemdriptypeid=speleothemdriptypeid
     
     def __str__(self):
         statement = (
@@ -48,8 +61,6 @@ class Speleothem:
                                 _entrancedistanceunits := %(entrancedistanceunits)s,
                                 _speleothemtypeid := %(speleothemtypeid)s)
                                 """
-        #                         _entitystatusid := %(entitystatusid)s,
-        #                         _speleothemdriptypeid := %(speleothemdriptypeid)s)
         inputs = {
             "siteid": self.siteid,
             "entityname": self.entityname,
@@ -58,8 +69,6 @@ class Speleothem:
             "entrancedistance": self.entrancedistance,
             "entrancedistanceunits": self.entrancedistanceunits,\
             "speleothemtypeid": self.speleothemtypeid}
-            # "entitystatusid": self.entitystatusid,
-            # "speleothemdriptypeid": self.speleothemdriptypeid}
         cur.execute(query, inputs)
         return cur.fetchone()[0]
     
@@ -72,7 +81,7 @@ class Speleothem:
                                 """
         inputs = {"entityid": id,
             "speleothemgeologyid": speleothemgeologyid,
-            "notes": None}
+            "notes": notes}
         cur.execute(query, inputs)
         return
     
@@ -84,5 +93,92 @@ class Speleothem:
                                 """
         inputs = {"entityid": id,
                   "collectionunitid": cuid}
+        cur.execute(query, inputs)
+        return
+    
+    def insert_entityrelationship_to_db(self, cur, id, entitystatusid, referenceentityid):
+        cur.execute(insert_entityrelationship)
+        query = """
+        SELECT insert_entityrelationship(_entityid := %(entityid)s,
+                                   _entitystatusid := %(entitystatusid)s,
+                                   _referenceentityid := %(referenceentityid)s)
+                                """
+        inputs = {"entityid": id,
+                  "entitystatusid": entitystatusid,
+                  "referenceentityid": referenceentityid}
+        cur.execute(query, inputs)
+        return
+    
+    def insert_entitydripheight_to_db(self, cur, id, 
+                                        speleothemdriptypeid, 
+                                        entitydripheight, 
+                                        entitydripheightunit):
+        cur.execute(insert_entitydripheight)
+        search = """SELECT variableunitsid
+                    FROM ndb.variableunits
+                    WHERE LOWER(variableunits) = %(entitydripheightunit)s"""
+        if isinstance(entitydripheightunit, str):
+            cur.execute(search, {'entitydripheightunit': entitydripheightunit.lower()})
+            entitydripheightunit = cur.fetchone()
+            if entitydripheightunit:
+                entitydripheightunit = entitydripheightunit[0]
+            else:
+                entitydripheightunit = None
+        query = """
+        SELECT insert_entitydripheight(_entityid := %(entityid)s,
+                                       _speleothemdriptypeid := %(speleothemdriptypeid)s,
+                                       _entitydripheight := %(entitydripheight)s,
+                                       _entitydripheightunit := %(entitydripheightunit)s)
+                                """
+        inputs = {"entityid": id,
+                  "speleothemdriptypeid": speleothemdriptypeid,
+                  "entitydripheight": entitydripheight,
+                  "entitydripheightunit": entitydripheightunit}
+        cur.execute(query, inputs)
+        return
+    
+    def insert_entitycovers_to_db(self, cur, id, 
+                                        entitycoverid, 
+                                        entitycoverthickness, 
+                                        entitycoverunits):
+        cur.execute(insert_entitycovers)
+        search = """SELECT variableunitsid
+                    FROM ndb.variableunits
+                    WHERE LOWER(variableunits) = %(entitycoverunits)s"""
+        if isinstance(entitycoverunits, str):
+            cur.execute(search, {'entitycoverunits': entitycoverunits.lower()})
+            entitycoverunits = cur.fetchone()
+            if entitycoverunits:
+                entitycoverunits = entitycoverunits[0]
+            else:
+                entitycoverunits = None
+        query = """
+        SELECT insert_entitycovers(_entityid := %(entityid)s,
+                                   _entitycoverid := %(entitycoverid)s,
+                                   _entitycoverthickness := %(entitycoverthickness)s,
+                                   _entitycoverunits := %(entitycoverunits)s)
+                                """
+        inputs = {"entityid": id,
+                  "entitycoverid": entitycoverid,
+                  "entitycoverthickness": entitycoverthickness,
+                  "entitycoverunits": entitycoverunits}
+        cur.execute(query, inputs)
+        return
+    
+    def insert_entitylandusecovers_to_db(self, cur, id, 
+                                        landusecovertypeid, 
+                                        landusecoverpercent, 
+                                        landusecovernotes):
+        cur.execute(insert_entitylandusecover)
+        query = """
+        SELECT insert_entitylandusecover(_entityid := %(entityid)s,
+                                         _landusecovertypeid := %(landusecovertypeid)s,
+                                         _landusecoverpercent := %(landusecoverpercent)s,
+                                         _landusecovernotes := %(landusecovernotes)s)
+                                """
+        inputs = {"entityid": id,
+                  "landusecovertypeid": landusecovertypeid,
+                  "landusecoverpercent": landusecoverpercent,
+                  "landusecovernotes": landusecovernotes}
         cur.execute(query, inputs)
         return

@@ -26,7 +26,10 @@ def insert_speleothem(cur, yml_dict, csv_file, uploader):
     params = ['siteid', 'entityid', 'entityname', 
               'monitoring', 'rockageid', 'entrancedistance', 
               'entrancedistanceunits', 'speleothemtypeid', 
-              'entitystatusid', 'speleothemgeologyid', 'speleothemdriptypeid']
+              'entitystatusid', 'speleothemgeologyid', 'speleothemdriptypeid',
+              'dripheight', 'dripheightunits',
+              'covertype', 'coverthickness', 'entitycoverunits',
+              'landusecovertypeid', 'landusecoverpercent', 'landusecovernotes']
     response = Response()
 
     driptype_q = """SELECT speleothemdriptypeid 
@@ -41,17 +44,28 @@ def insert_speleothem(cur, yml_dict, csv_file, uploader):
     speleothemtypes_q = """SELECT speleothemtypeid 
                            FROM ndb.speleothemtypes
                            WHERE LOWER(speleothemtype) = %(element)s;"""
+    covertype_q = """SELECT entitycoverid 
+                           FROM ndb.entitycovertypes
+                           WHERE LOWER(entitycovertype) = %(element)s;"""
+    landusecovertype_q = """SELECT landusecovertypeid 
+                           FROM ndb.landusetypes
+                           WHERE LOWER(landusecovertype) = %(element)s;"""
     
     par = {'speleothemdriptypeid': [driptype_q, 'speleothemdriptypeid'],
            'entitystatusid': [entitystatus_q, 'entitystatusid'],
-           'speleothemtypeid': [speleothemtypes_q, 'speleothemtypeid']}
+           'speleothemtypeid': [speleothemtypes_q, 'speleothemtypeid'],
+           'speleothemgeologyid': [entity_q, 'speleothemgeologyid'],
+           'covertype': [covertype_q, 'entitycoverid'],
+           'landusecovertypeid': [landusecovertype_q, 'landusecovertypeid']}
     try:
         inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.speleothems")
+        print('inputs', inputs)
     except Exception as e:
         response.validAll = False
         response.message.append(f"Speleothem elements in the CSV file are not properly defined.\n"
                                 f"Please verify the CSV file.")
     kwargs = {}
+    properties = {}
     kwargs['siteid']=uploader['sites'].siteid
     #kwargs['entityid']=inputs['entityid']
     counter = 0
@@ -59,38 +73,58 @@ def insert_speleothem(cur, yml_dict, csv_file, uploader):
         if inputs[k]:
             if inputs[k] != '':
                 cur.execute(v[0], {'element': inputs[k].lower()})
-                kwargs[v[1]] = cur.fetchone()
-                if not kwargs[v[1]]:
+                properties[v[1]] = cur.fetchone()
+                if not properties[v[1]]:
                     counter +=1
-                    response.message.append(f"✗  {k} ID for {inputs[k][i]} not found. "
+                    response.message.append(f"✗  {k} ID for {inputs[k]} not found. "
                                             f"Does it exist in Neotoma?")
                     response.valid.append(False)
-                    kwargs[v[1]] = None
+                    properties[v[1]] = None
                 else:
-                    kwargs[v[1]] = kwargs[v[1]][0]
+                    properties[v[1]] = properties[v[1]][0]
             else:
                 inputs[k] = None
-                kwargs[v[1]] = None
+                properties[v[1]] = None
                 response.message.append(f"?  {inputs[k]} ID not given. ")
                 response.valid.append(True)
         else:
             counter +=1
             response.message.append(f"?  {k} ID not given. ")
             response.valid.append(True)
-            kwargs[v[1]] = counter
-    cur.execute(entity_q, {'element': inputs['speleothemgeologyid'].lower()})
-    spgeologyid = cur.fetchone()
-    if not spgeologyid:
-        spgeologyid = None
-    else:
-        spgeologyid = spgeologyid[0]
+            properties[v[1]] = counter
+    kwargs['speleothemtypeid'] = properties['speleothemtypeid']
     sp = Speleothem(**kwargs)
     try:
+        if 'dripheight' not in inputs:
+            inputs['dripheight'] = None
+        if 'entitycoverthickness' not in inputs:
+            inputs['coverthickness'] = None
+        print(inputs)
+        print(properties)
         id = sp.insert_to_db(cur)
         sp.insert_cu_speleothem_to_db(cur, id = id, cuid = uploader['collunitid'].cuid)
         sp.insert_entitygeology_to_db(cur, id = id, 
-                                           speleothemgeologyid = spgeologyid,
+                                           speleothemgeologyid = properties['speleothemgeologyid'],
                                            notes = None)
+        sp.insert_entityrelationship_to_db(cur, id = id, 
+                                           entitystatusid = properties['entitystatusid'],
+                                           referenceentityid = id)#inputs['referenceentityid'])
+        sp.insert_entitydripheight_to_db(cur,
+                                         id = id,
+                                         speleothemdriptypeid = properties['speleothemdriptypeid'],
+                                         entitydripheight=inputs['dripheight'],
+                                         entitydripheightunit=inputs['dripheightunits'])
+        sp.insert_entitycovers_to_db(cur,
+                                      id = id,
+                                      entitycoverid = properties['entitycoverid'],
+                                      entitycoverthickness = inputs['coverthickness'],
+                                      entitycoverunits = inputs['entitycoverunits'])
+        print(properties['landusecovertypeid'])
+        sp.insert_entitylandusecovers_to_db(cur, 
+                                            id = id, 
+                                            landusecovertypeid = properties['landusecovertypeid'], 
+                                            landusecoverpercent = inputs['landusecoverpercent'], 
+                                            landusecovernotes = inputs['landusecovernotes'])
         response.valid.append(True)
     except Exception as e:
         response.valid.append(False)
