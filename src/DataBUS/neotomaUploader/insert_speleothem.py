@@ -23,13 +23,11 @@ def insert_speleothem(cur, yml_dict, csv_file, uploader):
             - message (list): A list of string messages detailing errors or confirmations during processing.
             - validAll (bool): A flag indicating whether all validations passed and the insertion was successful.
     """
-    params = ['siteid', 'entityid', 'entityname', 
-              'monitoring', 'rockageid', 'entrancedistance', 
-              'entrancedistanceunits', 'speleothemtypeid', 
-              'entitystatusid', 'speleothemgeologyid', 'speleothemdriptypeid',
-              'dripheight', 'dripheightunits',
-              'covertype', 'coverthickness', 'entitycoverunits',
-              'landusecovertypeid', 'landusecoverpercent', 'landusecovernotes']
+    params = ['siteid', 'entityid', 'entityname', 'monitoring', 'rockageid', 'entrancedistance', 
+              'entrancedistanceunitsid', 'speleothemtypeid', 'entitystatusid', 'speleothemgeologyid',
+              'speleothemdriptypeid', 'dripheight', 'dripheightunitsid', 'covertypeid', 'coverthickness',
+              'entitycoverunitsid', 'landusecovertypeid', 'landusecoverpercent', 'landusecovernotes',
+              'vegetationcovertypeid', 'vegetationcoverpercent', 'vegetationcovernotes', 'ref_id']
     response = Response()
 
     driptype_q = """SELECT speleothemdriptypeid 
@@ -45,91 +43,98 @@ def insert_speleothem(cur, yml_dict, csv_file, uploader):
                            FROM ndb.speleothemtypes
                            WHERE LOWER(speleothemtype) = %(element)s;"""
     covertype_q = """SELECT entitycoverid 
-                           FROM ndb.entitycovertypes
-                           WHERE LOWER(entitycovertype) = %(element)s;"""
+                     FROM ndb.entitycovertypes
+                     WHERE LOWER(entitycovertype) = %(element)s;"""
     landusecovertype_q = """SELECT landusecovertypeid 
-                           FROM ndb.landusetypes
-                           WHERE LOWER(landusecovertype) = %(element)s;"""
-    
+                            FROM ndb.landusetypes
+                            WHERE LOWER(landusecovertype) = %(element)s;"""
+    vegetationcovertype_q = """SELECT vegetationcovertypeid 
+                               FROM ndb.vegetationcovertypes
+                               WHERE LOWER(vegetationcovertype) = %(element)s;"""
+    rockage_q = """SELECT relativeageid
+                   FROM ndb.relativeages
+                   WHERE LOWER(relativeage) = %(element)s;"""
+    rocktype_q = """SELECT rocktypeid
+                    FROM ndb.rocktypes
+                    WHERE LOWER(rocktype) = %(element)s;"""
+    units_q = """SELECT variableunitsid
+                 FROM ndb.variableunits
+                 WHERE LOWER(variableunits) = %(element)s"""
     par = {'speleothemdriptypeid': [driptype_q, 'speleothemdriptypeid'],
            'entitystatusid': [entitystatus_q, 'entitystatusid'],
            'speleothemtypeid': [speleothemtypes_q, 'speleothemtypeid'],
            'speleothemgeologyid': [entity_q, 'speleothemgeologyid'],
-           'covertype': [covertype_q, 'entitycoverid'],
-           'landusecovertypeid': [landusecovertype_q, 'landusecovertypeid']}
+           'covertypeid': [covertype_q, 'entitycoverid'],
+           'landusecovertypeid': [landusecovertype_q, 'landusecovertypeid'],
+           'vegetationcovertypeid': [vegetationcovertype_q, 'vegetationcovertypeid'],
+           'rockageid': [rockage_q, 'rockageid'],
+           'rocktypeid': [rocktype_q, 'rocktypeid'],
+           'dripheightunitsid': [units_q, 'dripheightunitsid'],
+           'entitycoverunitsid': [units_q, 'entitycoverunitsid'],
+           'entrancedistanceunitsid': [units_q, 'entrancedistanceunitsid']}
     try:
         inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.speleothems")
-        print('inputs', inputs)
     except Exception as e:
         response.validAll = False
         response.message.append(f"Speleothem elements in the CSV file are not properly defined.\n"
                                 f"Please verify the CSV file.")
-    kwargs = {}
-    properties = {}
-    kwargs['siteid']=uploader['sites'].siteid
-    #kwargs['entityid']=inputs['entityid']
-    counter = 0
-    for k,v in par.items():
-        if inputs[k]:
-            if inputs[k] != '':
-                cur.execute(v[0], {'element': inputs[k].lower()})
-                properties[v[1]] = cur.fetchone()
-                if not properties[v[1]]:
-                    counter +=1
-                    response.message.append(f"✗  {k} ID for {inputs[k]} not found. "
-                                            f"Does it exist in Neotoma?")
-                    response.valid.append(False)
-                    properties[v[1]] = None
-                else:
-                    properties[v[1]] = properties[v[1]][0]
+    if inputs['monitoring'].lower() == 'yes':
+        inputs['monitoring'] = True
+    else:
+        inputs['monitoring'] = False
+    if isinstance(inputs['ref_id'], str):
+        inputs['ref_id'] = list(map(int, inputs['ref_id'].split(',')))
+    for inp in inputs:
+        if isinstance(inputs[inp], str) and 'id' in inp:
+            query = par[inp][0]
+            cur.execute(query, {'element': inputs[inp].lower()})
+            inputs[inp] = cur.fetchone()
+            if not inputs[inp]:
+                response.message.append(f"✗  {inp} for {inputs[inp]} not found. "
+                                        f"Does it exist in Neotoma?")
+                response.valid.append(False)
             else:
-                inputs[k] = None
-                properties[v[1]] = None
-                response.message.append(f"?  {inputs[k]} ID not given. ")
+                inputs[inp] = inputs[inp][0]
                 response.valid.append(True)
-        else:
-            counter +=1
-            response.message.append(f"?  {k} ID not given. ")
-            response.valid.append(True)
-            properties[v[1]] = counter
-    kwargs['speleothemtypeid'] = properties['speleothemtypeid']
-    sp = Speleothem(**kwargs)
+    sp = Speleothem(siteid=uploader['sites'].siteid,
+                    entityid=inputs['entityid'],
+                    entityname=inputs.get('entityname'),
+                    monitoring=inputs.get('monitoring'),
+                    rockageid=inputs.get('rockageid'),
+                    entrancedistance=inputs.get('entrancedistance'),
+                    entrancedistanceunits=inputs.get('entrancedistanceunits'),
+                    speleothemtypeid=inputs.get('speleothemtypeid'))
     try:
-        if 'dripheight' not in inputs:
-            inputs['dripheight'] = None
-        if 'entitycoverthickness' not in inputs:
-            inputs['coverthickness'] = None
-        print(inputs)
-        print(properties)
-        id = sp.insert_to_db(cur)
-        sp.insert_cu_speleothem_to_db(cur, id = id, cuid = uploader['collunitid'].cuid)
-        sp.insert_entitygeology_to_db(cur, id = id, 
-                                           speleothemgeologyid = properties['speleothemgeologyid'],
-                                           notes = None)
-        sp.insert_entityrelationship_to_db(cur, id = id, 
-                                           entitystatusid = properties['entitystatusid'],
-                                           referenceentityid = id)#inputs['referenceentityid'])
-        sp.insert_entitydripheight_to_db(cur,
-                                         id = id,
-                                         speleothemdriptypeid = properties['speleothemdriptypeid'],
-                                         entitydripheight=inputs['dripheight'],
-                                         entitydripheightunit=inputs['dripheightunits'])
-        sp.insert_entitycovers_to_db(cur,
-                                      id = id,
-                                      entitycoverid = properties['entitycoverid'],
-                                      entitycoverthickness = inputs['coverthickness'],
-                                      entitycoverunits = inputs['entitycoverunits'])
-        print(properties['landusecovertypeid'])
-        sp.insert_entitylandusecovers_to_db(cur, 
-                                            id = id, 
-                                            landusecovertypeid = properties['landusecovertypeid'], 
-                                            landusecoverpercent = inputs['landusecoverpercent'], 
-                                            landusecovernotes = inputs['landusecovernotes'])
+        sp.insert_to_db(cur)
+        sp.insert_cu_speleothem_to_db(cur, id = sp.entityid, cuid = uploader['collunitid'].cuid)
+        sp.insert_entitygeology_to_db(cur, id = sp.entityid,
+                                      speleothemgeologyid = inputs.get('speleothemgeologyid'),
+                                      notes = inputs.get('notes'))
+        sp.insert_entitydripheight_to_db(cur, id = sp.entityid,
+                                         speleothemdriptypeid = inputs.get('speleothemdriptypeid'),
+                                         entitydripheight=inputs.get('dripheight'),
+                                         entitydripheightunit=inputs.get('dripheightunitsid'))
+        sp.insert_entitycovers_to_db(cur, id = sp.entityid,
+                                     entitycoverid = inputs.get('entitycoverid'),
+                                     entitycoverthickness = inputs.get('coverthickness'),
+                                     entitycoverunits = inputs.get('entitycoverunitsid'))
+        sp.insert_entitylandusecovers_to_db(cur, id = sp.entityid, 
+                                            landusecovertypeid = inputs.get('landusecovertypeid'), 
+                                            landusecoverpercent = inputs.get('landusecoverpercent'), 
+                                            landusecovernotes = inputs.get('landusecovernotes'))
+        sp.insert_entityvegetationcovers_to_db(cur, id = sp.entityid, 
+                                               vegetationcovertypeid = inputs.get('vegetationcovertypeid'), 
+                                               vegetationcoverpercent = inputs.get('vegetationcoverpercent'), 
+                                               vegetationcovernotes = inputs.get('vegetationcovernotes'))
+        for i in inputs.get('ref_id', []):
+            sp.insert_entityrelationship_to_db(cur, id = sp.entityid, 
+                                               entitystatusid = inputs.get('entitystatusid'),
+                                               referenceentityid = i)
         response.valid.append(True)
     except Exception as e:
         response.valid.append(False)
         response.message.append(f"✗ Speleothem Entity cannot be inserted: " 
-                                    f"{e}")
+                                f"{e}")
     response.message = list(set(response.message))
     response.validAll = all(response.valid)
     if response.validAll:
