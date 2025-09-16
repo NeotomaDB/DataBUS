@@ -38,6 +38,7 @@ def pull_params(params, yml_dict, csv_template, table=None, name = None, values 
                 valor = subfields
             if len(valor) > 0: 
                 for count, val in enumerate(valor):
+                    chron_counter = 0
                     try:
                         clean_valor = clean_column(val.get("column"), 
                                                csv_template, 
@@ -76,18 +77,18 @@ def pull_params(params, yml_dict, csv_template, table=None, name = None, values 
                             else:
                                 add_unit_inputs[i] = []
                                 add_unit_inputs[i].append({f"{val.get('column')}": clean_valor})
-                        elif 'chronologies' in table and values == True:
+                        elif 'chronologies' in table:
                             if 'chronologies' not in add_unit_inputs:
                                 add_unit_inputs['chronologies'] = {}
                             if not all(x is None for x in clean_valor): 
                                 if 'chronologyname' in val:
                                     if not add_unit_inputs['chronologies'].get(val['chronologyname']):
-                                        add_unit_inputs['chronologies'][val['chronologyname']] = {}
-                                if i in ('age', 'ageboundolder', 'ageboundyounger'):
-                                    add_unit_inputs['chronologies'][val['chronologyname']][i] = clean_valor
+                                        add_unit_inputs['chronologies'][val.get('chronologyname', f'Chron_{chron_counter}')] = {}
+                                        chron_counter += 1
+                                    add_unit_inputs['chronologies'][val['chronologyname']][i] = clean_valor 
                                 else: 
                                     k = val['neotoma'].split('.')[-1]
-                                    add_unit_inputs[k] = clean_valor  
+                                    add_unit_inputs[k] = clean_valor
                         elif 'taxonname' in val:
                             if not all(x is None for x in clean_valor): 
                                 add_unit_inputs[val['taxonname']] = {}
@@ -103,15 +104,18 @@ def pull_params(params, yml_dict, csv_template, table=None, name = None, values 
             else:
                 add_unit_inputs[i] = None
         
+        
         if 'notes' in add_unit_inputs.keys():
             add_unit_inputs['notes']=clean_notes(add_unit_inputs['notes'], name)
-            add_unit_inputs['notes'] = add_unit_inputs['notes'].strip('  | ')
-            add_unit_inputs['notes'] = add_unit_inputs['notes'].replace("dataset", " ")
-            add_unit_inputs['notes'] = add_unit_inputs['notes'].replace("collunit", " ")
-            add_unit_inputs['notes'] = re.sub(r'\s+', ' ', add_unit_inputs['notes'])
-            add_unit_inputs['notes'] = add_unit_inputs['notes'].strip()
             return add_unit_inputs
         else:
+            if 'chronologies' in add_unit_inputs.keys():
+                add_unit_inputs['chronologies'] = {name: chron
+                                                for name, chron in add_unit_inputs['chronologies'].items()
+                                                if not all(all(v is None 
+                                                                for v in chron[key]) 
+                                                                for key in ('age', 'ageboundolder', 
+                                                                            'ageboundyounger'))}
             return add_unit_inputs
 
     elif isinstance(table, list):
