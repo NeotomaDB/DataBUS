@@ -23,6 +23,7 @@ def valid_sample_age(cur, yml_dict, csv_file, validator):
         error = str(e)
         try:
             if "time data" in error.lower():
+                print('in time data error')
                 age_dict = nh.retrieve_dict(yml_dict, "ndb.sampleages.age")
                 column = age_dict[0]['column']
                 if isinstance(csv_file[0][column], str) and len(csv_file[0][column]) >= 4:
@@ -45,7 +46,7 @@ def valid_sample_age(cur, yml_dict, csv_file, validator):
             response.validAll = False
             response.message.append(f"Sample Age parameters cannot be properly extracted. {e}\n {inner_e}")
             return response
-    if agemodel.get('agemodel').lower() == "collection date":
+    if agemodel.get('agemodel', '').lower() == "collection date":
         if isinstance(inputs.get('age', None), (float, int)):
             inputs['age'] = 1950 - inputs['age']
         elif isinstance(inputs.get('age', None), datetime):
