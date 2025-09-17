@@ -10,6 +10,7 @@ def insert_geochroncontrols(cur, yml_dict, csv_file, uploader):
     response = Response()
     try:
         assert len(entries['chroncontrolid']) == len(entries['geochronid'])
+        response.valid.append(True)
     except AssertionError:
         response.message.append("✗  Number of chroncontrol IDs does not match number of geochron IDs")
         response.valid.append(False)
