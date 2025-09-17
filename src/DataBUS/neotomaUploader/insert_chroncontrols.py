@@ -102,7 +102,6 @@ def insert_chroncontrols(cur, yml_dict, csv_file, uploader):
     static_params = {k: v for k, v in inputs.items() if not isinstance(v, list)}
 
     chronologies = uploader['chronology'].id
-    print(f"Chronologies: {chronologies}")
     for chron in chronologies:
         for values in zip(*iterable_params.values()):
             try:

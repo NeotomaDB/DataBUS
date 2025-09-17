@@ -19,59 +19,66 @@ def insert_geochron(cur, yml_dict, csv_file, uploader):
                'U/Th unspecified': 'Uranium series',
                'C14': 'Carbon-14'}
     inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.geochronology")
-
     indices = [i for i, value in enumerate(inputs['age']) if value is not None]
     inputs = {k: [v for i, v in enumerate(inputs[k]) if i in indices] if isinstance(inputs[k], list) else value for k, value in inputs.items()}
     inputs['sampleid'] = uploader['sample_geochron'].sampleid
+    try:
+        assert len(inputs['sampleid']) == len(inputs['age'])
+    except AssertionError:
+        response.message.append("✗  Number of ages does not match number of sample IDs")
+        response.valid.append(False)
+    
     geochron_q = """SELECT geochrontypeid FROM ndb.geochrontypes
                     WHERE LOWER(geochrontype) = LOWER(%(geochrontype)s)"""
     agetype_q = """SELECT agetypeid FROM ndb.agetypes
                    WHERE LOWER(agetype) = LOWER(%(agetype)s)"""
-    try:
-        for i in range(len(inputs['age'])):
-            entries={}
-            entries['sampleid'] = inputs['sampleid'][i]
-            if inputs['geochrontypeid'][i] in sisal_t:
-                inputs['geochrontypeid'][i] = sisal_t[inputs['geochrontypeid'][i]]
-            cur.execute(geochron_q, {"geochrontype": inputs['geochrontypeid'][i]})
+    
+    if inputs.get('geochrontypeid'):
+        inputs['geochrontypeid'] = [sisal_t.get(item, item) for item in inputs['geochrontypeid']]
+        elements = set(inputs['geochrontypeid'])
+        geochron = {}
+        for e in elements:
+            cur.execute(geochron_q, {"geochrontype": e})
             geochronid = cur.fetchone()
-            cur.execute(agetype_q, {"agetype": inputs['agetype']})
-            agetypeid = cur.fetchone()
-            if agetypeid:
-                entries['agetypeid'] = agetypeid[0]
-                response.valid.append(True)
-            else:
-                entries['agetypeid'] = None
-                response.valid.append(False)
-                response.message.append(f"Age Type {inputs['agetype'][i]} not found in database")
             if geochronid:
-                entries['geochrontypeid'] = geochronid[0]
-                response.valid.append(True)
+                geochron[e] = geochronid[0]
             else:
-                entries['geochrontypeid'] = None
+                response.message.append(f"✗  Geochron type {e} not found in database")
                 response.valid.append(False)
-                response.message.append(f"Geochron Type {inputs['geochrontypeid'][i]} not found in database")
-            
-            entries['age'] = inputs['age'][i] if inputs.get('age') is not None else None
-            entries['errorolder'] = inputs['errorolder'][i] if inputs.get('errorolder') is not None else None
-            entries['erroryounger'] = inputs['erroryounger'][i] if inputs.get('erroryounger') is not None else None
-            entries['infinite'] = inputs['infinite'][i] if inputs.get('infinite') is not None else False # Placeholder
-            entries['delta13c'] = inputs['delta13c'][i] if inputs.get('delta13c') is not None else None
-            entries['labnumber'] = inputs['labnumber'][i] if inputs.get('labnumber') is not None else None
-            entries['materialdated'] = inputs['materialdated'][i] if inputs.get('materialdated') is not None else None
-            entries['notes'] = inputs['notes'][i] if inputs.get('notes') is not None else None
-            try:
-                gc = Geochron(**entries)
-                id = gc.insert_to_db(cur)
-                response.id.append(id)
-                response.valid.append(True)
-                response.message.append("✔  Geochronology can be created")
-            except Exception as e:
-                response.valid.append(False)
-                response.message.append(f"✗  Geochronology cannot be created: {e}")
-    except (KeyError, TypeError) as e:
+                geochron[e] = None
+    if inputs.get('geochrontypeid') is not None:
+        inputs['geochrontypeid'] = [geochron.get(item, item) for item in inputs['geochrontypeid']]
+
+    try:
+        cur.execute(agetype_q, {"agetype": inputs['agetype']})
+        agetypeid = cur.fetchone()
+    except KeyError as e:
+        agetypeid = None
+        response.message.append("? No age type provided.")
         response.valid.append(False)
-        response.message.append(f"✗  Geochronology cannot be created: No geochrontype declared in CSV file.")
+    if agetypeid:
+        inputs['agetypeid'] = agetypeid[0]
+        response.valid.append(True)
+    else:
+        inputs['agetypeid'] = None
+        response.valid.append(False)
+        response.message.append(f"Age Type {inputs['agetype']} not found in database")
+    del inputs['agetype']
+    
+    iterable_params = {k: v for k, v in inputs.items() if isinstance(v, list)}
+    static_params = {k: v for k, v in inputs.items() if not isinstance(v, list)}
+    for values in zip(*iterable_params.values()):
+        kwargs = dict(zip(iterable_params.keys(), values))
+        kwargs.update(static_params) 
+        gc = Geochron(**kwargs)
+        response.valid.append(True)
+        try:
+            id = gc.insert_to_db(cur)
+            response.id.append(id)
+            response.valid.append(True)
+            response.message.append("✔  Geochronology can be inserted")
+        except Exception as e:
+            response.valid.append(False)
+            response.message.append(f"✗  Geochronology cannot be created: {e}")
     response.validAll = all(response.valid)
-    response.message = list(set(response.message))
     return response

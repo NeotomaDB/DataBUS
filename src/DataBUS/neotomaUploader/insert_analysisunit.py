@@ -16,7 +16,7 @@ def insert_analysisunit(cur, yml_dict, csv_file, uploader):
     params = ["analysisunitname", "depth", "thickness",
               "faciesid", "mixed", "igsn", "notes",
               "recdatecreated", "recdatemodified"]
-    try:
+    try: 
         inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.analysisunits")
     except Exception as e:
         response.validAll = False

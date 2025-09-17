@@ -19,8 +19,7 @@ def insert_sample_geochron(cur, yml_dict, csv_file, uploader):
     response = Response()
     inputs = {}
     inputs['anunits'] = uploader['anunits'].auid
-
-    age = nh.pull_params(["age"], yml_dict, csv_file, "ndb.sampleages")['age']
+    age = nh.pull_params(["age"], yml_dict, csv_file, "ndb.geochronology")['age']
     indices = [i for i, value in enumerate(age) if value is not None]
     inputs = {k: [v for i, v in enumerate(inputs[k]) if i in indices] if isinstance(inputs[k], list) else value for k, value in inputs.items()}
 
@@ -34,17 +33,16 @@ def insert_sample_geochron(cur, yml_dict, csv_file, uploader):
                 s_id = sample.insert_to_db(cur)
                 response.sampleid.append(s_id)
                 response.valid.append(True)
-                response.message.append(f"✔  Added Samples.")
+                response.message.append(f"✔  Added Geochron Samples.")
             except Exception as e:
                 s_id = sample.insert_to_db(cur)
                 response.sampleid.append(s_id)
                 response.valid.append(True)
-                response.message.append(f"✗  Cannot add sample: {e}.")
+                response.message.append(f"✗  Cannot add geocrhon sample: {e}.")
         except Exception as e:
             sample = Sample()
-            response.message.append(f"✗ Samples data is not correct: {e}")
+            response.message.append(f"✗ Geocrhon sample data is not correct: {e}")
             response.valid.append(False)
-
     response.validAll = all(response.valid)
     response.message = list(set(response.message))
     return response
