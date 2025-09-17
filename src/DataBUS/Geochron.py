@@ -11,7 +11,10 @@ class Geochron:
         self.age = age
         self.errorolder = errorolder
         self.erroryounger = erroryounger
-        self.infinite = infinite
+        if infinite is None:
+            self.infinite = False
+        else:
+            self.infinite = infinite
         self.delta13c = delta13c
         self.labnumber = labnumber
         self.materialdated = materialdated

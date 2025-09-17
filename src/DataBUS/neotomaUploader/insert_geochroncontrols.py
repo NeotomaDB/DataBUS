@@ -6,7 +6,14 @@ def insert_geochroncontrols(cur, yml_dict, csv_file, uploader):
     
     entries = {'chroncontrolid': uploader['chroncontrols'].id, 
                'geochronid': uploader['geochron'].id}
+
     response = Response()
+    try:
+        assert len(entries['chroncontrolid']) == len(entries['geochronid'])
+    except AssertionError:
+        response.message.append("✗  Number of chroncontrol IDs does not match number of geochron IDs")
+        response.valid.append(False)
+    
     for val in zip(*entries.values()):
         entry = {}
         entry['chroncontrolid'] = val[0]
