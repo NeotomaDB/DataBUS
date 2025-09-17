@@ -47,7 +47,7 @@ def insert_sample_age(cur, yml_dict, csv_file, uploader):
             response.validAll = False
             response.message.append(f"Sample Age parameters cannot be properly extracted. {e}\n {inner_e}")
             return response
-    if inputs.get('agetype').lower() == "collection date":
+    if inputs.get('agetype', '').lower() == "collection date":
         if isinstance(inputs.get('age', None), (float, int)):
             inputs['age'] = 1950 - inputs['age']
         elif isinstance(inputs.get('age', None), (datetime.datetime, datetime.date)):
