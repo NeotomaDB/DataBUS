@@ -12,42 +12,42 @@ def insert_uth_series(cur, yml_dict, csv_file, uploader):
     Returns:
     Response: A response object containing validation results and messages.
     """
+    response = Response()
     params = ['decayconstantid',
               'ratio230th232th', 'ratiouncertainty230th232th',
               'activity230th238u', 'activityuncertainty230th238u', 
               'activity234u238u', 'activityuncertainty234u238u',  
               'iniratio230th232th', 'iniratiouncertainty230th232th']
     inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.uraniumseries")
-    elements = [x for x in params if x not in {'geochronid', 'decayconstantid'}]
-    response = Response()
-    filtered_inputs = {k: v for k, v in inputs.items() if k in elements}
-    indices = [i for i, values in enumerate(zip(*filtered_inputs.values()))
-               if any(value is not None for value in values)]
 
-    inputs = {k: [v for i, v in enumerate(filtered_inputs[k]) if i in indices] if k in filtered_inputs
-                                                              else value for k, value in inputs.items()}
-    #uploader['geochronologies'].geochronid # Check for the name - maybe change the repsonse to just use a simple id list
+    indices = [i for i, values in enumerate(zip(*inputs.values()))
+               if any(value is not None for value in values)]
+    inputs = {k: [v for i, v in enumerate(inputs[k]) if i in indices] if k in inputs and k != "decayconstantid" 
+                                                                      else value for k, value in inputs.items()}
+    inputs['geochronid'] = uploader['geochron'].id
+    #assert that geochronid.id and all other inputs have the same length
+    if not all(len(inputs['geochronid']) == len(v) for k, v in inputs.items() if k not in ['geochronid', 'decayconstantid']):
+        response.message.append("✗ Length of geochronid does not match length of other inputs")
+        response.valid.append(False)
+
     if inputs.get('decayconstantid') is not None:
         decay_query = """SELECT decayconstantid FROM ndb.decayconstants
                     WHERE LOWER(decayconstant) = %(decayconstant)s;"""
-        replacement = {}
-        for constant in set(inputs.get('decayconstantid'))-{None}:
-            cur.execute(decay_query, {'decayconstant': constant.lower()})
-            decayconstantid = cur.fetchone()
-            if decayconstantid is not None:
-                replacement[constant] = decayconstantid[0]
-                response.valid.append(True)
-                response.message.append("✔ Decay constant found in database")
-            else:
-                response.valid.append(False)
-                response.message.append(f"✗ Decay constant {inputs['decayconstantid']} not found in database")
-    inputs['decayconstantid'] = [replacement.get(x, x) for x in inputs.get('decayconstantid') or []]
+        cur.execute(decay_query, {'decayconstant': 
+                                  inputs.get('decayconstantid', '').lower()})
+        decayconstantid = cur.fetchone()
+        if decayconstantid:
+            inputs['decayconstantid'] = decayconstantid[0]
+            response.valid.append(True)
+            response.message.append("✔ Decay constant found in database")
+        else:
+            response.valid.append(False)
+            response.message.append(f"✗ Decay constant {inputs['decayconstantid']} not found in database")
     
     for i in range(len(indices)):
         try:
-            #assert that the length of uploader[geochronid] is the same as the length of inputs[all other columns]
             uth = UThSeries(geochronid=uploader['geochron'].id[i],
-                            decayconstantid=inputs['decayconstantid'][i],
+                            decayconstantid=inputs['decayconstantid'],
                             ratio230th232th=inputs['ratio230th232th'][i],
                             ratiouncertainty230th232th=inputs['ratiouncertainty230th232th'][i],
                             activity230th238u=inputs['activity230th238u'][i],
@@ -61,27 +61,42 @@ def insert_uth_series(cur, yml_dict, csv_file, uploader):
                 uth.insert_to_db(cur)
                 response.valid.append(True)
                 response.message.append("✔ UThSeries has been inserted")
-                try:
-                    u = uploader['data'].data_id.get('238U')
-                    if u:
-                        uth.insert_uraniumseriesdata(u[i], cur)
-                        response.valid.append(True)
-                        response.message.append("✔ UraniumSeriesData has been inserted")
-                    else:
-                        response.valid.append(True)
-                        response.message.append("✔ No UraniumSeriesData to insert")
-                        continue
-                except Exception as e:
-                    response.valid.append(False)
-                    response.message.append(f"✗ Uranium Series Data cannot be inserted: {e}")
             except Exception as e:
                 response.valid.append(False)
                 response.message.append(f"✗ UThSeries cannot be inserted: {e}")
         except Exception as e:
             response.message.append(f"✗ UThSeries cannot be created: {e}")
             response.valid.append(False)
+    
+    
+    # Insert UraniumSeriesData
+    uraniumseries = ['238U', '230Th', '232Th']
+    uthdata = {}
+    for u in uraniumseries:
+        uthdata[u] = uploader['data'].data_id.get(u)
+        if uthdata[u] is None:
+            uthdata.pop(u, None)
+    uthdata = {k: [v for v in vals if v is not None] for k, vals in uthdata.items()}
 
-    # For the insert, insert UraniumSeriesData ID and the geochronID associated with the UThSeries
+    if not all(len(inputs['geochronid']) == len(v) for v in uthdata.values()):
+        response.message.append("✗ Length of geochronid does not match length of other inputs")
+        response.valid.append(False)
+        
+    for i in inputs['geochronid']:
+        for u in uraniumseries:
+            if uthdata.get(u):
+                try:
+                    uth.insert_uraniumseriesdata(cur, uthdata[u][i], inputs['geochronid'][i])
+                    response.valid.append(True)
+                    response.message.append("✔ UraniumSeriesData has been inserted")
+                except Exception as e:
+                    response.valid.append(False)
+                    response.message.append(f"✗ Uranium Series Data cannot be inserted: {e}")
+            else:
+                response.valid.append(True)
+                response.message.append("✔ No UraniumSeriesData to insert")
+                continue
+                
     response.message = list(set(response.message))
     response.validAll = all(response.valid)
     return response
