@@ -80,21 +80,28 @@ def insert_datauncertainty(cur, yml_dict, csv_file, uploader, wide = False):
                     response.message.append(f"?  {key} {k} ID not given. ")
                     response.valid.append(True)
                     entries[v[1]] = counter
-        assert len(taxa[key]['value']) == len(uploader['data'].data_id[key]), "Uncertainties and Data IDs must have the same length"
+        try:
+            assert len(taxa[key]['value']) == len(uploader['data'].data_id[key])
+        except AssertionError:
+            response.message.append(f"Uncertainties and Data IDs must have the same length: {key}")
+            response.valid.append(False)
         for i in range(len(taxa[key]['value'])):
-            try:
-                du = DataUncertainty(
-                    dataid= uploader['data'].data_id[key][i],  # retrieve correct ID for insert
-                    uncertaintyvalue = taxa[key]['value'][i],
-                    uncertaintyunitid = entries['variableunitsid'],  # False - need to get the ID first
-                    uncertaintybasisid = entries["uncertaintybasisid"],
-                    notes=entries.get("notes", None))
-                
-                du.insert_to_db(cur)
-                response.valid.append(True)
-            except Exception as e:
-                response.valid.append(False)
-                response.message.append(f"✗  Datum Uncertainty cannot be inserted: {e}")
+            if uploader['data'].data_id[key][i] is None:
+                continue
+            else:
+                try:
+                    du = DataUncertainty(
+                        dataid= uploader['data'].data_id[key][i],  # retrieve correct ID for insert
+                        uncertaintyvalue = taxa[key]['value'][i],
+                        uncertaintyunitid = entries['variableunitsid'],  # False - need to get the ID first
+                        uncertaintybasisid = entries["uncertaintybasisid"],
+                        notes=entries.get("notes", None))
+                    
+                    du.insert_to_db(cur)
+                    response.valid.append(True)
+                except Exception as e:
+                    response.valid.append(False)
+                    response.message.append(f"✗  Datum Uncertainty cannot be inserted: {e}")
     response.validAll = all(response.valid)
     response.message = list(set(response.message))
     if response.validAll:
