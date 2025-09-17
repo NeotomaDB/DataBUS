@@ -130,24 +130,28 @@ def insert_data(cur, yml_dict, csv_file, uploader, wide = False):
             varid = var.insert_to_db(cur)
         for i, j in enumerate(taxa[key]['value']):
             if key not in response.data_id:
-                response.data_id[key]=[]
-            try:
-                if len(uploader['samples'].sampleid)>1:
-                    sampleid = uploader['samples'].sampleid[i]
-                else:
-                    sampleid = uploader['samples'].sampleid[0]
-                datum = Datum(sampleid=sampleid, 
-                              variableid=varid, 
-                              value=j)
-                d_id = datum.insert_to_db(cur)
-                response.valid.append(True)
-                response.data_id[key].append(d_id)
-            except Exception as e:
-                response.valid.append(False)
-                response.message.append(f"✗  Datum cannot be inserted: {e}")
-                d_id = 2
-                cur.execute("ROLLBACK;") # exit error status
+                    response.data_id[key]=[]
+            if taxa[key]['value'][i] in [None, '']:
+                response.data_id[key].append(None)
                 continue
+            else:
+                try:
+                    if len(uploader['samples'].sampleid)>1:
+                        sampleid = uploader['samples'].sampleid[i]
+                    else:
+                        sampleid = uploader['samples'].sampleid[0]
+                    datum = Datum(sampleid=sampleid, 
+                                  variableid=varid, 
+                                  value=j)
+                    d_id = datum.insert_to_db(cur)
+                    response.valid.append(True)
+                    response.data_id[key].append(d_id)
+                except Exception as e:
+                    response.valid.append(False)
+                    response.message.append(f"✗  Datum cannot be inserted: {e}")
+                    response.data_id[key].append(None)
+                    cur.execute("ROLLBACK;") # exit error status
+                    continue
 
     response.validAll = all(response.valid)
     if response.validAll:
