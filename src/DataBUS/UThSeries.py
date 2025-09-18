@@ -59,13 +59,13 @@ class UThSeries:
         cur.execute(uths_query, inputs)
         return
     
-    def insert_uraniumseriesdata(self, dataid, cur):
-        cur.execute(insert_uraniumseriesdata) 
-        uths_query = """SELECT insert_uraniumseriesdata(_geochronid := %(geochronid)s,
-                                                _dataid := %(dataid)s)"""
-        inputs = {
-            'geochronid': self.geochronid,
-            'dataid': dataid
-        }
-        cur.execute(uths_query, inputs)
-        return
+def insert_uraniumseriesdata(cur, dataid, geochronid):
+    cur.execute(insert_uraniumseriesdata) 
+    uths_query = """SELECT insert_uraniumseriesdata(_geochronid := %(geochronid)s,
+                                            _dataid := %(dataid)s)"""
+    inputs = {
+        'geochronid': geochronid,
+        'dataid': dataid
+    }
+    cur.execute(uths_query, inputs)
+    return

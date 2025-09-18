@@ -29,3 +29,4 @@ from .Geochron import Geochron
 from .GeochronControl import GeochronControl
 from .Hiatus import Hiatus
 from .UThSeries import UThSeries
+from .UThSeries import insert_uraniumseriesdata

@@ -1,5 +1,5 @@
 import DataBUS.neotomaHelpers as nh
-from DataBUS import Response, UThSeries
+from DataBUS import Response, UThSeries, insert_uraniumseriesdata
 
 def insert_uth_series(cur, yml_dict, csv_file, uploader):
     """
@@ -86,7 +86,7 @@ def insert_uth_series(cur, yml_dict, csv_file, uploader):
         for u in uraniumseries:
             if uthdata.get(u):
                 try:
-                    uth.insert_uraniumseriesdata(cur, uthdata[u][i], inputs['geochronid'][i])
+                    insert_uraniumseriesdata(cur, uthdata[u][i], inputs['geochronid'][i])
                     response.valid.append(True)
                     response.message.append("✔ UraniumSeriesData has been inserted")
                 except Exception as e:
