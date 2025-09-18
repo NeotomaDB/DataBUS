@@ -19,26 +19,24 @@ def insert_uth_series(cur, yml_dict, csv_file, uploader):
               'activity234u238u', 'activityuncertainty234u238u',  
               'iniratio230th232th', 'iniratiouncertainty230th232th']
     inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.uraniumseries")
-
-    indices = [i for i, values in enumerate(zip(*inputs.values()))
-               if any(value is not None for value in values)]
-    inputs = {k: [v for i, v in enumerate(inputs[k]) if i in indices] if k in inputs and k != "decayconstantid" 
-                                                                      else value for k, value in inputs.items()}
+    filtered_inputs = {k: v for k, v in inputs.items() if k != 'decayconstantid'}
+    indices = [i for i in range(len(next(iter(filtered_inputs.values()))))
+              if any(isinstance(v, (list, tuple)) and v[i] is not None for v in filtered_inputs.values())]
+    decayconstant = inputs.pop('decayconstantid', None)
+    inputs = {k: [v for i, v in enumerate(inputs[k]) if i in indices] for k in inputs}
     inputs['geochronid'] = uploader['geochron'].id
-    #assert that geochronid.id and all other inputs have the same length
+
     for k,v in inputs.items():
-        if k != 'decayconstantid' and k != 'geochronid':
+        if k != 'geochronid':
             if len(v) != len(inputs['geochronid']):
                 response.message.append(f"✗ Length of geochronid does not match length of {k} inputs")
                 response.valid.append(False)
             else:
                 response.valid.append(True)
-
-    if inputs.get('decayconstantid') is not None:
+    if isinstance(decayconstant, str):
         decay_query = """SELECT decayconstantid FROM ndb.decayconstants
                     WHERE LOWER(decayconstant) = %(decayconstant)s;"""
-        cur.execute(decay_query, {'decayconstant': 
-                                  inputs.get('decayconstantid', '').lower()})
+        cur.execute(decay_query, {'decayconstant': decayconstant.lower()})
         decayconstantid = cur.fetchone()
         if decayconstantid:
             inputs['decayconstantid'] = decayconstantid[0]
@@ -46,11 +44,17 @@ def insert_uth_series(cur, yml_dict, csv_file, uploader):
             response.message.append("✔ Decay constant found in database")
         else:
             response.valid.append(False)
-            response.message.append(f"✗ Decay constant {inputs['decayconstantid']} not found in database")
+            response.message.append(f"✗ Decay constant {decayconstant} not found in database")
+    elif isinstance(decayconstant, (int)):
+        inputs['decayconstantid'] = decayconstant
+        response.valid.append(True)
+    else:
+        response.valid.append(False)
+        response.message.append("✗ Decay constant not properly defined")
     
-    for i in range(len(indices)):
+    for i in range(len(inputs['geochronid'])):
         try:
-            uth = UThSeries(geochronid=uploader['geochron'].id[i],
+            uth = UThSeries(geochronid=inputs['geochronid'][i],
                             decayconstantid=inputs['decayconstantid'],
                             ratio230th232th=inputs['ratio230th232th'][i],
                             ratiouncertainty230th232th=inputs['ratiouncertainty230th232th'][i],
