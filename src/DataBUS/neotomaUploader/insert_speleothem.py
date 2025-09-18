@@ -1,5 +1,7 @@
 import DataBUS.neotomaHelpers as nh
 from DataBUS import Response, Speleothem
+import csv
+import os
 
 def insert_speleothem(cur, yml_dict, csv_file, uploader):
     """
@@ -78,19 +80,20 @@ def insert_speleothem(cur, yml_dict, csv_file, uploader):
         response.validAll = False
         response.message.append(f"Speleothem elements in the CSV file are not properly defined.\n"
                                 f"Please verify the CSV file.")
-    if inputs['monitoring'].lower() == 'yes':
+    if inputs.get('monitoring', '').lower() == 'yes':
         inputs['monitoring'] = True
     else:
         inputs['monitoring'] = False
-    if isinstance(inputs['ref_id'], str):
+    if isinstance(inputs.get('ref_id'), str):
         inputs['ref_id'] = list(map(int, inputs['ref_id'].split(',')))
     for inp in inputs:
+        el = inputs[inp]
         if isinstance(inputs[inp], str) and 'id' in inp:
             query = par[inp][0]
             cur.execute(query, {'element': inputs[inp].lower()})
             inputs[inp] = cur.fetchone()
             if not inputs[inp]:
-                response.message.append(f"✗  {inp} for {inputs[inp]} not found. "
+                response.message.append(f"✗  {inp} for {el} not found. "
                                         f"Does it exist in Neotoma?")
                 response.valid.append(False)
             else:
@@ -126,10 +129,15 @@ def insert_speleothem(cur, yml_dict, csv_file, uploader):
                                                vegetationcovertypeid = inputs.get('vegetationcovertypeid'), 
                                                vegetationcoverpercent = inputs.get('vegetationcoverpercent'), 
                                                vegetationcovernotes = inputs.get('vegetationcovernotes'))
-        for i in inputs.get('ref_id', []):
-            sp.insert_entityrelationship_to_db(cur, id = sp.entityid, 
-                                               entitystatusid = inputs.get('entitystatusid'),
-                                               referenceentityid = i)
+
+        file_path = "data/references_entities.csv"
+        write_header = not os.path.exists(file_path) or os.path.getsize(file_path) == 0
+        with open(file_path, "a", newline="") as f:
+            writer = csv.writer(f)
+            if write_header:
+                writer.writerow(["entity", "entitystatusid", "reference_id"])
+            for i in inputs.get("ref_id", []):
+                writer.writerow([sp.entityid, inputs.get("entitystatusid"), i])
         response.valid.append(True)
     except Exception as e:
         response.valid.append(False)
