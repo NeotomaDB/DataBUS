@@ -35,3 +35,4 @@ from .valid_geochron import valid_geochron
 from .valid_geochroncontrol import valid_geochroncontrol
 from .valid_uth_series import valid_uth_series
 from .valid_hiatus import valid_hiatus
+from .valid_external_speleothem import valid_external_speleothem

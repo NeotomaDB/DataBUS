@@ -35,3 +35,4 @@ from .insert_sample_geochron import insert_sample_geochron
 from .insert_uth_series import insert_uth_series
 from .insert_final import insert_final
 from .insert_hiatus import insert_hiatus
+from .insert_external_speleothem import insert_external_speleothem

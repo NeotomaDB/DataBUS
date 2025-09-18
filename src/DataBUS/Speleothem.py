@@ -97,19 +97,6 @@ class Speleothem:
         cur.execute(query, inputs)
         return
     
-    def insert_entityrelationship_to_db(self, cur, id, entitystatusid, referenceentityid):
-        cur.execute(insert_entityrelationship)
-        query = """
-                SELECT insert_entityrelationship(_entityid := %(entityid)s,
-                                                 _entitystatusid := %(entitystatusid)s,
-                                                 _referenceentityid := %(referenceentityid)s)
-                """
-        inputs = {"entityid": id,
-                  "entitystatusid": entitystatusid,
-                  "referenceentityid": referenceentityid}
-        cur.execute(query, inputs)
-        return
-    
     def insert_entitydripheight_to_db(self, cur, id, 
                                       speleothemdriptypeid, 
                                       entitydripheight, 
@@ -181,3 +168,48 @@ class Speleothem:
                   "vegetationcovernotes": vegetationcovernotes}
         cur.execute(query, inputs)
         return
+    
+    def insert_externalspeleothem_to_db(cur, self, externalid, extdatabaseid, externaldescription):
+        cur.execute(insert_externalspeleothem)
+        query = """
+                SELECT insert_externalspeleothem(_entityid := %(entityid)s,
+                                                 _externalid := %(externalid)s,
+                                                 _extdatabaseid := %(extdatabaseid)s,
+                                                 _externaldescription := %(externaldescription)s)
+                """
+        inputs = {"entityid": self.id,
+                  "externalid": externalid,
+                  "extdatabaseid": extdatabaseid,
+                  "externaldescription": externaldescription}
+        cur.execute(query, inputs)
+        return
+
+def insert_entityrelationship_to_db(cur, id, entitystatusid, referenceentityid):
+    cur.execute(insert_entityrelationship)
+    query = """
+            SELECT insert_entityrelationship(_entityid := %(entityid)s,
+                                                _entitystatusid := %(entitystatusid)s,
+                                                _referenceentityid := %(referenceentityid)s)
+            """
+    inputs = {"entityid": id,
+                "entitystatusid": entitystatusid,
+                "referenceentityid": referenceentityid}
+    cur.execute(query, inputs)
+    return
+
+class ExternalSpeleothem:
+    def __init__(
+        self,
+        entityid=None,
+        externalid=None,
+        extdatabaseid=None,
+        externaldescription=None):
+        self.entityid = entityid
+        self.externalid = externalid
+        self.extdatabaseid = extdatabaseid
+        self.externaldescription=externaldescription
+    
+    def __str__(self):
+        statement = (
+            f"Entity: {self.entityid}, External Entity: {self.externalid}")
+        return statement
