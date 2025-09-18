@@ -4,7 +4,7 @@ with importlib.resources.open_text("DataBUS.sqlHelpers",
     insert_uthseries = sql_file.read()
 with importlib.resources.open_text("DataBUS.sqlHelpers", 
                                    "insert_uraniumseriesdata.sql") as sql_file:
-    insert_uraniumseriesdata = sql_file.read()
+    insert_uraniumseriesquery = sql_file.read()
     
 class UThSeries:
     description = "UThSeries object in Neotoma"
@@ -60,9 +60,9 @@ class UThSeries:
         return
     
 def insert_uraniumseriesdata(cur, dataid, geochronid):
-    cur.execute(insert_uraniumseriesdata) 
+    cur.execute(insert_uraniumseriesquery) 
     uths_query = """SELECT insert_uraniumseriesdata(_geochronid := %(geochronid)s,
-                                            _dataid := %(dataid)s)"""
+                                                    _dataid := %(dataid)s)"""
     inputs = {
         'geochronid': geochronid,
         'dataid': dataid

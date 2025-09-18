@@ -26,9 +26,13 @@ def insert_uth_series(cur, yml_dict, csv_file, uploader):
                                                                       else value for k, value in inputs.items()}
     inputs['geochronid'] = uploader['geochron'].id
     #assert that geochronid.id and all other inputs have the same length
-    if not all(len(inputs['geochronid']) == len(v) for k, v in inputs.items() if k not in ['geochronid', 'decayconstantid']):
-        response.message.append("✗ Length of geochronid does not match length of other inputs")
-        response.valid.append(False)
+    for k,v in inputs.items():
+        if k != 'decayconstantid' and k != 'geochronid':
+            if len(v) != len(inputs['geochronid']):
+                response.message.append(f"✗ Length of geochronid does not match length of {k} inputs")
+                response.valid.append(False)
+            else:
+                response.valid.append(True)
 
     if inputs.get('decayconstantid') is not None:
         decay_query = """SELECT decayconstantid FROM ndb.decayconstants
@@ -77,25 +81,23 @@ def insert_uth_series(cur, yml_dict, csv_file, uploader):
         if uthdata[u] is None:
             uthdata.pop(u, None)
     uthdata = {k: [v for v in vals if v is not None] for k, vals in uthdata.items()}
-
-    if not all(len(inputs['geochronid']) == len(v) for v in uthdata.values()):
-        response.message.append("✗ Length of geochronid does not match length of other inputs")
-        response.valid.append(False)
-        
-    for i in inputs['geochronid']:
-        for u in uraniumseries:
-            if uthdata.get(u):
-                try:
-                    insert_uraniumseriesdata(cur, uthdata[u][i], inputs['geochronid'][i])
-                    response.valid.append(True)
-                    response.message.append("✔ UraniumSeriesData has been inserted")
-                except Exception as e:
-                    response.valid.append(False)
-                    response.message.append(f"✗ Uranium Series Data cannot be inserted: {e}")
-            else:
+    
+    for k, v in uthdata.items():
+        if len(v) != len(inputs['geochronid']):
+            response.message.append("✗ Length of geochronid does not match length of other inputs")
+            response.valid.append(False)
+        else:
+            response.valid.append(True)
+   
+    for i in range(len(inputs['geochronid'])):
+        for k in uthdata:
+            try:
+                insert_uraniumseriesdata(cur, uthdata[k][i], inputs['geochronid'][i])
                 response.valid.append(True)
-                response.message.append("✔ No UraniumSeriesData to insert")
-                continue
+                response.message.append("✔ UraniumSeriesData has been inserted")
+            except Exception as e:
+                response.valid.append(False)
+                response.message.append(f"✗ Uranium Series Data cannot be inserted: {e}")
                 
     response.message = list(set(response.message))
     response.validAll = all(response.valid)
