@@ -84,6 +84,15 @@ def insert_speleothem(cur, yml_dict, csv_file, uploader):
         inputs['monitoring'] = True
     else:
         inputs['monitoring'] = False
+    if isinstance(inputs.get('ref_id'), list):
+        inputs['ref_id'] = list(set(inputs['ref_id']))
+        elist = []
+        for el in inputs['ref_id']:
+            if isinstance(el, str):
+                elist.extend(el.split(','))
+            else:
+                elist.append(str(el))
+        inputs['ref_id'] = list(set(map(int, elist)))
     if isinstance(inputs.get('ref_id'), str):
         inputs['ref_id'] = list(map(int, inputs['ref_id'].split(',')))
     for inp in inputs:
@@ -109,6 +118,7 @@ def insert_speleothem(cur, yml_dict, csv_file, uploader):
                     speleothemtypeid=inputs.get('speleothemtypeid'))
     try:
         sp.insert_to_db(cur)
+        response.id = sp.entityid
         sp.insert_cu_speleothem_to_db(cur, id = sp.entityid, cuid = uploader['collunitid'].cuid)
         sp.insert_entitygeology_to_db(cur, id = sp.entityid,
                                       speleothemgeologyid = inputs.get('speleothemgeologyid'),

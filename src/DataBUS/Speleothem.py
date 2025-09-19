@@ -24,6 +24,10 @@ with importlib.resources.open_text("DataBUS.sqlHelpers",
                                    "insert_entityvegetationcover.sql") as sql_file:
     insert_entityvegetationcover = sql_file.read()   
 
+with importlib.resources.open_text("DataBUS.sqlHelpers", 
+                                   "insert_externalspeleothem.sql") as sql_file:
+    insert_externalspeleothem = sql_file.read()
+
 class Speleothem:
     def __init__(
         self,
@@ -168,21 +172,6 @@ class Speleothem:
                   "vegetationcovernotes": vegetationcovernotes}
         cur.execute(query, inputs)
         return
-    
-    def insert_externalspeleothem_to_db(cur, self, externalid, extdatabaseid, externaldescription):
-        cur.execute(insert_externalspeleothem)
-        query = """
-                SELECT insert_externalspeleothem(_entityid := %(entityid)s,
-                                                 _externalid := %(externalid)s,
-                                                 _extdatabaseid := %(extdatabaseid)s,
-                                                 _externaldescription := %(externaldescription)s)
-                """
-        inputs = {"entityid": self.id,
-                  "externalid": externalid,
-                  "extdatabaseid": extdatabaseid,
-                  "externaldescription": externaldescription}
-        cur.execute(query, inputs)
-        return
 
 def insert_entityrelationship_to_db(cur, id, entitystatusid, referenceentityid):
     cur.execute(insert_entityrelationship)
@@ -213,3 +202,19 @@ class ExternalSpeleothem:
         statement = (
             f"Entity: {self.entityid}, External Entity: {self.externalid}")
         return statement
+
+        
+    def insert_externalspeleothem_to_db(self, cur):
+        cur.execute(insert_externalspeleothem)
+        query = """
+                SELECT insert_externalspeleothem(_entityid := %(entityid)s,
+                                                    _externalid := %(externalid)s,
+                                                    _extdatabaseid := %(extdatabaseid)s,
+                                                    _externaldescription := %(externaldescription)s)
+                """
+        inputs = {"entityid": self.entityid,
+                    "externalid": self.externalid,
+                    "extdatabaseid": self.extdatabaseid,
+                    "externaldescription": self.externaldescription}
+        cur.execute(query, inputs)
+        return
