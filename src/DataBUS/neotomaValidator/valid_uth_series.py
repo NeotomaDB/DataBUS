@@ -30,22 +30,19 @@ def valid_uth_series(cur, yml_dict, csv_file):
     if inputs.get('decayconstantid') is not None:
         decay_query = """SELECT decayconstantid FROM ndb.decayconstants
                     WHERE LOWER(decayconstant) = %(decayconstant)s;"""
-        replacement = {}
-        for constant in set(inputs.get('decayconstantid'))-{None}:
-            cur.execute(decay_query, {'decayconstant': constant.lower()})
-            decayconstantid = cur.fetchone()
-            if decayconstantid is not None:
-                replacement[constant] = decayconstantid[0]
-                response.valid.append(True)
-                response.message.append("✔ Decay constant found in database")
-            else:
-                response.valid.append(False)
-                response.message.append(f"✗ Decay constant {inputs['decayconstantid']} not found in database")
-    inputs['decayconstantid'] = [replacement.get(x, x) for x in inputs.get('decayconstantid') or []]
+        cur.execute(decay_query, {'decayconstant': inputs['decayconstantid'].lower()})
+        decayconstantid = cur.fetchone()
+        if decayconstantid is not None:
+            inputs['decayconstantid'] = decayconstantid[0]
+            response.valid.append(True)
+            response.message.append("✔ Decay constant found in database")
+        else:
+            response.valid.append(False)
+            response.message.append(f"✗ Decay constant {inputs['decayconstantid']} not found in database")
     for i in range(len(indices)):
         try:
             uth = UThSeries(geochronid=inputs['geochronid'],
-                            decayconstantid=inputs['decayconstantid'][i],
+                            decayconstantid=inputs['decayconstantid'],
                             ratio230th232th=inputs['ratio230th232th'][i],
                             ratiouncertainty230th232th=inputs['ratiouncertainty230th232th'][i],
                             activity230th238u=inputs['activity230th238u'][i],
