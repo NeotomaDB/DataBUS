@@ -15,7 +15,7 @@ def valid_geochron(cur, yml_dict, csv_file):
     sisal_t = {'MC-ICP-MS U/Th': 'Uranium series',
                'ICP-MS U/Th Other': 'Uranium series',
                'Alpha U/Th': 'Uranium series',
-               'TIMS': 'TIMS',
+               'TIMS': 'Uranium series',
                'U/Th unspecified': 'Uranium series',
                'C14': 'Carbon-14'}
     inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.geochronology")

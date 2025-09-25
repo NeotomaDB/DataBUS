@@ -18,7 +18,7 @@ def valid_chroncontrols(yml_dict, csv_file, cur, validator):
        'Event; end of laminations':'Annual laminations (varves)', 
        'C14': 'Radiocarbon, calibrated', 
        'Multiple methods':'Complex (mixture of types)', 
-       'other (see notes)':',Other dating methods'}
+       'other (see notes)':'Other dating methods'}
     
     try:
         inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.chroncontrols")
