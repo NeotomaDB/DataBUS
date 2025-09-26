@@ -47,6 +47,9 @@ def valid_contact(cur, csv_file, yml_dict):
                 familyname = name.split(",")[0].strip()
                 firstname = name.split(",")[1].strip() if len(name.split(",")) > 1 else ""
                 if '.' in firstname:
+                    parts = firstname.strip().split()
+                    if len(parts) >= 2 and len(parts[1].replace(".", "")) == 1:
+                        firstname = parts[0][0].upper() + "." + parts[1][0].upper() + "."
                     nameQuery = """SELECT contactid, familyname || ', ' || leadinginitials AS fullname
                                    FROM ndb.contacts
                                    WHERE LOWER(familyname) = %(familyname)s AND
@@ -87,4 +90,4 @@ def valid_contact(cur, csv_file, yml_dict):
                     for i in person["match"]:
                         response.message.append(f"   * {i[1]}")
     response.validAll = all(response.valid)
-    return response 
+    return response
