@@ -14,9 +14,8 @@ def insert_analysisunit(cur, yml_dict, csv_file, uploader):
         _int_: _The integer value of the newly created siteid from the Neotoma Database._
     """
     params = ["analysisunitname", "depth", "thickness",
-              "faciesid", "mixed", "igsn", "notes",
-              "recdatecreated", "recdatemodified"]
-    try: 
+              "faciesid", "mixed", "igsn", "notes"]
+    try:
         inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.analysisunits")
     except Exception as e:
         response.validAll = False
@@ -50,7 +49,6 @@ def insert_analysisunit(cur, yml_dict, csv_file, uploader):
                     kwargs['faciesid'][0]
                 au = AnalysisUnit(**kwargs)
                 auid = au.insert_to_db(cur)
-                response.message.append(f"✔ Added Analysis Units.")
                 response.valid.append(True)
             except Exception as e:
                 response.message.append(f"✗ Could not insert Analysis Unit, " 
@@ -59,6 +57,7 @@ def insert_analysisunit(cur, yml_dict, csv_file, uploader):
                                   mixed=False)
                 auid = 3 #placeholder
             response.auid.append(auid)
+        response.message.append(f"✔ Added {len(response.auid)} Analysis Units.")
     else:
         try:
             inputs['collectionunitid'] = uploader["collunitid"].cuid

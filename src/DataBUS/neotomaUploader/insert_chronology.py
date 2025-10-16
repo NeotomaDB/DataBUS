@@ -52,8 +52,7 @@ def insert_chronology(cur, yml_dict, csv_file, uploader, multiple = False):
             return response
     
     if len(inputs['chronologies']) >1:
-        response.message.append("✔ File with multiple chronologies: ")
-        response.message.append(f"{str(list(inputs['chronologies'].keys())).replace('[', '').replace(']', '')}")
+        response.message.append("✔ File with multiple chronologies.")
     for chron in inputs['chronologies']:
         ch = inputs['chronologies'][chron]
         if ch.get("agetype", inputs['agetype']) is not None: 
@@ -104,7 +103,7 @@ def insert_chronology(cur, yml_dict, csv_file, uploader, multiple = False):
                 chronid = cronology.insert_to_db(cur)
                 response.id.append(chronid)
                 response.valid.append(True)
-                response.message.append(f"✔ Added Chronology {chronid}.")
+                response.message.append(f"✔ Added Chronology {chronid, chron}. \n")
             except Exception as e:
                 response.message.append(f"✗  Chronology Data is not correct. "
                                         f"Error message: {e}")

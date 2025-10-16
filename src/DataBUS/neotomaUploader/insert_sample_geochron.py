@@ -22,7 +22,6 @@ def insert_sample_geochron(cur, yml_dict, csv_file, uploader):
     age = nh.pull_params(["age"], yml_dict, csv_file, "ndb.geochronology")['age']
     indices = [i for i, value in enumerate(age) if value is not None]
     inputs = {k: [v for i, v in enumerate(inputs[k]) if i in indices] if isinstance(inputs[k], list) else value for k, value in inputs.items()}
-
     for unit in inputs['anunits']:
         entry = {'analysisunitid': unit,
                  'datasetid': uploader["geochrondatasets"].datasetid}

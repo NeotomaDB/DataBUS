@@ -12,97 +12,94 @@ def insert_uth_series(cur, yml_dict, csv_file, uploader):
     Returns:
     Response: A response object containing validation results and messages.
     """
+    
     response = Response()
-    params = ['decayconstantid',
-              'ratio230th232th', 'ratiouncertainty230th232th',
-              'activity230th238u', 'activityuncertainty230th238u', 
-              'activity234u238u', 'activityuncertainty234u238u',  
-              'iniratio230th232th', 'iniratiouncertainty230th232th']
-    inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.uraniumseries")
-    filtered_inputs = {k: v for k, v in inputs.items() if k != 'decayconstantid'}
-    indices = [i for i in range(len(next(iter(filtered_inputs.values()))))
-              if any(isinstance(v, (list, tuple)) and v[i] is not None for v in filtered_inputs.values())]
-    decayconstant = inputs.pop('decayconstantid', None)
-    inputs = {k: [v for i, v in enumerate(inputs[k]) if i in indices] for k in inputs}
-    inputs['geochronid'] = uploader['geochron'].id
-
-    for k,v in inputs.items():
-        if k != 'geochronid':
-            if len(v) != len(inputs['geochronid']):
-                response.message.append(f"✗ Length of geochronid does not match length of {k} inputs")
-                response.valid.append(False)
-            else:
-                response.valid.append(True)
-    if isinstance(decayconstant, str):
-        decay_query = """SELECT decayconstantid FROM ndb.decayconstants
-                    WHERE LOWER(decayconstant) = %(decayconstant)s;"""
-        cur.execute(decay_query, {'decayconstant': decayconstant.lower()})
-        decayconstantid = cur.fetchone()
-        if decayconstantid:
-            inputs['decayconstantid'] = decayconstantid[0]
-            response.valid.append(True)
-            response.message.append("✔ Decay constant found in database")
-        else:
-            response.valid.append(False)
-            response.message.append(f"✗ Decay constant {decayconstant} not found in database")
-    elif isinstance(decayconstant, (int)):
-        inputs['decayconstantid'] = decayconstant
+    if not uploader['geochron'].id:
+        response.message.append("✔ No geochron IDs to insert")
         response.valid.append(True)
+        response.validAll = all(response.valid)
+        return response
+    
     else:
-        response.valid.append(False)
-        response.message.append("✗ Decay constant not properly defined")
-    
-    for i in range(len(inputs['geochronid'])):
-        try:
-            uth = UThSeries(geochronid=inputs['geochronid'][i],
-                            decayconstantid=inputs['decayconstantid'],
-                            ratio230th232th=inputs['ratio230th232th'][i],
-                            ratiouncertainty230th232th=inputs['ratiouncertainty230th232th'][i],
-                            activity230th238u=inputs['activity230th238u'][i],
-                            activityuncertainty230th238u=inputs['activityuncertainty230th238u'][i],
-                            activity234u238u=inputs['activity234u238u'][i],
-                            activityuncertainty234u238u=inputs['activityuncertainty234u238u'][i],
-                            iniratio230th232th=inputs['iniratio230th232th'][i],
-                            iniratiouncertainty230th232th=inputs['iniratiouncertainty230th232th'][i])
-            response.valid.append(True)
-            try:
-                uth.insert_to_db(cur)
+        params = ['geochronid', 'decayconstantid',
+                'ratio230th232th', 'ratiouncertainty230th232th',
+                'activity230th238u', 'activityuncertainty230th238u', 
+                'activity234u238u', 'activityuncertainty234u238u',  
+                'iniratio230th232th', 'iniratiouncertainty230th232th']
+        inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.uraniumseries")
+        elements = [x for x in params if x not in {'geochronid', 'decayconstantid'}]
+        filtered_inputs = {k: v for k, v in inputs.items() if k in elements}
+        indices = [i for i, values in enumerate(zip(*filtered_inputs.values()))
+                if any(value is not None for value in values)]
+        inputs = {k: [v for i, v in enumerate(filtered_inputs[k]) if i in indices] if k in filtered_inputs
+                                                                else value for k, value in inputs.items()}
+        inputs['geochronid'] = uploader['geochron'].id
+
+        if inputs.get('decayconstantid') is not None:
+            decay_query = """SELECT decayconstantid FROM ndb.decayconstants
+                        WHERE LOWER(decayconstant) = %(decayconstant)s;"""
+            cur.execute(decay_query, {'decayconstant': inputs['decayconstantid'].lower().strip()})
+            decayconstantid = cur.fetchone()
+            if decayconstantid is not None:
+                inputs['decayconstantid'] = decayconstantid[0]
                 response.valid.append(True)
-                response.message.append("✔ UThSeries has been inserted")
-            except Exception as e:
+                response.message.append("✔ Decay constant found in database")
+            else:
                 response.valid.append(False)
-                response.message.append(f"✗ UThSeries cannot be inserted: {e}")
-        except Exception as e:
-            response.message.append(f"✗ UThSeries cannot be created: {e}")
-            response.valid.append(False)
-    
-    
-    # Insert UraniumSeriesData
-    uraniumseries = ['238U', '230Th', '232Th']
-    uthdata = {}
-    for u in uraniumseries:
-        uthdata[u] = uploader['data'].data_id.get(u)
-        if uthdata[u] is None:
-            uthdata.pop(u, None)
-    uthdata = {k: [v for v in vals if v is not None] for k, vals in uthdata.items()}
-    
-    for k, v in uthdata.items():
-        if len(v) != len(inputs['geochronid']):
-            response.message.append("✗ Length of geochronid does not match length of other inputs")
-            response.valid.append(False)
+                response.message.append(f"✗ Decay constant {inputs['decayconstantid']} not found in database")
+        
+        if not indices:
+            response.message.append("✔ No UTh Series data to insert")
+            response.valid.append(True)
+            response.validAll = all(response.valid)
+            return response
         else:
-            response.valid.append(True)
-   
-    for i in range(len(inputs['geochronid'])):
-        for k in uthdata:
-            try:
-                insert_uraniumseriesdata(cur, uthdata[k][i], inputs['geochronid'][i])
-                response.valid.append(True)
-                response.message.append("✔ UraniumSeriesData has been inserted")
-            except Exception as e:
-                response.valid.append(False)
-                response.message.append(f"✗ Uranium Series Data cannot be inserted: {e}")
-                
-    response.message = list(set(response.message))
-    response.validAll = all(response.valid)
-    return response
+            for i in range(len(indices)):
+                try:
+                    uth = UThSeries(geochronid=inputs['geochronid'][i],
+                                    decayconstantid=inputs['decayconstantid'],
+                                    ratio230th232th=inputs['ratio230th232th'][i],
+                                    ratiouncertainty230th232th=inputs['ratiouncertainty230th232th'][i],
+                                    activity230th238u=inputs['activity230th238u'][i],
+                                    activityuncertainty230th238u=inputs['activityuncertainty230th238u'][i],
+                                    activity234u238u=inputs['activity234u238u'][i],
+                                    activityuncertainty234u238u=inputs['activityuncertainty234u238u'][i],
+                                    iniratio230th232th=inputs['iniratio230th232th'][i],
+                                    iniratiouncertainty230th232th=inputs['iniratiouncertainty230th232th'][i])
+                    response.valid.append(True)
+                    response.message.append("✔ UThSeries can be created")
+                    try:
+                        uth.insert_to_db(cur)
+                        response.valid.append(True)
+                        response.message.append("✔ UThSeries has been inserted")
+                    except Exception as e:
+                        response.valid.append(False)
+                        response.message.append(f"✗ UThSeries cannot be inserted: {e}")
+                except Exception as e:
+                    response.valid.append(False)
+                    response.message.append(f"✗ UThSeries cannot be created: {e}")
+
+        # For the insert, insert UraniumSeriesData ID and the geochronID associated with the UThSeries
+        # Insert UraniumSeriesData
+        uraniumseries = ['238U', '230Th', '232Th']
+        uthdata = {}
+        for u in uraniumseries:
+            uthdata[u] = uploader['data'].data_id.get(u)
+            if uthdata[u] is None:
+                uthdata.pop(u, None)
+        uthdata = {k: [v for v in vals if v is not None] for k, vals in uthdata.items()}
+        if uthdata:
+            for k, v in uthdata.items():
+                if isinstance(v, list) and len(v):
+                    for i in range(len(v)):
+                        try:
+                            insert_uraniumseriesdata(cur, v[i], inputs['geochronid'][i])
+                            response.valid.append(True)
+                            response.message.append("✔ UraniumSeriesData has been inserted")
+                        except Exception as e:
+                            response.valid.append(False)
+                            response.message.append(f"✗ Uranium Series Data cannot be inserted: {e}")
+                    
+        response.message = list(set(response.message))
+        response.validAll = all(response.valid)
+        return response

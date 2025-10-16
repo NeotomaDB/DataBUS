@@ -6,28 +6,38 @@ def insert_geochroncontrols(cur, yml_dict, csv_file, uploader):
     
     entries = {'chroncontrolid': uploader['chroncontrols'].id, 
                'geochronid': uploader['geochron'].id}
-
     response = Response()
-    try:
-        assert len(entries['chroncontrolid']) == len(entries['geochronid'])
+    if len(entries['chroncontrolid']) == 0 or len(entries['geochronid']) == 0:
+        response.message.append("✔ No chroncontrol IDs or geochron IDs to insert.")
         response.valid.append(True)
-    except AssertionError:
-        response.message.append("✗  Number of chroncontrol IDs does not match number of geochron IDs")
-        response.valid.append(False)
+        response.validAll = all(response.valid)
+        return response
     
-    for val in zip(*entries.values()):
+    try:
+        #dividing entrieschroncontrolid by geochronid should be an exact number
+        assert len(entries['chroncontrolid']) % len(entries['geochronid']) == 0 
+        times = len(entries['chroncontrolid']) // len(entries['geochronid'])
+        # duplicate geochronid the appropriate number of times
+        entries['geochronid'] = entries['geochronid'] * times
+    except AssertionError:
+        response.message.append(f"✗  Number of chroncontrol IDs {entries['chroncontrolid']}"
+                                f"does not match number of geochron IDs {entries['geochronid']}")
+        response.valid.append(False)
+    counter = 0
+    
+    for i in range(len(entries['chroncontrolid'])):
+        counter += 1
         entry = {}
-        entry['chroncontrolid'] = val[0]
-        entry['geochronid'] = val[1]
+        entry['chroncontrolid'] = entries['chroncontrolid'][i]
+        entry['geochronid'] = entries['geochronid'][i]
         try:
             gcc = GeochronControl(**entry)
             gcc.insert_to_db(cur)    
             response.valid. append(True)
-            response.message.append("GeochronControl inserted.")
+            response.message.append("✔ GeochronControl inserted.")
         except Exception as e:
             response.valid.append(False)
-            response.message.append(f"GeochronControl not inserted. {e}")
-    
+            response.message.append(f"✗  GeochronControl not inserted. {e}")
     response.message = list(set(response.message))
     response.validAll = all(response.valid)
     return response

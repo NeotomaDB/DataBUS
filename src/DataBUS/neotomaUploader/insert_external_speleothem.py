@@ -15,9 +15,7 @@ def insert_external_speleothem(cur, yml_dict, csv_file, uploader):
     Returns:
         Response: An object that contains:
             - message (list): A list of status messages indicating the success or failure of each step.
-            - valid (list): A list of booleans corresponding to the validity of each major operation.
-    Example:
-        response = insert_external_speleothem(cur, yml_dict, csv_file)
+            - validAll (bool): A boolean indicating if all operations were successful.
     """
 
     params = ['externalid', 'externaldescription', 'extdatabaseid']
@@ -26,15 +24,15 @@ def insert_external_speleothem(cur, yml_dict, csv_file, uploader):
     query = """SELECT extdatabaseid 
                FROM ndb.externaldatabases
                WHERE LOWER(extdatabasename) = %(element)s OR
-               LOWER(url) ILIKE %(element)s;"""
+               LOWER(url) ILIKE %(element2)s;"""
     try:
         inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.externalspeleothemdata")
     except Exception as e:
         response.message.append(f"✗  Cannot pull external speleothem parameters from CSV file. {e}")
         response.valid.append(False)
-
     if isinstance(inputs.get('extdatabaseid'), str):
-        cur.execute(query, {'element': inputs['extdatabaseid'].lower()})
+        cur.execute(query, {'element': inputs['extdatabaseid'].lower(),
+                            'element2': f"%{inputs['extdatabaseid'].lower()}%"})
         inputs['extdatabaseid'] = cur.fetchone()
         if not inputs['extdatabaseid']:
             response.message.append(f"✗  extdatabaseid for {inputs.get('extdatabaseid')} not found. "

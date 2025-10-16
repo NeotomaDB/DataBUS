@@ -32,10 +32,12 @@ def insert_chroncontrols(cur, yml_dict, csv_file, uploader):
        'Event; end of laminations':'Annual laminations (varves)', 
        'C14': 'Radiocarbon, calibrated', 
        'Multiple methods':'Complex (mixture of types)', 
-       'other (see notes)':',Other dating methods'}
+       'other (see notes)':'Other dating methods'}
     
     try:
         inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.chroncontrols")
+        if not inputs['analysisunitid']:
+            inputs['analysisunitid']= uploader['anunits'].auid
         indices = [i for i, value in enumerate(inputs['age']) if value is not None]
         inputs = {k: [v for i, v in enumerate(inputs[k]) if i in indices] if isinstance(inputs[k], list) else value for k, value in inputs.items()}
     except Exception as e:

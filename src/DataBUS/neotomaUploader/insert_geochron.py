@@ -15,7 +15,7 @@ def insert_geochron(cur, yml_dict, csv_file, uploader):
     sisal_t = {'MC-ICP-MS U/Th': 'Uranium series',
                'ICP-MS U/Th Other': 'Uranium series',
                'Alpha U/Th': 'Uranium series',
-               'TIMS': 'TIMS',
+               'TIMS': 'Uranium series',
                'U/Th unspecified': 'Uranium series',
                'C14': 'Carbon-14'}
     inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.geochronology")
@@ -27,7 +27,7 @@ def insert_geochron(cur, yml_dict, csv_file, uploader):
     except AssertionError:
         response.message.append("✗  Number of ages does not match number of sample IDs")
         response.valid.append(False)
-    
+     
     geochron_q = """SELECT geochrontypeid FROM ndb.geochrontypes
                     WHERE LOWER(geochrontype) = LOWER(%(geochrontype)s)"""
     agetype_q = """SELECT agetypeid FROM ndb.agetypes
@@ -76,9 +76,10 @@ def insert_geochron(cur, yml_dict, csv_file, uploader):
             id = gc.insert_to_db(cur)
             response.id.append(id)
             response.valid.append(True)
-            response.message.append("✔  Geochronology can be inserted")
         except Exception as e:
             response.valid.append(False)
             response.message.append(f"✗  Geochronology cannot be created: {e}")
     response.validAll = all(response.valid)
+    response.message.append(f"✔  {len(response.id)} Geochronologies inserted")
+    response.message=list(set(response.message))
     return response
