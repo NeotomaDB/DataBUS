@@ -53,7 +53,7 @@ def insert_speleothem(cur, yml_dict, csv_file, uploader):
     vegetationcovertype_q = """SELECT vegetationcovertypeid 
                                FROM ndb.vegetationcovertypes
                                WHERE LOWER(vegetationcovertype) = %(element)s;"""
-    rockage_q = """SELECT relativeageid
+    rockage_q = """SELECT relativeageid 
                    FROM ndb.relativeages
                    WHERE LOWER(relativeage) = %(element)s;"""
     rocktype_q = """SELECT rocktypeid
@@ -114,7 +114,7 @@ def insert_speleothem(cur, yml_dict, csv_file, uploader):
                     monitoring=inputs.get('monitoring'),
                     rockageid=inputs.get('rockageid'),
                     entrancedistance=inputs.get('entrancedistance'),
-                    entrancedistanceunits=inputs.get('entrancedistanceunits'),
+                    entrancedistanceunits=inputs.get('entrancedistanceunitsid'),
                     speleothemtypeid=inputs.get('speleothemtypeid'))
     try:
         sp.insert_to_db(cur)
@@ -128,7 +128,7 @@ def insert_speleothem(cur, yml_dict, csv_file, uploader):
                                          entitydripheight=inputs.get('dripheight'),
                                          entitydripheightunit=inputs.get('dripheightunitsid'))
         sp.insert_entitycovers_to_db(cur, id = sp.entityid,
-                                     entitycoverid = inputs.get('entitycoverid'),
+                                     entitycoverid = inputs.get('covertypeid'),
                                      entitycoverthickness = inputs.get('coverthickness'),
                                      entitycoverunits = inputs.get('entitycoverunitsid'))
         sp.insert_entitylandusecovers_to_db(cur, id = sp.entityid, 
