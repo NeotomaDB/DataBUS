@@ -26,7 +26,6 @@ def insert_collunit(cur, yml_dict, csv_file, uploader):
               "gpserror", "waterdepth", "substrateid", "slopeaspect",
               "slopeangle", "location", "notes", "geog", "geog.latitude", 
               "geog.longitude"]
-    
     try:
         inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.collectionunits")
     except Exception as e:
@@ -64,7 +63,6 @@ def insert_collunit(cur, yml_dict, csv_file, uploader):
             response.message.append(f"CU parameters cannot be properly extracted. {e}\n"
                                     f"{inner_e}")
             return response
-    
     if inputs.get("colltypeid"):
         query1 = """SELECT colltypeid FROM ndb.collectiontypes 
                     WHERE LOWER(colltype) = %(colltype)s"""
@@ -72,7 +70,6 @@ def insert_collunit(cur, yml_dict, csv_file, uploader):
         inputs["colltypeid"] = cur.fetchone()
         if inputs.get("colltypeid"):
             inputs["colltypeid"] = inputs["colltypeid"][0]
-    
     if inputs.get("substrateid"):
         query2 = """SELECT rocktypeid FROM ndb.rocktypes 
                     WHERE LOWER(rocktype) = %(substrate)s"""
@@ -82,11 +79,9 @@ def insert_collunit(cur, yml_dict, csv_file, uploader):
             inputs["substrateid"] = inputs["substrateid"][0]
         else:
             inputs["substrateid"] = None
-
     if 'geog.latitude' and 'geog.longitude' in inputs:
         inputs['geog'] = (inputs["geog.latitude"], inputs["geog.longitude"])
         del inputs["geog.latitude"], inputs["geog.longitude"]
-    
     if inputs.get('geog'):
         try:
             inputs['geog'] = Geog((inputs["geog"][0], inputs["geog"][1]))
@@ -96,9 +91,7 @@ def insert_collunit(cur, yml_dict, csv_file, uploader):
             inputs['geog'] = None
     else:
         inputs['geog'] = None
-
     overwrite = nh.pull_overwrite(params, yml_dict, "ndb.collectionunits")
-
     if inputs.get("depenvtid"):
         query = """SELECT depenvtid FROM ndb.depenvttypes
                    WHERE LOWER(depenvt) = %(depenvt)s"""

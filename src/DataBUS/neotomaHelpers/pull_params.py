@@ -66,7 +66,6 @@ def pull_params(params, yml_dict, csv_template, table=None, name = None, values 
                             case "string" | "str":
                                 clean_valor = list(map(str, clean_valor)) if val.get("rowwise") else str(clean_valor)
                                 if isinstance(clean_valor, list):
-                                    #clean_valor = None if clean_valor.strip() in ("", "NA") else clean_valor
                                     clean_valor = [None if isinstance(value, str) and value.strip() in ("", "NA") 
                                                else str(value) if not isinstance(value, list) else value 
                                                for value in clean_valor]
@@ -77,15 +76,19 @@ def pull_params(params, yml_dict, csv_template, table=None, name = None, values 
                             else:
                                 add_unit_inputs[i] = []
                                 add_unit_inputs[i].append({f"{val.get('column')}": clean_valor})
-                        elif 'chronologies' in table:
-                            if 'chronologies' not in add_unit_inputs:
-                                add_unit_inputs['chronologies'] = {}
+                        elif any(k in table for k in ('chronologies', 'sampleages')):
+                            key = ('chronologies' if 'chronologies' in table 
+                                   else 'sampleages' if 'sampleages' in table else None)
+                            if key not in add_unit_inputs:
+                                add_unit_inputs[key] = {}
                             if not all(x is None for x in clean_valor): 
                                 if 'chronologyname' in val:
-                                    if not add_unit_inputs['chronologies'].get(val['chronologyname']):
-                                        add_unit_inputs['chronologies'][val.get('chronologyname', f'Chron_{chron_counter}')] = {}
+                                    if not add_unit_inputs[key].get(val['chronologyname']):
+                                        add_unit_inputs[key][val.get('chronologyname', f'Chron_{chron_counter}')] = {}
                                         chron_counter += 1
-                                    add_unit_inputs['chronologies'][val['chronologyname']][i] = clean_valor 
+                                    add_unit_inputs[key][val['chronologyname']][i] = clean_valor
+                                    if i == 'age' and key == 'chronologies':
+                                        add_unit_inputs['chronologies'][val['chronologyname']]['isdefault'] = val.get('default', False)
                                 else: 
                                     k = val['neotoma'].split('.')[-1]
                                     add_unit_inputs[k] = clean_valor
@@ -103,21 +106,21 @@ def pull_params(params, yml_dict, csv_template, table=None, name = None, values 
                             add_unit_inputs[i] = clean_valor
             else:
                 add_unit_inputs[i] = None
-        
-        
         if 'notes' in add_unit_inputs.keys():
             add_unit_inputs['notes']=clean_notes(add_unit_inputs['notes'], name)
             return add_unit_inputs
         else:
-            if 'chronologies' in add_unit_inputs.keys():
-                add_unit_inputs['chronologies'] = {name: chron
-                                                for name, chron in add_unit_inputs['chronologies'].items()
-                                                if not all(all(v is None 
-                                                                for v in chron[key]) 
-                                                                for key in ('age', 'ageboundolder', 
-                                                                            'ageboundyounger'))}
+            if any(k in add_unit_inputs.keys() for k in ('chronologies', 'sampleages')):
+                key = ('chronologies' if 'chronologies' in add_unit_inputs.keys()
+                        else 'sampleages' if 'sampleages' in  add_unit_inputs.keys() else None)
+                add_unit_inputs[key] = {name: chron
+                                            for name, chron in add_unit_inputs[key].items()
+                                            if not all(all(v is None 
+                                                            for v in chron[key]) 
+                                                            for key in ('age', 'ageyounger', 'ageolder', 
+                                                                        'age', 'ageboundolder', 
+                                                                        'ageboundyounger'))}
             return add_unit_inputs
-
     elif isinstance(table, list):
         for item in table:
             results.append(pull_params(params, yml_dict, csv_template, item))

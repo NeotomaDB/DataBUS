@@ -4,13 +4,11 @@ from DataBUS import Sample, Response
 def insert_sample(cur, yml_dict, csv_file, uploader):
     """
     Inserts sample data into Neotoma.
-
     Args:
         cur (cursor object): Database cursor to execute SQL queries.
         yml_dict (dict): Dictionary containing YAML data.
         csv_file (str): File path to the CSV template.
         uploader (dict): Dictionary containing uploader details.
-
     Returns:
         response (dict): A dictionary containing information about the inserted samples.
             - 'samples' (list): List of sample IDs inserted into the database.
@@ -20,11 +18,9 @@ def insert_sample(cur, yml_dict, csv_file, uploader):
     params = ["sampledate", "samplename", "analysisdate",
              "labnumber", "prepmethod", "notes", "taxonname"]
     inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.samples")
-    
     get_taxonid = """SELECT * FROM ndb.taxa WHERE taxonname %% %(taxonname)s;"""
-
     for i, unit in enumerate(uploader["anunits"].auid):
-        entry = {'analysisunitid': unit,
+        entry = {'analysisunitid':int(unit),
                  'datasetid': uploader["datasets"].datasetid,
                  'sampledate': inputs['sampledate'][i] if isinstance(inputs.get('sampledate'), list) else inputs['sampledate'],
                  'samplename': inputs['samplename'][i] if isinstance(inputs.get('samplename'), list) else inputs['samplename'],
@@ -61,9 +57,8 @@ def insert_sample(cur, yml_dict, csv_file, uploader):
             sample = Sample()
             response.message.append(f"✗ Samples data is not correct: {e}")
             response.valid.append(False)
-
     if not len(uploader["anunits"].auid) == len(response.sampleid):
-        response.message.append("✗  Analysis Units and Samples do not have same length.")
+       response.message.append("✗  Analysis Units and Samples do not have same length.")
     if response.sampleid:
         response.message.append(f"✔  Added Samples {len(response.sampleid)}.")
     response.validAll = all(response.valid)

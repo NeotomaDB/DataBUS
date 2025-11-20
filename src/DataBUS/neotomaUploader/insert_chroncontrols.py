@@ -4,25 +4,21 @@ from DataBUS import ChronControl, Response
 def insert_chroncontrols(cur, yml_dict, csv_file, uploader):
     """
     Inserts chronological control data into a database.
-
     Args:
         cur (cursor object): Database cursor to execute SQL queries.
         yml_dict (dict): Dictionary containing YAML data.
         csv_file (str): File path to the CSV template.
         uploader (dict): Dictionary containing uploader details.
-
     Returns:
         response (dict): A dictionary containing information about the inserted chronological control units.
             'chron_control_units' (list): List of IDs for the inserted chronological control units.
             'valid' (bool): Indicates if all insertions were successful.
-
     """
     response = Response()
     params = ['chronologyid', 'chroncontroltypeid', 
               'depth', 'thickness', 'age', 
               'agelimityounger', 'agelimitolder', 
               'notes', 'analysisunitid', 'agetype']
-    
     sisal_t = {'MC-ICP-MS U/Th':'Uranium-series',
        'ICP-MS U/Th':'Other Uranium-series', 
        'Alpha U/Th':'Uranium-series', 
@@ -33,7 +29,6 @@ def insert_chroncontrols(cur, yml_dict, csv_file, uploader):
        'C14': 'Radiocarbon, calibrated', 
        'Multiple methods':'Complex (mixture of types)', 
        'other (see notes)':'Other dating methods'}
-    
     try:
         inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.chroncontrols")
         if not inputs['analysisunitid']:
@@ -45,7 +40,6 @@ def insert_chroncontrols(cur, yml_dict, csv_file, uploader):
         response.message.append("Chronology parameters cannot be properly extracted. Verify the CSV file.")
         response.message.append(e)
         return response
-    
     agetype_q = """SELECT agetypeid FROM ndb.agetypes
                 WHERE LOWER(agetype) = LOWER(%(agetype)s)"""
     chroncontrol_q = """SELECT chroncontroltypeid FROM ndb.chroncontroltypes
@@ -82,10 +76,10 @@ def insert_chroncontrols(cur, yml_dict, csv_file, uploader):
             response.valid.append(False)
     except Exception as e:
         response.message.append("? Depth, Age, or Thickness are not given.")
-
     if inputs.get('chroncontroltypeid'):
         inputs['chroncontroltypeid'] = [sisal_t.get(item, item) for item in inputs['chroncontroltypeid']]
         elements = set(inputs['chroncontroltypeid'])
+        elements.discard(None)
         chroncontroltypes = {}
         for e in elements:
             cur.execute(chroncontrol_q, {"chroncontroltype": e})
@@ -96,13 +90,10 @@ def insert_chroncontrols(cur, yml_dict, csv_file, uploader):
                 response.message.append(f"✗  Chron control type {e} not found in database")
                 response.valid.append(False)
                 chroncontroltypes[e] = None
-
     if inputs.get('chroncontroltypeid') is not None:
         inputs['chroncontroltypeid'] = [chroncontroltypes.get(item, item) for item in inputs.get('chroncontroltypeid',[])]
-
     iterable_params = {k: v for k, v in inputs.items() if isinstance(v, list)}
     static_params = {k: v for k, v in inputs.items() if not isinstance(v, list)}
-
     chronologies = uploader['chronology'].id
     for chron in chronologies:
         for values in zip(*iterable_params.values()):
@@ -117,7 +108,6 @@ def insert_chroncontrols(cur, yml_dict, csv_file, uploader):
             except Exception as e:
                 response.message.append(f"✗  Could not create chron control {e}")
                 response.valid.append(False)
-
     response.validAll = all(response.valid)
     if response.validAll:
         response.message.append(f"✔  Chron control can be created")

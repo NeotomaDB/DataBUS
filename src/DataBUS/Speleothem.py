@@ -3,9 +3,6 @@ with importlib.resources.open_text("DataBUS.sqlHelpers",
                                    "insert_speleothem.sql") as sql_file:
     insert_speleothem = sql_file.read()
 with importlib.resources.open_text("DataBUS.sqlHelpers", 
-                                   "insert_speleothem_cu.sql") as sql_file:
-    insert_speleothem_cu = sql_file.read()
-with importlib.resources.open_text("DataBUS.sqlHelpers", 
                                 "insert_entitygeology.sql") as sql_file:
     insert_entitygeology = sql_file.read()
 with importlib.resources.open_text("DataBUS.sqlHelpers", 
@@ -22,11 +19,13 @@ with importlib.resources.open_text("DataBUS.sqlHelpers",
     insert_entitylandusecover = sql_file.read()
 with importlib.resources.open_text("DataBUS.sqlHelpers", 
                                    "insert_entityvegetationcover.sql") as sql_file:
-    insert_entityvegetationcover = sql_file.read()   
-
+    insert_entityvegetationcover = sql_file.read()
 with importlib.resources.open_text("DataBUS.sqlHelpers", 
                                    "insert_externalspeleothem.sql") as sql_file:
     insert_externalspeleothem = sql_file.read()
+with importlib.resources.open_text("DataBUS.sqlHelpers", 
+                                   "insert_entitysamples.sql") as sql_file:
+    insert_entitysamples = sql_file.read()
 
 class Speleothem:
     def __init__(
@@ -87,17 +86,6 @@ class Speleothem:
         inputs = {"entityid": id,
                   "speleothemgeologyid": speleothemgeologyid,
                   "notes": notes}
-        cur.execute(query, inputs)
-        return
-    
-    def insert_cu_speleothem_to_db(self, cur, id, cuid):
-        cur.execute(insert_speleothem_cu)
-        query = """
-                SELECT insert_speleothem_cu(_entityid := %(entityid)s,
-                                            _collectionunitid := %(collectionunitid)s)
-                """
-        inputs = {"entityid": id,
-                  "collectionunitid": cuid}
         cur.execute(query, inputs)
         return
     
@@ -172,6 +160,33 @@ class Speleothem:
                   "vegetationcovernotes": vegetationcovernotes}
         cur.execute(query, inputs)
         return
+    
+    def insert_entitysamples_to_db(self, cur, organics, fluid_inclusions, mineralogy_petrology_fabric,
+                              clumped_isotopes, noble_gas_temperatures, C14, ODL):
+        cur.execute(insert_entitysamples)
+        def to_bool(x):
+            if isinstance(x, str):
+                return x.lower() == "yes"
+            return None
+        query = """
+                SELECT insert_entitysamples(_entityid := %(entityid)s,
+                                            _organics := %(organics)s,
+                                            _fluid_inclusions := %(fluid_inclusions)s,
+                                            _mineralogy_petrology_fabric := %(mineralogy_petrology_fabric)s,
+                                            _noble_gas_temperatures := %(noble_gas_temperatures)s,
+                                            _clumped_isotopes := %(clumped_isotopes)s,
+                                            _C14 := %(C14)s,
+                                            _ODL := %(ODL)s)
+                """
+        inputs = {"entityid": int(self.entityid),
+                    "organics": to_bool(organics),
+                    "fluid_inclusions": to_bool(fluid_inclusions),
+                    "mineralogy_petrology_fabric": to_bool(mineralogy_petrology_fabric),
+                    "noble_gas_temperatures": to_bool(noble_gas_temperatures),
+                    "clumped_isotopes": to_bool(clumped_isotopes),
+                    "C14": to_bool(C14),
+                    "ODL": to_bool(ODL)}
+        cur.execute(query, inputs)
 
 def insert_entityrelationship_to_db(cur, id, entitystatusid, referenceentityid):
     cur.execute(insert_entityrelationship)

@@ -50,7 +50,6 @@ def insert_chronology(cur, yml_dict, csv_file, uploader, multiple = False):
             response.message.append(f"Chronology parameters cannot be properly extracted. {e}\n"
                                     f"{str(inner_e)}")
             return response
-    
     if len(inputs['chronologies']) >1:
         response.message.append("✔ File with multiple chronologies.")
     for chron in inputs['chronologies']:
@@ -73,7 +72,10 @@ def insert_chronology(cur, yml_dict, csv_file, uploader, multiple = False):
             response.message.append("? No age type provided.")
             response.valid.append(True)
             inputs["agetypeid"] = None
-        # create the chronology
+        if ch.get('isdefault'):
+            ch['agemodel'] = inputs.get('agemodel')
+        else:
+            ch['agemodel'] = chron.replace('_SISAL', '')
         c = {'collectionunitid': uploader["collunitid"].cuid,
              'agetypeid': ch.get('agetypeid', inputs.get('agetypeid')),
              'contactid': ch.get('contactid', inputs.get('contactid')),
@@ -102,6 +104,7 @@ def insert_chronology(cur, yml_dict, csv_file, uploader, multiple = False):
             try:
                 chronid = cronology.insert_to_db(cur)
                 response.id.append(chronid)
+                response.name[chron] = chronid
                 response.valid.append(True)
                 response.message.append(f"✔ Added Chronology {chronid, chron}. \n")
             except Exception as e:
@@ -111,6 +114,5 @@ def insert_chronology(cur, yml_dict, csv_file, uploader, multiple = False):
         except Exception as e:
             response.valid.append(False)
             response.message.append(f"✗  Chronology cannot be created: {e}")
-    
     response.validAll = all(response.valid)
     return response  

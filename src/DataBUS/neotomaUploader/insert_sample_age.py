@@ -4,14 +4,12 @@ import datetime
 
 def insert_sample_age(cur, yml_dict, csv_file, uploader):
     """
-    Inserts sample age data into a database.
-
+    Inserts sample age data into a database
     Args:
         cur (cursor object): Database cursor to execute SQL queries.
         yml_dict (dict): Dictionary containing YAML data.
         csv_file (str): File path to the CSV template.
         uploader (dict): Dictionary containing uploader details.
-
     Returns:
         response (dict): A dictionary containing information about the inserted sample ages.
             - 'sampleAge' (list): List of IDs for the inserted sample age data.
@@ -60,39 +58,43 @@ def insert_sample_age(cur, yml_dict, csv_file, uploader):
                     inputs["ageboundyounger"]= int(min(inputs["age"])) 
                     inputs["ageboundolder"]= int(max(inputs["age"])) 
                 del inputs['age']
-        
     del inputs['agetype']
-    iterable_params = {k: v for k, v in inputs.items() if isinstance(v, list)}
-    static_params = {k: v for k, v in inputs.items() if not isinstance(v, list)}
-    iterable_params['sampleid'] = uploader['samples'].sampleid
-    static_params['chronologyid'] = uploader['chronology'].id[0] # check that this is the lin_interp_age as per template
-    for values in zip(*iterable_params.values()):
-        kwargs = dict(zip(iterable_params.keys(), values))
-        kwargs.update(static_params)
-        if 'ageyounger' or 'ageolder' not in kwargs:
-            response.message.append("? No uncertainty to substract. Ageyounger/Ageolder will be None.")
-            inputs['ageyounger'] = None
-            inputs['ageolder'] = None 
-        elif not(kwargs['ageyounger'] and kwargs['ageolder']):
-            if kwargs['uncertainty']:
-                inputs['ageyounger'] = inputs["age"] - inputs["uncertainty"]
-                inputs['ageolder'] = inputs["age"] + inputs["uncertainty"]
-            else:
-                response.message.append("? No uncertainty to substract. Ageyounger/Ageolder will be None.")
-                inputs['ageyounger'] = None
-                inputs['ageolder'] = None 
-        try:
-            kwargs.pop('uncertainty', None)
-            sample_age = SampleAge(**kwargs)
-            response.valid.append(True)
+    for chronos, id in uploader['chronology'].name.items():
+        chron_id = id
+        chron_name = chronos
+        for idx, sa_id in enumerate(uploader['samples'].sampleid):
+            ageyounger = inputs['sampleages'][chron_name].get('ageyounger')
+            ageolder   = inputs['sampleages'][chron_name].get('ageolder')   
+            if not ageyounger or not ageolder:
+                if inputs['sampleages'][chron_name].get('uncertainty', None):
+                    inputs['sampleages'][chron_name]['ageyounger'] = inputs['sampleages'][chron_name]["age"] - inputs['sampleages'][chron_name]["uncertainty"]
+                    inputs['sampleages'][chron_name]['ageolder'] = inputs['sampleages'][chron_name]["age"] + inputs['sampleages'][chron_name]["uncertainty"]
+                else:
+                    response.message.append("? No uncertainty to substract. Ageyounger/Ageolder will be None.")
+                    inputs['sampleages'][chron_name]['ageyounger'] = None
+                    inputs['sampleages'][chron_name]['ageolder'] = None 
             try:
-                sample_age.insert_to_db(cur)
+                if inputs['sampleages'][chron_name]['ageolder'] is None:
+                    ageolder_ = None
+                else:
+                    ageolder_ = float(inputs['sampleages'][chron_name]['ageolder'][idx])
+                if inputs['sampleages'][chron_name]['ageyounger'] is None:
+                    ageyounger_ = None
+                else:
+                    ageyounger_ = float(inputs['sampleages'][chron_name]['ageyounger'][idx])
+                sample_age = SampleAge(sampleid=int(sa_id),
+                                       chronologyid =int(chron_id),
+                                       age = inputs['sampleages'][chron_name]['age'][idx],
+                                       ageyounger = ageyounger_,
+                                       ageolder = ageolder_)
+                response.valid.append(True)
+                try:
+                    sample_age.insert_to_db(cur)
+                except Exception as e:
+                    response.message.append(f"✗ Samples ages cannot be inserted: {e}")
             except Exception as e:
-                response.message.append(f"✗ Samples ages cannot be inserted: {e}")
-        except Exception as e:
-            response.valid.append(False)
-            response.message.append(f"✗ Samples ages cannot be created. {e}")
-
+                response.valid.append(False)
+                response.message.append(f"✗ Samples ages cannot be created. {e}")
     response.message = list(set(response.message))
     response.validAll = all(response.valid)
     return response
