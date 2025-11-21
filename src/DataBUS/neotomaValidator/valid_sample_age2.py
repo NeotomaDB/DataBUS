@@ -2,7 +2,7 @@ import DataBUS.neotomaHelpers as nh
 from DataBUS import SampleAge, Response
 from datetime import datetime
 
-def valid_sample_age(cur, yml_dict, csv_file, validator):
+def valid_sample_age2(cur, yml_dict, csv_file, validator):
     """
     Validates and processes sample age data for ostracode samples.
     Args:
@@ -63,8 +63,8 @@ def valid_sample_age(cur, yml_dict, csv_file, validator):
             kwargs.update(static_params) 
             if not(kwargs['ageyounger'] and kwargs['ageolder']):
                 if kwargs['uncertainty']:
-                    inputs['ageyounger'] = inputs["age"] - inputs["uncertainty"]
-                    inputs['ageolder'] = inputs["age"] + inputs["uncertainty"]
+                    inputs['ageyounger'] = [a - u for a, u in zip(inputs["age"], inputs["uncertainty"])]
+                    inputs['ageolder']   = [a + u for a, u in zip(inputs["age"], inputs["uncertainty"])]
                 else:
                     response.message.append("? No uncertainty to substract. Ageyounger/Ageolder will be None.")
                     inputs['ageyounger'] = None
