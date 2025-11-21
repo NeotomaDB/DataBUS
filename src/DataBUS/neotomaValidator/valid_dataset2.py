@@ -1,7 +1,7 @@
 import DataBUS.neotomaHelpers as nh
 from DataBUS import Dataset, Response
 
-def valid_dataset(cur, yml_dict, csv_file, name=None):
+def valid_dataset2(cur, yml_dict, csv_file, name=None):
     """
     Validates a dataset based on provided YAML dictionary and CSV file.
 
@@ -19,21 +19,9 @@ def valid_dataset(cur, yml_dict, csv_file, name=None):
 """
     response = Response()
 
-    params = [("datasetname", "ndb.datasets.datasetname"),
-            ("datasettypeid", "ndb.datasettypes.datasettypeid"),
-            ("datasettype", "ndb.datasettypes.datasettype")]
-    inputs = {}
-    for param in params:
-        val = nh.retrieve_dict(yml_dict, param[1])
-        if val:
-            try:
-                inputs[param[0]] = val[0]['value']
-                response.message.append(f"")
-            except Exception as e:
-                response.valid.append(False)
-                response.message.append(f"✗ {param[0]} value is missing in template: {e}")
-        else:
-            inputs[param[0]] = None
+
+    params = ["datasetname","datasettypeid", "datasettype"]
+    inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.datasets")
 
     query = """SELECT datasettypeid 
             FROM ndb.datasettypes 
