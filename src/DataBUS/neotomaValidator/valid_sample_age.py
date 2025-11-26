@@ -18,12 +18,13 @@ def valid_sample_age(cur, yml_dict, csv_file, validator):
         params = ["age", "ageyounger", "ageolder", "agetype"]
         inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.sampleages")
         if "agetype" in inputs:
-            inputs["agetype"] = set(inputs.get("agetype"))
-            inputs['agetype'].discard("Event; hiatus")
-            inputs["agetype"].discard(None)
-            inputs["agetype"] = list(inputs.get("agetype"))
-            if inputs["agetype"] == []:
-                inputs["agetype"] = ""
+            if isinstance(inputs.get("agetype"), list):
+                inputs["agetype"] = set(inputs.get("agetype"))
+                inputs['agetype'].discard("Event; hiatus")
+                inputs["agetype"].discard(None)
+                inputs["agetype"] = list(inputs.get("agetype"))
+                if inputs["agetype"] == []:
+                    inputs["agetype"] = ""
         if isinstance(inputs.get("agetype", None), list) and (len(inputs.get("agetype", [])) == 1):
             inputs["agetype"] = inputs["agetype"][0]
             response.valid.append(True)
@@ -101,7 +102,7 @@ def valid_sample_age(cur, yml_dict, csv_file, validator):
                         ageolder_ = float(inputs['sampleages'][chron_name]['ageolder'][idx])
                 if inputs['sampleages'][chron_name]['ageyounger'] is None:
                     ageyounger_ = None
-                else:
+                else: 
                     if inputs['sampleages'][chron_name]['ageyounger'][idx] is None:
                         ageyounger_ = None
                     else:

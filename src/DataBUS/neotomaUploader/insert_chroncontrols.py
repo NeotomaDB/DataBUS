@@ -45,7 +45,25 @@ def insert_chroncontrols(cur, yml_dict, csv_file, uploader):
     chroncontrol_q = """SELECT chroncontroltypeid FROM ndb.chroncontroltypes
                 WHERE LOWER(chroncontroltype) = LOWER(%(chroncontroltype)s)"""
     try:
-        if inputs.get("agetype"):
+        if isinstance(inputs.get("agetype"), list):
+            if len(inputs["agetype"]) > 0:
+                new_ages = []
+                for age in inputs["agetype"]:
+                    cur.execute(agetype_q , {"agetype": age})
+                    agetype = cur.fetchone()
+                    if agetype:
+                        response.message.append("✔ The provided age type is correct.")
+                        response.valid.append(True)
+                        new_ages.append(age)
+                    else:
+                        response.message.append("✗ The provided age type is incorrect..")
+                        response.valid.append(False)
+                        new_ages.append(None)
+                inputs["agetype"] = new_ages
+                inputs["agetype"] = inputs["agetype"][0]
+            else:
+                inputs["agetype"] = None
+        elif isinstance(inputs.get("agetype"), str):
             cur.execute(agetype_q , {"agetype": inputs["agetype"]})
             agetype = cur.fetchone()
             if agetype:

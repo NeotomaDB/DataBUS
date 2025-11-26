@@ -1,6 +1,6 @@
 import DataBUS.neotomaHelpers as nh
 from DataBUS import SampleAge, Response
-import datetime
+import datetime 
 
 def insert_sample_age(cur, yml_dict, csv_file, uploader):
     """
@@ -19,17 +19,22 @@ def insert_sample_age(cur, yml_dict, csv_file, uploader):
     try:
         params = ["age", "ageyounger", "ageolder", "agetype"]
         inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.sampleages")
-        if "agetype" in inputs:
-            inputs["agetype"] = set(inputs.get("agetype"))
-            inputs['agetype'].discard("Event; hiatus")
-            inputs["agetype"].discard(None)
-            inputs["agetype"] = list(inputs.get("agetype"))
+        if "agetype" in inputs: 
+            if isinstance(inputs.get("agetype"), list):
+                inputs["agetype"] = set(inputs.get("agetype"))
+                inputs['agetype'].discard("Event; hiatus")
+                inputs["agetype"].discard(None)
+                inputs["agetype"] = list(inputs.get("agetype"))
+                if inputs["agetype"] == []:
+                    inputs["agetype"] = ""
         if isinstance(inputs.get("agetype", None), list) and (len(inputs.get("agetype", [])) == 1):
             inputs["agetype"] = inputs["agetype"][0]
             response.valid.append(True)
         elif isinstance(inputs.get("agetype", None), list) and (len(inputs.get("agetype", [])) > 1):
+            at = inputs["agetype"].copy()
+            inputs["agetype"] = inputs["agetype"][0]
             response.valid.append(False)
-            response.message.append(f"✗ Sample Age agetype must be unique for all entries: {set(inputs['agetype'])}.")
+            response.message.append(f"✗ Sample Age agetype must be unique for all entries: {set(at)}.")
     except Exception as e:
         error = str(e)
         try: 
@@ -91,11 +96,17 @@ def insert_sample_age(cur, yml_dict, csv_file, uploader):
                 if inputs['sampleages'][chron_name]['ageolder'] is None:
                     ageolder_ = None
                 else:
-                    ageolder_ = float(inputs['sampleages'][chron_name]['ageolder'][idx])
+                    if inputs['sampleages'][chron_name]['ageolder'][idx] is None:
+                        ageolder_ = None
+                    else:
+                        ageolder_ = float(inputs['sampleages'][chron_name]['ageolder'][idx])
                 if inputs['sampleages'][chron_name]['ageyounger'] is None:
                     ageyounger_ = None
-                else:
-                    ageyounger_ = float(inputs['sampleages'][chron_name]['ageyounger'][idx])
+                else: 
+                    if inputs['sampleages'][chron_name]['ageyounger'][idx] is None:
+                        ageyounger_ = None
+                    else:
+                        ageyounger_ = float(inputs['sampleages'][chron_name]['ageyounger'][idx])
                 sample_age = SampleAge(sampleid=int(sa_id),
                                         chronologyid =int(chron_id),
                                         age = inputs['sampleages'][chron_name]['age'][idx],

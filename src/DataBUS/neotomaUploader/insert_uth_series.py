@@ -27,18 +27,37 @@ def insert_uth_series(cur, yml_dict, csv_file, uploader):
                 'activity234u238u', 'activityuncertainty234u238u',  
                 'iniratio230th232th', 'iniratiouncertainty230th232th']
         inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.uraniumseries")
+    if isinstance(inputs.get('decayconstantid'), list):
+        elements = [x for x in params if x not in {'geochronid'}]
+    else:
         elements = [x for x in params if x not in {'geochronid', 'decayconstantid'}]
-        filtered_inputs = {k: v for k, v in inputs.items() if k in elements}
-        indices = [i for i, values in enumerate(zip(*filtered_inputs.values()))
-                if any(value is not None for value in values)]
-        inputs = {k: [v for i, v in enumerate(filtered_inputs[k]) if i in indices] if k in filtered_inputs
-                                                                else value for k, value in inputs.items()}
-        inputs['geochronid'] = uploader['geochron'].id
+    response = Response()
+    filtered_inputs = {k: v for k, v in inputs.items() if k in elements}
+    indices = [i for i, values in enumerate(zip(*filtered_inputs.values()))
+               if any(value is not None for value in values)]
 
-        if inputs.get('decayconstantid') is not None:
+    inputs = {k: [v for i, v in enumerate(filtered_inputs[k]) if i in indices] if k in filtered_inputs
+                                                              else value for k, value in inputs.items()}
+    decay_query = """SELECT decayconstantid FROM ndb.decayconstants
+                                WHERE LOWER(decayconstant) = %(decayconstant)s;"""
+    if inputs.get('decayconstantid') is not None:
+        if isinstance(inputs['decayconstantid'], list):
+            new_dc = []
+            for dc in inputs['decayconstantid']:
+                cur.execute(decay_query, {'decayconstant': dc.lower()})
+                decayconstantid = cur.fetchone()
+                if decayconstantid is not None:
+                    new_dc.append(decayconstantid[0])
+                    response.valid.append(True)
+                    response.message.append("✔ Decay constant found in database")
+                else:
+                    response.valid.append(False)
+                    response.message.append(f"✗ Decay constant {dc} not found in database")
+            inputs['decayconstantid'] = new_dc
+        elif isinstance(inputs['decayconstantid'], str):
             decay_query = """SELECT decayconstantid FROM ndb.decayconstants
                         WHERE LOWER(decayconstant) = %(decayconstant)s;"""
-            cur.execute(decay_query, {'decayconstant': inputs['decayconstantid'].lower().strip()})
+            cur.execute(decay_query, {'decayconstant': inputs['decayconstantid'].lower()})
             decayconstantid = cur.fetchone()
             if decayconstantid is not None:
                 inputs['decayconstantid'] = decayconstantid[0]
@@ -47,7 +66,6 @@ def insert_uth_series(cur, yml_dict, csv_file, uploader):
             else:
                 response.valid.append(False)
                 response.message.append(f"✗ Decay constant {inputs['decayconstantid']} not found in database")
-        
         if not indices:
             response.message.append("✔ No UTh Series data to insert")
             response.valid.append(True)
@@ -56,8 +74,12 @@ def insert_uth_series(cur, yml_dict, csv_file, uploader):
         else:
             for i in range(len(indices)):
                 try:
+                    if isinstance(inputs.get('decayconstantid'), list):
+                        dc_id = inputs['decayconstantid'][i]
+                    else:
+                        dc_id = inputs['decayconstantid']
                     uth = UThSeries(geochronid=inputs['geochronid'][i],
-                                    decayconstantid=inputs['decayconstantid'],
+                                    decayconstantid=dc_id,
                                     ratio230th232th=inputs['ratio230th232th'][i],
                                     ratiouncertainty230th232th=inputs['ratiouncertainty230th232th'][i],
                                     activity230th238u=inputs['activity230th238u'][i],
