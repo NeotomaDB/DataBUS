@@ -22,6 +22,8 @@ def valid_sample_age(cur, yml_dict, csv_file, validator):
             inputs['agetype'].discard("Event; hiatus")
             inputs["agetype"].discard(None)
             inputs["agetype"] = list(inputs.get("agetype"))
+            if inputs["agetype"] == []:
+                inputs["agetype"] = ""
         if isinstance(inputs.get("agetype", None), list) and (len(inputs.get("agetype", [])) == 1):
             inputs["agetype"] = inputs["agetype"][0]
             response.valid.append(True)
@@ -93,11 +95,17 @@ def valid_sample_age(cur, yml_dict, csv_file, validator):
                 if inputs['sampleages'][chron_name]['ageolder'] is None:
                     ageolder_ = None
                 else:
-                    ageolder_ = float(inputs['sampleages'][chron_name]['ageolder'][idx])
+                    if inputs['sampleages'][chron_name]['ageolder'][idx] is None:
+                        ageolder_ = None
+                    else:
+                        ageolder_ = float(inputs['sampleages'][chron_name]['ageolder'][idx])
                 if inputs['sampleages'][chron_name]['ageyounger'] is None:
                     ageyounger_ = None
                 else:
-                    ageyounger_ = float(inputs['sampleages'][chron_name]['ageyounger'][idx])
+                    if inputs['sampleages'][chron_name]['ageyounger'][idx] is None:
+                        ageyounger_ = None
+                    else:
+                        ageyounger_ = float(inputs['sampleages'][chron_name]['ageyounger'][idx])
                 if sa_id is None:
                     continue
                 else:

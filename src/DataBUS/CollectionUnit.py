@@ -157,15 +157,21 @@ class CollectionUnit:
     
     def compare_cu(self, other):
         attributes = [
-        'colltypeid', 'depenvtid', 'collunitname', 'colldate', 'colldevice',
+        'colltypeid', 'depenvtid', 'handle', 'colldate', 'colldevice',
         'gpsaltitude', 'gpserror', 'waterdepth', 'substrateid', 'slopeaspect',
         'slopeangle', 'location', 'notes', 'geog']
+
+        special_atts = ['collunitname']
 
         differences = []
 
         for attr in attributes:
             if getattr(self, attr) != getattr(other, attr):
                 differences.append(f"CSV {attr}: {getattr(self, attr)} != Neotoma {attr}: {getattr(other, attr)}")
+        
+        if getattr(self, 'handle').lower() == getattr(other, 'handle').lower():
+            if getattr(self, 'collunitname') != getattr(other, 'collunitname'):
+                differences.append(f"✗  Same handlename {getattr(self, 'handle')} for different collunits: {getattr(self, 'collunitname')} != Neotoma collunitname: {getattr(other, 'collunitname')}")
 
         return differences
 
