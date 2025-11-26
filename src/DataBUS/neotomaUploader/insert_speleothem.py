@@ -108,11 +108,14 @@ def insert_speleothem(cur, yml_dict, csv_file, uploader):
                     elist.extend(el.split(','))
                 else:
                     elist.append(str(el))
+        if (len(inputs['ref_id']) == 1) and isinstance(inputs['ref_id'], list):
+            inputs['ref_id'] = inputs['ref_id'][0]
+        elif isinstance(inputs['ref_id'], list):
             inputs['ref_id'] = list(set(map(int, elist)))
-        if isinstance(inputs.get('ref_id'), str):
+        elif isinstance(inputs.get('ref_id'), str):
             inputs['ref_id'] = list(map(int, inputs['ref_id'].split(',')))
         for inp in inputs:
-            if inp == "fluidinclusions":
+            if inp in ("fluidinclusions", "ref_id"):
                 continue
             el = inputs[inp]
             if isinstance(inputs[inp], str) and 'id' in inp:

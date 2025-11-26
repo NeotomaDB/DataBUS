@@ -56,7 +56,15 @@ include-package-data = true
       "sqlHelpers/insert_uraniumseriesdata.sql",
       "sqlHelpers/insert_uthseries.sql",
       "sqlHelpers/insert_speleothem.sql",
-      "sqlHelpers/insert_speleothem_cu.sql"]
+      "sqlHelpers/insert_speleothem_cu.sql",
+      "sqlHelpers/insert_entitycovers.sql",
+      "sqlHelpers/insert_entitydripheight.sql",
+      "sqlHelpers/insert_entitygeology.sql",
+      "sqlHelpers/insert_entitylandusecover.sql",
+      "sqlHelpers/insert_entityrelationship.sql",
+      "sqlHelpers/insert_entitysamples.sql",
+      "sqlHelpers/insert_entityvegetationcover.sql",
+      "sqlHelpers/insert_externalspeleothem.sql",]
 
     [project.optional-dependencies]
     build = ["build", "twine"]

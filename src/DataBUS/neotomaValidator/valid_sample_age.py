@@ -1,6 +1,6 @@
 import DataBUS.neotomaHelpers as nh
 from DataBUS import SampleAge, Response
-from datetime import datetime
+import datetime
 
 def valid_sample_age(cur, yml_dict, csv_file, validator):
     """
@@ -14,16 +14,26 @@ def valid_sample_age(cur, yml_dict, csv_file, validator):
         Response: An object containing validation results and messages.
     """
     response = Response()
-    params = ["age", "sampleid", "chronologyid", 
-              "ageyounger", "ageolder", "uncertainty"]
-    agemodel = nh.pull_params(['agemodel'], yml_dict, csv_file, "ndb.chronologies")
     try:
+        params = ["age", "ageyounger", "ageolder", "agetype"]
         inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.sampleages")
+        if "agetype" in inputs:
+            inputs["agetype"] = set(inputs.get("agetype"))
+            inputs['agetype'].discard("Event; hiatus")
+            inputs["agetype"].discard(None)
+            inputs["agetype"] = list(inputs.get("agetype"))
+        if isinstance(inputs.get("agetype", None), list) and (len(inputs.get("agetype", [])) == 1):
+            inputs["agetype"] = inputs["agetype"][0]
+            response.valid.append(True)
+        elif isinstance(inputs.get("agetype", None), list) and (len(inputs.get("agetype", [])) > 1):
+            at = inputs["agetype"].copy()
+            inputs["agetype"] = inputs["agetype"][0]
+            response.valid.append(False)
+            response.message.append(f"✗ Sample Age agetype must be unique for all entries: {set(at)}.")
     except Exception as e:
         error = str(e)
-        try:
+        try: 
             if "time data" in error.lower():
-                print('in time data error')
                 age_dict = nh.retrieve_dict(yml_dict, "ndb.sampleages.age")
                 column = age_dict[0]['column']
                 if isinstance(csv_file[0][column], str) and len(csv_file[0][column]) >= 4:
@@ -37,61 +47,70 @@ def valid_sample_age(cur, yml_dict, csv_file, validator):
                         new_date = None
                 else:
                     new_date = None
-            if 'age' in params:
+            if "age" in params:
                 params.remove('age')
-            inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.sampleages")
-            inputs['age'] = new_date
+                inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.sampleages")
+                inputs['age'] = new_date
             response.valid.append(True)
         except Exception as inner_e:
             response.validAll = False
             response.message.append(f"Sample Age parameters cannot be properly extracted. {e}\n {inner_e}")
             return response
-    if agemodel.get('agemodel', '').lower() == "collection date":
+    if inputs.get('agetype', '').lower() == "collection date":
         if isinstance(inputs.get('age', None), (float, int)):
             inputs['age'] = 1950 - inputs['age']
-        elif isinstance(inputs.get('age', None), datetime):
+        elif isinstance(inputs.get('age', None), (datetime.datetime, datetime.date)):
             inputs['age'] = 1950 - inputs['age'].year
         elif isinstance(inputs.get('age', None), list):
-            inputs['age'] = [1950 - value.year if isinstance(value, datetime) else 1950 - value
-                             for value in inputs['age']]
-    iterable_params = {k: v for k, v in inputs.items() if isinstance(v, list)}
-    static_params = {k: v for k, v in inputs.items() if not isinstance(v, list)}
-    static_params['sampleid'] = 2
-    static_params['chronologyid'] = 2
-    if iterable_params:
-        for values in zip(*iterable_params.values()):
-            kwargs = dict(zip(iterable_params.keys(), values))  # Create dictionary with lists
-            kwargs.update(static_params) 
-            if not(kwargs['ageyounger'] and kwargs['ageolder']):
-                if kwargs['uncertainty']:
-                    inputs['ageyounger'] = inputs["age"] - inputs["uncertainty"]
-                    inputs['ageolder'] = inputs["age"] + inputs["uncertainty"]
+            inputs['age'] = [1950 - value.year if isinstance(value, datetime.datetime) else 1950 - value
+                            for value in inputs['age']]
+            if 'age' in inputs:
+                if not (inputs["ageboundolder"] and inputs["ageboundyounger"]):
+                    inputs["ageboundyounger"]= int(min(inputs["age"])) 
+                    inputs["ageboundolder"]= int(max(inputs["age"])) 
+                del inputs['age']
+    if "agetype" in inputs:
+        del inputs['agetype']
+    sa_id_placeholder = nh.pull_params(['depth'], yml_dict, csv_file, "ndb.analysisunits")
+    inputs['sampleid'] = sa_id_placeholder['depth']
+    for chronos in inputs['sampleages'].keys():
+        chron_id = 3 #placeholder
+        chron_name = chronos
+        for idx, sa_id in enumerate(sa_id_placeholder['depth']):
+            ageyounger = inputs['sampleages'][chron_name].get('ageyounger')
+            ageolder   = inputs['sampleages'][chron_name].get('ageolder')   
+            if not ageyounger or not ageolder:
+                if inputs['sampleages'][chron_name].get('uncertainty', None):
+                    inputs['sampleages'][chron_name]['ageyounger'] = inputs['sampleages'][chron_name]["age"] - inputs['sampleages'][chron_name]["uncertainty"]
+                    inputs['sampleages'][chron_name]['ageolder'] = inputs['sampleages'][chron_name]["age"] + inputs['sampleages'][chron_name]["uncertainty"]
                 else:
                     response.message.append("? No uncertainty to substract. Ageyounger/Ageolder will be None.")
-                    inputs['ageyounger'] = None
-                    inputs['ageolder'] = None 
-            # Assess if they are a list, then make it so that we take the max/min values of the list.
-            # Need to ask if it is OK to have multiple ages and since they are linked with the geochronology
-            # if I also need to create multiple chronologies (one for each sample age)
+                    inputs['sampleages'][chron_name]['ageyounger'] = None
+                    inputs['sampleages'][chron_name]['ageolder'] = None 
+            if inputs['sampleages'][chron_name]['age'][idx] is None:
+                    continue
             try:
-                kwargs.pop('uncertainty', None)
-                SampleAge(**kwargs)
-                response.valid.append(True)
+                if inputs['sampleages'][chron_name]['ageolder'] is None:
+                    ageolder_ = None
+                else:
+                    ageolder_ = float(inputs['sampleages'][chron_name]['ageolder'][idx])
+                if inputs['sampleages'][chron_name]['ageyounger'] is None:
+                    ageyounger_ = None
+                else:
+                    ageyounger_ = float(inputs['sampleages'][chron_name]['ageyounger'][idx])
+                if sa_id is None:
+                    continue
+                else:
+                    SampleAge(sampleid=int(sa_id),
+                            chronologyid =int(chron_id),
+                            age = inputs['sampleages'][chron_name]['age'][idx],
+                            ageyounger = ageyounger_,
+                            ageolder = ageolder_)
+                    response.valid.append(True)
+                    response.message.append(f"✔ Sample Age is valid.")
             except Exception as e:
                 response.valid.append(False)
                 response.message.append(f"✗ Samples ages cannot be created. {e}")
-    else:
-        response.message.append("? Age is a unique number. Ageyounger/Ageolder will be None.")
-        try:
-            static_params.pop('uncertainty', None)
-            SampleAge(**static_params)
-            response.valid.append(True)
-        except Exception as e:
-            response.valid.append(False)
-            response.message.append(f"✗ Samples ages cannot be created. {e}") 
-        
-    response.validAll = all(response.valid)
-    if response.validAll:
-        response.message.append(f"✔ Sample ages can be created.")
     response.message = list(set(response.message))
+    response.validAll = all(response.valid)
     return response

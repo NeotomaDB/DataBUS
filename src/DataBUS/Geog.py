@@ -1,12 +1,11 @@
 class WrongCoordinates(Exception):
     pass
 
-
 class Geog:
     def __init__(self, coords):
         if not (isinstance(coords, (list, tuple)) or coords is None):
             raise TypeError("✗ Coordinates must be a list or a tuple")
-        if coords is None:
+        if coords is None or coords == [None, None]:
             self.latitude = None
             self.longitude = None
         else:

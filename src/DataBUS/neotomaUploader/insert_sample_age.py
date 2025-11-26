@@ -19,9 +19,20 @@ def insert_sample_age(cur, yml_dict, csv_file, uploader):
     try:
         params = ["age", "ageyounger", "ageolder", "agetype"]
         inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.sampleages")
+        if "agetype" in inputs:
+            inputs["agetype"] = set(inputs.get("agetype"))
+            inputs['agetype'].discard("Event; hiatus")
+            inputs["agetype"].discard(None)
+            inputs["agetype"] = list(inputs.get("agetype"))
+        if isinstance(inputs.get("agetype", None), list) and (len(inputs.get("agetype", [])) == 1):
+            inputs["agetype"] = inputs["agetype"][0]
+            response.valid.append(True)
+        elif isinstance(inputs.get("agetype", None), list) and (len(inputs.get("agetype", [])) > 1):
+            response.valid.append(False)
+            response.message.append(f"✗ Sample Age agetype must be unique for all entries: {set(inputs['agetype'])}.")
     except Exception as e:
         error = str(e)
-        try:
+        try: 
             if "time data" in error.lower():
                 age_dict = nh.retrieve_dict(yml_dict, "ndb.sampleages.age")
                 column = age_dict[0]['column']
@@ -58,7 +69,8 @@ def insert_sample_age(cur, yml_dict, csv_file, uploader):
                     inputs["ageboundyounger"]= int(min(inputs["age"])) 
                     inputs["ageboundolder"]= int(max(inputs["age"])) 
                 del inputs['age']
-    del inputs['agetype']
+    if "agetype" in inputs:
+        del inputs['agetype']
     for chronos, id in uploader['chronology'].name.items():
         chron_id = id
         chron_name = chronos
@@ -73,6 +85,8 @@ def insert_sample_age(cur, yml_dict, csv_file, uploader):
                     response.message.append("? No uncertainty to substract. Ageyounger/Ageolder will be None.")
                     inputs['sampleages'][chron_name]['ageyounger'] = None
                     inputs['sampleages'][chron_name]['ageolder'] = None 
+            if inputs['sampleages'][chron_name]['age'][idx] is None:
+                    continue
             try:
                 if inputs['sampleages'][chron_name]['ageolder'] is None:
                     ageolder_ = None
@@ -83,10 +97,10 @@ def insert_sample_age(cur, yml_dict, csv_file, uploader):
                 else:
                     ageyounger_ = float(inputs['sampleages'][chron_name]['ageyounger'][idx])
                 sample_age = SampleAge(sampleid=int(sa_id),
-                                       chronologyid =int(chron_id),
-                                       age = inputs['sampleages'][chron_name]['age'][idx],
-                                       ageyounger = ageyounger_,
-                                       ageolder = ageolder_)
+                                        chronologyid =int(chron_id),
+                                        age = inputs['sampleages'][chron_name]['age'][idx],
+                                        ageyounger = ageyounger_,
+                                        ageolder = ageolder_)
                 response.valid.append(True)
                 try:
                     sample_age.insert_to_db(cur)

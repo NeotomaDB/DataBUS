@@ -135,22 +135,22 @@ def valid_collunit(cur, yml_dict, csv_file):
             coll_info = rows[0]
             try:
                 inputs2 = {'collectionunitid': int(coll_info[0]),
-                           'handle': str(coll_info[1]),
-                           'siteid': int(coll_info[2]),
-                           'colltypeid': int(coll_info[3]),
-                           'depenvtid': int(coll_info[4]),
-                           'collunitname': str(coll_info[5]),
-                           'colldate': coll_info[6],
-                           'colldevice': str(coll_info[7]),
-                           'geog': Geog(coll_info[8], coll_info[9]),
-                           'gpsaltitude': int(coll_info[10]),
-                           'gpserror': coll_info[11],
-                           'waterdepth': float(coll_info[12]),
-                           'substrateid': int(coll_info[13]),
-                           'slopeaspect': coll_info[14],
-                           'slopeangle': coll_info[15],
-                           'location': str(coll_info[16]),
-                           'notes':str(coll_info[17])}
+                        'handle': str(coll_info[1]),
+                        'siteid': int(coll_info[2]),
+                        'colltypeid': int(coll_info[3]) if coll_info[3] is not None else None,
+                        'depenvtid': int(coll_info[4]) if coll_info[4] is not None else None,
+                        'collunitname': str(coll_info[5]),
+                        'colldate': coll_info[6],
+                        'colldevice': str(coll_info[7]),
+                        'geog': Geog([coll_info[8], coll_info[9]]),
+                        'gpsaltitude': int(coll_info[10]) if coll_info[10] is not None else None,
+                        'gpserror': coll_info[11],
+                        'waterdepth': float(coll_info[12]) if coll_info[12] is not None else None,
+                        'substrateid': int(coll_info[13]) if coll_info[13] is not None else None,
+                        'slopeaspect': coll_info[14],
+                        'slopeangle': coll_info[15],
+                        'location': str(coll_info[16]),
+                        'notes':str(coll_info[17])}
                 found_cu = CollectionUnit(**inputs2)
                 msg = cu.compare_cu(found_cu)
                 response.message.append(f"? Are CollUnits equal: {cu == found_cu}.")

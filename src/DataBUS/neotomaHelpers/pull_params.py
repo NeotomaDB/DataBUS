@@ -81,7 +81,9 @@ def pull_params(params, yml_dict, csv_template, table=None, name = None, values 
                                    else 'sampleages' if 'sampleages' in table else None)
                             if key not in add_unit_inputs:
                                 add_unit_inputs[key] = {}
-                            if not all(x is None for x in clean_valor): 
+                            if clean_valor is None:
+                                continue
+                            elif not all(x is None for x in clean_valor): 
                                 if 'chronologyname' in val:
                                     if not add_unit_inputs[key].get(val['chronologyname']):
                                         add_unit_inputs[key][val.get('chronologyname', f'Chron_{chron_counter}')] = {}
