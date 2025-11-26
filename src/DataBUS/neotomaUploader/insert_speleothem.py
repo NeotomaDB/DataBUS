@@ -111,12 +111,12 @@ def insert_speleothem(cur, yml_dict, csv_file, uploader):
         inputs['ref_id'] = elist
         if isinstance(inputs['ref_id'], list):
             if inputs['ref_id'] == ['']:
-                inputs['ref_id'] = None
+                inputs['ref_id'] = []
             else:
                 inputs['ref_id'] = list(set(map(int, elist)))
         elif isinstance(inputs.get('ref_id'), str):
             if inputs['ref_id'].strip() == '':
-                inputs['ref_id'] = None
+                inputs['ref_id'] = []
             else:
                 inputs['ref_id'] = list(map(int, inputs['ref_id'].split(',')))
         for inp in inputs:
