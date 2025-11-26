@@ -13,6 +13,7 @@ class Response:
         self.data_id = {}
         self.uncertaintyinputs = []
         self.id = []
+        self.name = {}
         
 
     def __str__(self):

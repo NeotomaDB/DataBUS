@@ -71,7 +71,7 @@ class Speleothem:
             "monitoring": self.monitoring,
             "rockageid": self.rockageid,
             "entrancedistance": self.entrancedistance,
-            "entrancedistanceunits": self.entrancedistanceunits,\
+            "entrancedistanceunits": self.entrancedistanceunits,
             "speleothemtypeid": self.speleothemtypeid}
         cur.execute(query, inputs)
         return cur.fetchone()[0]

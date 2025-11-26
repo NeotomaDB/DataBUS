@@ -1,7 +1,7 @@
 CREATE OR REPLACE FUNCTION insert_entityvegetationcover(_entityid numeric,
                                                         _vegetationcovertypeid numeric,
                                                         _vegetationcoverpercent numeric DEFAULT NULL,
-                                                        _vegetationcovernotes character varying DEFAULT NULL::character varying)in
+                                                        _vegetationcovernotes character varying DEFAULT NULL::character varying)
 RETURNS void
 LANGUAGE sql
 AS $function$ 
