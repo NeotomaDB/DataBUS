@@ -15,6 +15,17 @@ def valid_chronologies(cur, yml_dict, csv_file):
         ValueError: If there is an issue with the extracted parameters.
         AssertionError: If the date format in the CSV file is incorrect.
     """
+    def collapse_into_chronology(data, chron_k='chronologies'):
+        chron = data.get(chron_k, {})
+        if len(chron) == 1:
+            key = next(iter(chron))
+            inner = chron[key]
+            for k, v in data.items():
+                if k != chron_k:
+                    inner[k] = v
+            return {chron_k: {key: inner}}
+        return data
+
     response = ChronResponse()
 
     params = ['ageboundolder', 'ageboundyounger', 'agemodel', #'chronologyname', 'isdefault',  <- don't need anymore because we use a dictionary that retrieves this from yml
@@ -38,28 +49,31 @@ def valid_chronologies(cur, yml_dict, csv_file):
                         new_date = None
                 else:
                     new_date = None
-            if 'age' in params:
-                params.remove('age')
-                inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.chronologies")
-                inputs['age'] = new_date
-                response.valid.append(True)
+                if 'age' in params:
+                    params.remove('age')
+                    inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.chronologies")
+                    inputs['age'] = new_date
+                    response.valid.append(True)
+            else:
+                inputs = {}
         except Exception as inner_e:
+            inputs = {}
             response.validAll = False
             response.message.append(f"Chronology parameters cannot be properly extracted. {e}\n"
                                     f"{str(inner_e)}")
             return response
-    
+        
+    inputs = collapse_into_chronology(inputs)
     if len(inputs['chronologies']) >1:
         response.message.append("✔ File with multiple chronologies")
         response.message.append(f"{list(inputs['chronologies'].keys())}")
-
     for chron in inputs['chronologies']:
         ch = inputs['chronologies'][chron]
-        if ch.get("agetype", inputs['agetype']) is not None: 
-            ch.get("agetype", inputs['agetype']).replace("cal yr BP", 'Calendar years BP')
+        if ch.get("agetype", inputs.get('agetype')) is not None: 
+            ch.get("agetype", inputs.get('agetype')).replace("cal yr BP", 'Calendar years BP')
             agetype_query = """SELECT agetypeid FROM ndb.agetypes
                                 WHERE LOWER(agetype) = %(agetype)s"""
-            cur.execute(agetype_query, {'agetype': ch.get("agetype", inputs['agetype']).lower()})
+            cur.execute(agetype_query, {'agetype': ch.get("agetype", inputs.get('agetype')).lower()})
             id = cur.fetchone()
             if id:
                 ch['agetypeid'] = id[0]
@@ -94,15 +108,23 @@ def valid_chronologies(cur, yml_dict, csv_file):
                 elif isinstance(ch.get('age', inputs.get('age')), list):
                     ch['age'] = [1950 - value.year if isinstance(value, datetime) else 1950 - value
                                     for value in ch.get('age', inputs.get('age'))]
-            c["ageboundolder"]= int(max([num for num in ch.get('ageboundolder', ch.get('age')) if num is not None]))
-            c["ageboundyounger"]= int(min([num for num in ch.get('ageboundyounger', ch.get('age')) if num is not None]))
+            for param in ['ageboundolder', 'ageboundyounger']:
+                if param in ch:
+                    if isinstance(ch[param], list):
+                        c[param]= int(min([num for num in ch.get(param, ch.get('age')) if num is not None])) if param == 'ageboundyounger' else int(max([num for num in ch.get(param, ch.get('age')) if num is not None]))
+                    else:
+                        c[param]= ch[param]
+                else:
+                    if isinstance(ch['age'], list):
+                        c[param]= int(min([num for num in ch.get('age') if num is not None])) if param == 'ageboundyounger' else int(max([num for num in ch.get('age') if num is not None]))
+                    else:
+                        c[param]= None
             Chronology(**c)
             response.valid.append(True)
             response.message.append("✔  Chronology can be created")
         except Exception as e:
             response.valid.append(False)
             response.message.append(f"✗  Chronology cannot be created: {e}")
-    
     response.validAll = all(response.valid)
     response.message = list(set(response.message))
     return response

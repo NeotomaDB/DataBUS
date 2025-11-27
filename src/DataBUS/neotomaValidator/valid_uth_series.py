@@ -56,8 +56,10 @@ def valid_uth_series(cur, yml_dict, csv_file):
                 response.valid.append(True)
                 response.message.append("✔ Decay constant found in database")
             else:
+                inputs['decayconstantid'] = None
                 response.valid.append(False)
                 response.message.append(f"✗ Decay constant {inputs['decayconstantid']} not found in database")
+    
     for i in range(len(indices)):
         try:
             if isinstance(inputs.get('decayconstantid'), list):

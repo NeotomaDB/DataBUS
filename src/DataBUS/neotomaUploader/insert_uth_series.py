@@ -21,12 +21,13 @@ def insert_uth_series(cur, yml_dict, csv_file, uploader):
         return response
     
     else:
-        params = ['geochronid', 'decayconstantid',
+        params = ['decayconstantid',
                 'ratio230th232th', 'ratiouncertainty230th232th',
                 'activity230th238u', 'activityuncertainty230th238u', 
                 'activity234u238u', 'activityuncertainty234u238u',  
                 'iniratio230th232th', 'iniratiouncertainty230th232th']
         inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.uraniumseries")
+        inputs['geochronid'] = uploader['geochron'].id
     if isinstance(inputs.get('decayconstantid'), list):
         elements = [x for x in params if x not in {'geochronid'}]
     else:
@@ -51,6 +52,7 @@ def insert_uth_series(cur, yml_dict, csv_file, uploader):
                     response.valid.append(True)
                     response.message.append("✔ Decay constant found in database")
                 else:
+                    new_dc.append(None)
                     response.valid.append(False)
                     response.message.append(f"✗ Decay constant {dc} not found in database")
             inputs['decayconstantid'] = new_dc
@@ -64,8 +66,10 @@ def insert_uth_series(cur, yml_dict, csv_file, uploader):
                 response.valid.append(True)
                 response.message.append("✔ Decay constant found in database")
             else:
+                inputs['decayconstantid'] = None
                 response.valid.append(False)
                 response.message.append(f"✗ Decay constant {inputs['decayconstantid']} not found in database")
+        
         if not indices:
             response.message.append("✔ No UTh Series data to insert")
             response.valid.append(True)
@@ -112,7 +116,7 @@ def insert_uth_series(cur, yml_dict, csv_file, uploader):
         uthdata = {k: [v for v in vals if v is not None] for k, vals in uthdata.items()}
         if uthdata:
             for k, v in uthdata.items():
-                if isinstance(v, list) and len(v):
+                if isinstance(v, list) and len(v): 
                     for i in range(len(v)):
                         try:
                             insert_uraniumseriesdata(cur, v[i], inputs['geochronid'][i])

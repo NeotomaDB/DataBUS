@@ -63,6 +63,7 @@ def valid_publication(cur, yml_dict, csv_file):
                 obs = cur.fetchone()
                 pub_id = obs if obs is not None else None
                 if pub_id:
+                    print(obs[1])
                     response.message.append(f"✔  Found Publication: "
                                             f"{obs[1]} in Neotoma")
                     response.valid.append(True)
