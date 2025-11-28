@@ -37,7 +37,7 @@ def insert_dataset_pi(cur, yml_dict, csv_file, uploader):
         cont_name = nh.get_contacts(cur, inputs["contactname"])
         for agent in cont_name:
             if agent['id'] is None:
-                response.message.append(f"✗ Contact DatasetPI not found.")
+                response.message.append(f"✗ Contact DatasetPI not found: {inputs['contactname']}.")
                 response.valid.append(False)
             else:
                 try:
