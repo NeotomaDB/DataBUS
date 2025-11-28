@@ -52,7 +52,7 @@ def valid_dataset(cur, yml_dict, csv_file, name=None):
         inputs["datasettypeid"] = None
         response.message.append(f"✗ Dataset type is not known to Neotoma and needs to be created first")
         response.valid.append(False)
-    inputs["notes"] = nh.pull_params(["notes"], yml_dict, csv_file, "ndb.datasets", name).get('notes', "")
+    inputs["notes"] = nh.pull_params(["notes"], yml_dict, csv_file, "ndb.datasets").get('notes', "")
     try:
         Dataset(**inputs)
         response.message.append(f"✔ Dataset can be created.")

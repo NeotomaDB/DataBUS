@@ -72,7 +72,12 @@ def pull_params(params, yml_dict, csv_template, table=None, name = None, values 
                                     clean_valor = None if all(item in [None, ''] for item in clean_valor) and clean_valor else clean_valor
                         if i == 'notes':
                             if'notes' in add_unit_inputs:
-                                add_unit_inputs[i].append({f"{val.get('column')}": clean_valor})
+                                if add_unit_inputs['notes'] is None:
+                                    add_unit_inputs['notes'] = []
+                                elif isinstance(add_unit_inputs['notes'], str):
+                                    add_unit_inputs['notes'] = [add_unit_inputs['notes']]
+                                elif isinstance(add_unit_inputs['notes'], list):
+                                    add_unit_inputs[i].append({f"{val.get('column')}": clean_valor})
                             else:
                                 add_unit_inputs[i] = []
                                 add_unit_inputs[i].append({f"{val.get('column')}": clean_valor})
