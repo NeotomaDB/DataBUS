@@ -20,7 +20,6 @@ def insert_data(cur, yml_dict, csv_file, uploader, wide = False):
             response.message.append("? No Values to validate.")
             response.validAll = False
             return response
-        
     response = Response()
 
     var_query = """SELECT variableelementid FROM ndb.variableelements
@@ -29,7 +28,7 @@ def insert_data(cur, yml_dict, csv_file, uploader, wide = False):
                      WHERE LOWER(taxonname) = %(element)s;"""
     units_query = """SELECT variableunitsid FROM ndb.variableunits 
                      WHERE LOWER(variableunits) = %(element)s;"""
-    context_query = """SELECT LOWER(variablecontext) FROM ndb.variablecontexts
+    context_query = """SELECT variablecontextid FROM ndb.variablecontexts
                        WHERE LOWER(variablecontext) = %(element)s;"""
 
     par = {'variableelement': [var_query, 'variableelementid'], 
@@ -45,7 +44,6 @@ def insert_data(cur, yml_dict, csv_file, uploader, wide = False):
                                   yml_dict, csv_file, "ndb.variables", 
                                   values=wide)
         taxa_in['value'] = inputs['value']
-        
         taxa = {}   
         for i, taxon in enumerate(taxa_in['taxon']):
             if taxon not in taxa:
@@ -89,7 +87,7 @@ def insert_data(cur, yml_dict, csv_file, uploader, wide = False):
                         entries[v[1]] = entries[v[1]][0]
                 elif isinstance(inputs2[k], str):
                     cur.execute(v[0], {'element': inputs2[k].lower()})
-                    entries[v[1]] = cur.fetchall()
+                    entries[v[1]] = cur.fetchone()
                     if not entries[v[1]]:
                         counter +=1
                         response.message.append(f"✗  {k} ID for {inputs2[k]} not found. "

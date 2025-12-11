@@ -50,5 +50,26 @@ def get_contacts(cur, contacts_list):
                     contids.append({"name": i, "id": None, "order": baseid})
                 baseid +=1
             else:
-                contids.append({"name": i, "id": None, "order": None})
+                contactname = i.lower()
+                get_contact = """SELECT contactid, familyname || ', ' || givennames AS fullname
+                                 FROM ndb.contacts
+                                 WHERE LOWER(contactname) = %(contactname)s;"""
+                cur.execute(get_contact, {"contactname": contactname})
+                data = cur.fetchone()
+                if data:
+                    d_name = data[1].lower()
+                    d_id = data[0]
+                    contids.append({"name": d_name, "id": d_id, "order": baseid})
+                    baseid +=1
+                else:
+                    contactname = contactname.replace(". ", ".")
+                    cur.execute(get_contact, {"familyname": contactname})
+                    data = cur.fetchone()
+                    if data:
+                        d_name = data[1].lower()
+                        d_id = data[0]
+                        contids.append({"name": d_name, "id": d_id, "order": baseid})
+                        baseid +=1
+                    else:
+                        contids.append({"name": i, "id": None, "order": None})
     return contids

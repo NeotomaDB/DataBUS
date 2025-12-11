@@ -27,6 +27,7 @@ def insert_collector(cur, yml_dict, csv_file, uploader):
             inputs['contactname'] = [x for x in inputs['contactname'] if not (x in seen or seen.add(x))] # preserve order
         elif isinstance(inputs.get('contactname', None), str):
             inputs['contactname'] = inputs['contactname'].split("|")
+            inputs['contactname'] = [value.strip() for value in inputs['contactname']]
     else:
         inputs["contactid"] = list(dict.fromkeys(inputs["contactid"]))
     contids = []

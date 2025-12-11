@@ -1,7 +1,6 @@
 from DataBUS import Response, Contact
 import DataBUS.neotomaHelpers as nh
 
-
 def insert_dataset_pi(cur, yml_dict, csv_file, uploader):
     """
     Inserts dataset principal investigator data into Neotomas.
@@ -28,6 +27,7 @@ def insert_dataset_pi(cur, yml_dict, csv_file, uploader):
             inputs['contactname'] = [x for x in inputs['contactname'] if not (x in seen or seen.add(x))] # preserve order
         elif isinstance(inputs['contactname'], str):
             inputs['contactname'] = inputs['contactname'].split("|")
+            inputs['contactname'] = [value.strip() for value in inputs['contactname']]
     else:
         inputs["contactid"] = list(dict.fromkeys(inputs["contactid"]))
 
