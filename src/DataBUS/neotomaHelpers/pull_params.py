@@ -2,7 +2,7 @@ import datetime
 import re
 from .retrieve_dict import retrieve_dict
 from .clean_column import clean_column
-from .clean_notes import clean_notes
+#from .clean_notes import clean_notes
  
 def pull_params(params, yml_dict, csv_template, table=None, name = None, values = False):
     """
@@ -116,9 +116,9 @@ def pull_params(params, yml_dict, csv_template, table=None, name = None, values 
                         add_unit_inputs[i] = None
             else:
                 add_unit_inputs[i] = None
-        if 'notes' in add_unit_inputs.keys():
-            add_unit_inputs['notes']=clean_notes(add_unit_inputs['notes'], name)
-            return add_unit_inputs
+        # if 'notes' in add_unit_inputs.keys():
+        #     add_unit_inputs['notes']=clean_notes(add_unit_inputs['notes'], name)
+        #     return add_unit_inputs
         else:
             if any(k in add_unit_inputs.keys() for k in ('chronologies', 'sampleages')):
                 key = ('chronologies' if 'chronologies' in add_unit_inputs.keys()

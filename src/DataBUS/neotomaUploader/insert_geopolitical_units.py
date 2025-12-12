@@ -1,6 +1,6 @@
 import DataBUS.neotomaHelpers as nh
 from DataBUS import Response
-
+ 
 def insert_geopolitical_units(cur, yml_dict, csv_file, uploader):
     """_Validating geopolitical units"""
     response = Response()
