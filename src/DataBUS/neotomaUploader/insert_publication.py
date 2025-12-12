@@ -68,7 +68,6 @@ def insert_publication(cur, yml_dict, csv_file, uploader):
                 cur.execute(cit_q, {'cit': cit.lower()})
                 obs = cur.fetchone()
                 pub_id = obs if obs is not None else None
-                print(pub_id)
                 if pub_id:
                     response.message.append(f"✔  Found Publication: "
                                             f"{obs[1]} in Neotoma")
