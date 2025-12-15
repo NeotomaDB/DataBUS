@@ -33,7 +33,7 @@ class Variable:
     def get_id_from_db(self, cur):
         variable_q = """
                  SELECT variableid FROM ndb.variables 
-                           WHERE variableunitsid = %(variableunitsid)s 
+                           WHERE (variableunitsid IS NULL OR variableunitsid = %(variableunitsid)s)
                            AND taxonid = %(taxonid)s
                            AND (variableelementid IS NULL OR variableelementid = %(variableelementid)s)
                            AND (variablecontextid IS NULL OR variablecontextid = %(variablecontextid)s)

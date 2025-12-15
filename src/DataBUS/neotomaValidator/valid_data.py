@@ -25,7 +25,7 @@ def valid_data(cur, yml_dict, csv_file, wide = False):
                      WHERE LOWER(taxonname) = %(element)s;"""
     units_query = """SELECT variableunitsid FROM ndb.variableunits 
                      WHERE LOWER(variableunits) = %(element)s;"""
-    context_query = """SELECT LOWER(variablecontext) FROM ndb.variablecontexts
+    context_query = """SELECT variablecontextid FROM ndb.variablecontexts
                        WHERE LOWER(variablecontext) = %(element)s;"""
 
     par = {'taxon': [taxon_query, 'taxonid'],
