@@ -26,7 +26,10 @@ def valid_publication(cur, yml_dict, csv_file):
                     flattened_list.append(item)
             flattened_list = list(set(flattened_list))
         elif isinstance(original_list, str):
-            flattened_list = [original_list]
+            if delim in original_list:
+                flattened_list = original_list.split(delim)
+            else:
+                flattened_list = [original_list]
         return flattened_list
     
     response = Response()
@@ -34,11 +37,10 @@ def valid_publication(cur, yml_dict, csv_file):
     inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.publications")
     inputs['doi'] = list_flattener(inputs['doi'])
     inputs['publicationid'] = list_flattener(inputs['publicationid'])
-    inputs['citation'] = list_flattener(inputs.get('citation', None),  delim=' | ')
+    inputs['citation'] = list_flattener(inputs.get('citation', None),  delim='|')
     if inputs["publicationid"]:
         inputs["publicationid"] = [value if value != "NA" else None for value in inputs["publicationid"]]
         inputs["publicationid"] = inputs["publicationid"][0]
-        
     doi_pattern = r"^10\.\d{4,9}/[-._;()/:A-Z0-9]+$"
     cit_q = """SELECT publicationid, citation, similarity(LOWER(citation), %(cit)s) as SIM
                FROM ndb.publications
@@ -63,7 +65,6 @@ def valid_publication(cur, yml_dict, csv_file):
                 obs = cur.fetchone()
                 pub_id = obs if obs is not None else None
                 if pub_id:
-                    print(obs[1])
                     response.message.append(f"✔  Found Publication: "
                                             f"{obs[1]} in Neotoma")
                     response.valid.append(True)
