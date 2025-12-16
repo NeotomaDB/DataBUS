@@ -61,6 +61,7 @@ def valid_publication(cur, yml_dict, csv_file):
         response.valid.append(True)
         if inputs.get('citation', None):
             for i, cit in enumerate(inputs['citation']):
+                cit = cit.strip()
                 cur.execute(cit_q, {'cit': cit.lower()})
                 obs = cur.fetchone()
                 pub_id = obs if obs is not None else None

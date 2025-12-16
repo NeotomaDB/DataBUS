@@ -26,7 +26,10 @@ def insert_publication(cur, yml_dict, csv_file, uploader):
                     flattened_list.append(item)
             flattened_list = list(set(flattened_list))
         elif isinstance(original_list, str):
-            flattened_list = [original_list]
+            if delim in original_list:
+                flattened_list = original_list.split(delim)
+            else:
+                flattened_list = [original_list]
         return flattened_list
     
     response = Response()
@@ -65,6 +68,7 @@ def insert_publication(cur, yml_dict, csv_file, uploader):
             if isinstance(inputs['citation'], str):
                 inputs['citation'] = inputs['citation'].split('|')
             for i, cit in enumerate(inputs['citation']):
+                cit = cit.strip()
                 cur.execute(cit_q, {'cit': cit.lower()})
                 obs = cur.fetchone()
                 pub_id = obs if obs is not None else None
