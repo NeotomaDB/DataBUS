@@ -59,7 +59,7 @@ def valid_chronologies(cur, yml_dict, csv_file):
         except Exception as inner_e:
             inputs = {}
             response.validAll = False
-            response.message.append(f"Chronology parameters cannot be properly extracted. {e}\n"
+            response.message.append(f"✗  Chronology parameters cannot be properly extracted. {e}\n"
                                     f"{str(inner_e)}")
             return response
         

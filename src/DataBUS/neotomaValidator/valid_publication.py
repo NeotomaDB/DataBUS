@@ -26,10 +26,7 @@ def valid_publication(cur, yml_dict, csv_file):
                     flattened_list.append(item)
             flattened_list = list(set(flattened_list))
         elif isinstance(original_list, str):
-            if delim in original_list:
-                flattened_list = original_list.split(delim)
-            else:
-                flattened_list = [original_list]
+            flattened_list = [original_list]
         return flattened_list
     
     response = Response()
@@ -37,7 +34,7 @@ def valid_publication(cur, yml_dict, csv_file):
     inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.publications")
     inputs['doi'] = list_flattener(inputs['doi'])
     inputs['publicationid'] = list_flattener(inputs['publicationid'])
-    inputs['citation'] = list_flattener(inputs.get('citation', None),  delim='|')
+    inputs['citation'] = list_flattener(inputs.get('citation', None),  delim=' | ')
     if inputs["publicationid"]:
         inputs["publicationid"] = [value if value != "NA" else None for value in inputs["publicationid"]]
         inputs["publicationid"] = inputs["publicationid"][0]
@@ -48,14 +45,12 @@ def valid_publication(cur, yml_dict, csv_file):
                AND similarity(LOWER(citation), %(cit)s) >= .6
                ORDER BY similarity(LOWER(citation), %(cit)s) DESC
                LIMIT 1; """
-    
     doi_q = """SELECT *, similarity(LOWER(doi), %(doi)s) as SIM
                FROM ndb.publications
                WHERE doi IS NOT NULL
                 AND similarity(LOWER(doi), %(doi)s) > .60
                ORDER BY similarity(LOWER(doi), %(doi)s) DESC
                LIMIT 1; """
-
     if not inputs.get('publicationid', None):
         response.message.append(f"? No ID present")
         response.valid.append(True)

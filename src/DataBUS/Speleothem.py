@@ -56,7 +56,6 @@ class Speleothem:
         cur.execute(insert_speleothem)
         query = """
         SELECT insert_speleothem(_siteid := %(siteid)s,
-                                _entityid := %(entityid)s,
                                 _entityname := %(entityname)s,
                                 _monitoring := %(monitoring)s,
                                 _rockageid := %(rockageid)s,
@@ -66,7 +65,6 @@ class Speleothem:
                                 """
         inputs = {
             "siteid": self.siteid,
-            "entityid": self.entityid,
             "entityname": self.entityname,
             "monitoring": self.monitoring,
             "rockageid": self.rockageid,
@@ -74,7 +72,8 @@ class Speleothem:
             "entrancedistanceunits": self.entrancedistanceunits,
             "speleothemtypeid": self.speleothemtypeid}
         cur.execute(query, inputs)
-        return cur.fetchone()[0]
+        spid = cur.fetchone()[0]
+        return spid
     
     def insert_entitygeology_to_db(self, cur, id, speleothemgeologyid, notes):
         cur.execute(insert_entitygeology)
@@ -161,7 +160,7 @@ class Speleothem:
         cur.execute(query, inputs)
         return
     
-    def insert_entitysamples_to_db(self, cur, organics, fluid_inclusions, mineralogy_petrology_fabric,
+    def insert_entitysamples_to_db(self, cur, id, organics, fluid_inclusions, mineralogy_petrology_fabric,
                               clumped_isotopes, noble_gas_temperatures, C14, ODL):
         cur.execute(insert_entitysamples)
         def to_bool(x):
@@ -178,7 +177,7 @@ class Speleothem:
                                             _C14 := %(C14)s,
                                             _ODL := %(ODL)s)
                 """
-        inputs = {"entityid": int(self.entityid),
+        inputs = {"entityid": int(id),
                     "organics": to_bool(organics),
                     "fluid_inclusions": to_bool(fluid_inclusions),
                     "mineralogy_petrology_fabric": to_bool(mineralogy_petrology_fabric),

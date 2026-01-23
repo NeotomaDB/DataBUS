@@ -14,15 +14,14 @@ class Response:
         self.uncertaintyinputs = []
         self.id = []
         self.name = {}
+        self.indices = []
         
-
     def __str__(self):
         new_msg = "\n".join(str(m) for m in self.message)
         if self.validAll == False:
             return f"Valid: {str(self.validAll).upper()} \n" f"Message: \n" f"{new_msg}"
         else:
             return f"Valid: {self.validAll} \n" f"Message: \n" f"{new_msg}"
-
 
 class SiteResponse(Response):
     def __init__(self):
@@ -45,7 +44,6 @@ class SiteResponse(Response):
                 str(site) for site in self.sitelist
             )
         return response_str
-
 
 class CUResponse(Response):
     def __init__(self):
@@ -72,7 +70,6 @@ class CUResponse(Response):
             )
         return response_str
 
-
 class AUResponse(Response):
     def __init__(self):
         super().__init__()
@@ -89,7 +86,6 @@ class AUResponse(Response):
                 str(site) for site in self.aulist
             )
         return response_str
-
 
 class ChronResponse(Response):
     def __init__(self):

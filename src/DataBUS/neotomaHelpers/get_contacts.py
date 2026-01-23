@@ -50,7 +50,7 @@ def get_contacts(cur, contacts_list):
                     contids.append({"name": i, "id": None, "order": baseid})
                 baseid +=1
             else:
-                contactname = i.lower()
+                contactname = i.lower().strip()
                 get_contact = """SELECT contactid, familyname || ', ' || givennames AS fullname
                                  FROM ndb.contacts
                                  WHERE LOWER(contactname) = %(contactname)s;"""

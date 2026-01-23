@@ -1,5 +1,5 @@
-import DataBUS.neotomaHelpers as nh
 from DataBUS import Response, UThSeries, insert_uraniumseriesdata
+import DataBUS.neotomaHelpers as nh
 
 def insert_uth_series(cur, yml_dict, csv_file, uploader):
     """
@@ -19,7 +19,6 @@ def insert_uth_series(cur, yml_dict, csv_file, uploader):
         response.valid.append(True)
         response.validAll = all(response.valid)
         return response
-    
     else:
         params = ['decayconstantid',
                 'ratio230th232th', 'ratiouncertainty230th232th',
@@ -32,7 +31,6 @@ def insert_uth_series(cur, yml_dict, csv_file, uploader):
         elements = [x for x in params if x not in {'geochronid'}]
     else:
         elements = [x for x in params if x not in {'geochronid', 'decayconstantid'}]
-    response = Response()
     filtered_inputs = {k: v for k, v in inputs.items() if k in elements}
     indices = [i for i, values in enumerate(zip(*filtered_inputs.values()))
                if any(value is not None for value in values)]
@@ -124,8 +122,7 @@ def insert_uth_series(cur, yml_dict, csv_file, uploader):
                             response.message.append("✔ UraniumSeriesData has been inserted")
                         except Exception as e:
                             response.valid.append(False)
-                            response.message.append(f"✗ Uranium Series Data cannot be inserted: {e}")
-                    
-        response.message = list(set(response.message))
-        response.validAll = all(response.valid)
-        return response
+                            response.message.append(f"✗ Uranium Series Data cannot be inserted: {e}")              
+    response.message = list(set(response.message))
+    response.validAll = all(response.valid)
+    return response

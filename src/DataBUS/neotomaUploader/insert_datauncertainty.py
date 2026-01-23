@@ -77,11 +77,11 @@ def insert_datauncertainty(cur, yml_dict, csv_file, uploader, wide = False):
                     response.message.append(f"?  {key} {k} ID not given. ")
                     response.valid.append(True)
             else:
-                    response.message.append(f"?  {key} {k} ID not given. ")
-                    response.valid.append(True)
-                    entries[v[1]] = counter
+                response.message.append(f"?  {key} {k} ID not given. ")
+                response.valid.append(True)
+                entries[v[1]] = counter
         try:
-            assert len(taxa[key]['value']) == len(uploader['data'].data_id[key])
+            assert len(taxa.get(key)['value']) == len(uploader['data'].data_id.get(key))
         except AssertionError:
             response.message.append(f"Uncertainties and Data IDs must have the same length: {key}")
             response.valid.append(False)

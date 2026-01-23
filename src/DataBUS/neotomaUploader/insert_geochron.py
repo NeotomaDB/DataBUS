@@ -5,7 +5,6 @@ def insert_geochron(cur, yml_dict, csv_file, uploader):
     """
     """
     response = Response()
-
     params = ["geochrontypeid", "agetype", 
               "age", "errorolder", "erroryounger",
               "infinite", "delta13c", "labnumber", 
@@ -19,9 +18,22 @@ def insert_geochron(cur, yml_dict, csv_file, uploader):
                'U/Th unspecified': 'Uranium series',
                'C14': 'Carbon-14'}
     inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.geochronology")
-    indices = [i for i, value in enumerate(inputs['age']) if value is not None]
+    if inputs['geochrontypeid'] is None:
+        response.valid.append(True)
+        response.message.append("✔ No geochron type IDs to insert.")
+        response.validAll = all(response.valid)
+        return response
+    indices = [i for i, value in enumerate(inputs['geochrontypeid']) if value is not None]
     inputs = {k: [v for i, v in enumerate(inputs[k]) if i in indices] if isinstance(inputs[k], list) else value for k, value in inputs.items()}
-    inputs['sampleid'] = uploader['sample_geochron'].sampleid
+    sampleids = uploader['sample_geochron'].sampleid
+    inputs['sampleid'] = []
+    sample_idx = 0
+    for age in inputs['age']:
+        if age is None:
+            inputs['sampleid'].append(None)
+        else:
+            inputs['sampleid'].append(sampleids[sample_idx])
+            sample_idx += 1
     try:
         assert len(inputs['sampleid']) == len(inputs['age'])
     except AssertionError:
@@ -43,8 +55,8 @@ def insert_geochron(cur, yml_dict, csv_file, uploader):
             if geochronid:
                 geochron[e] = geochronid[0]
             else:
-                response.message.append(f"✗  Geochron type {e} not found in database")
-                response.valid.append(False)
+                # response.message.append(f"✗  Geochron type {e} not found in database")
+                # response.valid.append(False)
                 geochron[e] = None
     if inputs.get('geochrontypeid') is not None:
         inputs['geochrontypeid'] = [geochron.get(item, item) for item in inputs['geochrontypeid']]
@@ -69,17 +81,28 @@ def insert_geochron(cur, yml_dict, csv_file, uploader):
     static_params = {k: v for k, v in inputs.items() if not isinstance(v, list)}
     for values in zip(*iterable_params.values()):
         kwargs = dict(zip(iterable_params.keys(), values))
-        kwargs.update(static_params) 
+        kwargs.update(static_params)
         gc = Geochron(**kwargs)
         response.valid.append(True)
         try:
-            id = gc.insert_to_db(cur)
-            response.id.append(id)
-            response.valid.append(True)
+            if gc.age is None:
+                response.id.append(None)
+                continue
+            else:
+                if gc.geochrontypeid is None:
+                    response.valid.append(False)
+                    response.message.append(f"✗  Geochron type ID is None, cannot insert Geochronology.")
+                    continue
+                else:
+                    id = gc.insert_to_db(cur)
+                    response.id.append(id)
+                    response.valid.append(True)
         except Exception as e:
             response.valid.append(False)
             response.message.append(f"✗  Geochronology cannot be created: {e}")
+    respids = [rid for rid in response.id if rid is not None]
     response.validAll = all(response.valid)
-    response.message.append(f"✔  {len(response.id)} Geochronologies inserted")
+    response.message.append(f"✔  {len(respids)}. IDs: {respids}.")
     response.message=list(set(response.message))
+    response.indices = indices
     return response

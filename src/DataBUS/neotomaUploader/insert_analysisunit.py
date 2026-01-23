@@ -15,20 +15,19 @@ def insert_analysisunit(cur, yml_dict, csv_file, uploader):
     """
     params = ["analysisunitname", "depth", "thickness",
               "faciesid", "mixed", "igsn", "notes"]
+    response = AUResponse()
     try:
         inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.analysisunits")
     except Exception as e:
         response.validAll = False
         response.valid.append(False)
-        response.message.append(f"AU Elements in the CSV file are not formatted properly. Please verify the CSV file")
+        response.message.append(f"AU Elements in the CSV file are not formatted properly. Please verify the CSV file: {e}")
+        return response
     facies_q = """SELECT faciesid
                   FROM ndb.faciestypes
                   WHERE LOWER(facies) = %(faciesid)s"""
     if not inputs['mixed']:
         inputs['mixed'] = False
-
-    response = AUResponse()
-
     if not uploader['collunitid'].cuid:
         response.message.append(f"✗ CU ID needed to create Analysis Unit"
                                 f" Placeholder `1` will be used to create log.")

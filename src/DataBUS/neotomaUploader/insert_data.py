@@ -20,7 +20,6 @@ def insert_data(cur, yml_dict, csv_file, uploader, wide = False):
             response.message.append("? No Values to validate.")
             response.validAll = False
             return response
-    response = Response()
 
     var_query = """SELECT variableelementid FROM ndb.variableelements
                     WHERE LOWER(variableelement) = %(element)s;"""
@@ -125,7 +124,15 @@ def insert_data(cur, yml_dict, csv_file, uploader, wide = False):
                                     f"variableelement: {varelement}, ID: {entries['variableelementid']},\n"
                                     f"variablecontextid: {varcontextid}, ID: {entries['variablecontextid']}\n")
             response.valid.append(True)
-            varid = var.insert_to_db(cur)
+            try:
+                varid = var.insert_to_db(cur)
+                response.valid.append(True)
+                response.message.append(f"✔  Var ID inserted to db with ID {varid}.")
+            except Exception as e:
+                response.valid.append(False)
+                response.message.append(f"✗  Var ID cannot be inserted to db: {e}")
+                cur.execute("ROLLBACK;") # exit error status
+                continue
         for i, j in enumerate(taxa[key]['value']):
             if key not in response.data_id:
                     response.data_id[key]=[]
@@ -150,7 +157,6 @@ def insert_data(cur, yml_dict, csv_file, uploader, wide = False):
                     response.data_id[key].append(None)
                     cur.execute("ROLLBACK;") # exit error status
                     continue
-
     response.validAll = all(response.valid)
     if response.validAll:
         response.message.append(f"✔  Data inserted.")

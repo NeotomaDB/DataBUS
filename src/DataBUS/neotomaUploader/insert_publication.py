@@ -26,10 +26,7 @@ def insert_publication(cur, yml_dict, csv_file, uploader):
                     flattened_list.append(item)
             flattened_list = list(set(flattened_list))
         elif isinstance(original_list, str):
-            if delim in original_list:
-                flattened_list = original_list.split(delim)
-            else:
-                flattened_list = [original_list]
+            flattened_list = [original_list]
         return flattened_list
     
     response = Response()
@@ -37,8 +34,7 @@ def insert_publication(cur, yml_dict, csv_file, uploader):
     inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.publications")
     inputs['doi'] = list_flattener(inputs['doi'])
     inputs['publicationid'] = list_flattener(inputs['publicationid'])
-    inputs['citation'] = list_flattener(inputs['citation'],  delim=' | ')
-
+    inputs['citation'] = list_flattener(inputs.get('citation', None),  delim=' | ')
     if inputs["publicationid"]:
         inputs["publicationid"] = [value if value != "NA" else None for value in inputs["publicationid"]]
         inputs["publicationid"] = inputs["publicationid"][0]
@@ -54,7 +50,7 @@ def insert_publication(cur, yml_dict, csv_file, uploader):
     doi_q = """SELECT *, similarity(LOWER(doi), %(doi)s) as SIM
                FROM ndb.publications
                WHERE doi IS NOT NULL
-                AND similarity(LOWER(doi), %(doi)s) > .65
+                AND similarity(LOWER(doi), %(doi)s) > .60
                ORDER BY similarity(LOWER(doi), %(doi)s) DESC
                LIMIT 1; """
     
@@ -65,10 +61,7 @@ def insert_publication(cur, yml_dict, csv_file, uploader):
         response.message.append(f"? No ID present")
         response.valid.append(True)
         if inputs.get('citation', None):
-            if isinstance(inputs['citation'], str):
-                inputs['citation'] = inputs['citation'].split('|')
             for i, cit in enumerate(inputs['citation']):
-                cit = cit.strip()
                 cur.execute(cit_q, {'cit': cit.lower()})
                 obs = cur.fetchone()
                 pub_id = obs if obs is not None else None
@@ -76,9 +69,13 @@ def insert_publication(cur, yml_dict, csv_file, uploader):
                     response.message.append(f"✔  Found Publication: "
                                             f"{obs[1]} in Neotoma")
                     response.valid.append(True)
-                    cur.execute(dataset_pub_q, {'datasetid': uploader["datasets"].datasetid,
-                                                'publicationid': pub_id[0],
-                                                'primarypub': True})
+                    try:
+                        cur.execute(dataset_pub_q, {'datasetid': uploader["datasets"].datasetid,
+                                                    'publicationid': pub_id[0],
+                                                    'primarypub': True})
+                    except Exception as e:
+                        response.message.append("✗  Could not associate dataset ID to publication ID")
+                        response.valid.append(False)
                 else:
                     if inputs.get('doi', None):
                         cur.execute(doi_q, {'doi': inputs['doi'][i].lower()})
@@ -102,7 +99,6 @@ def insert_publication(cur, yml_dict, csv_file, uploader):
             inputs['publicationid'] = int(inputs['publicationid'])
         except Exception as e:
             response.message.append(f"?  Publication ID is not an integer.")
-        
         if isinstance(inputs['publicationid'], int):
             pub_query = """
                         SELECT * FROM ndb.publications

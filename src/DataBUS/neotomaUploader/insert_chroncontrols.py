@@ -130,4 +130,5 @@ def insert_chroncontrols(cur, yml_dict, csv_file, uploader):
     if response.validAll:
         response.message.append(f"✔  Chron control can be created")
     response.message = list(set(response.message))
+    response.indices.append(indices)
     return response

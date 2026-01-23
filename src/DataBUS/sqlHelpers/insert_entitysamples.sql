@@ -11,8 +11,8 @@ CREATE OR REPLACE FUNCTION insert_entitysamples(
 RETURNS void
 LANGUAGE sql
 AS $function$ 
-    INSERT INTO ndb.entitysamples(entityid, organics, fluidinclusions, 
-    mineralogypetrologyfabric, clumpedisotopes, noblegastemperatures, c14, odl)
+    INSERT INTO ndb.entitysamples(entityid, organics, fluid_inclusions, 
+    mineralogy_petrology_fabric, clumped_isotopes, noble_gas_temperatures, c14, odl)
     VALUES (_entityid, _organics, _fluid_inclusions, _mineralogy_petrology_fabric,
     _clumped_isotopes, _noble_gas_temperatures, _C14, _ODL);
 $function$

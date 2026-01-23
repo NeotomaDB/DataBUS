@@ -25,16 +25,14 @@ class Variable:
             "variableunitsid": self.variableunitsid,
             "variablecontextid": self.variablecontextid,
         }
-
         cur.execute(variable_q, inputs)
         self.datumid = cur.fetchone()[0]
         return self.datumid
-
     def get_id_from_db(self, cur):
         variable_q = """
                  SELECT variableid FROM ndb.variables 
-                           WHERE (variableunitsid IS NULL OR variableunitsid = %(variableunitsid)s)
-                           AND taxonid = %(taxonid)s
+                           WHERE taxonid = %(taxonid)s
+                           AND (variableunitsid IS NULL OR variableunitsid = %(variableunitsid)s)
                            AND (variableelementid IS NULL OR variableelementid = %(variableelementid)s)
                            AND (variablecontextid IS NULL OR variablecontextid = %(variablecontextid)s)
                 """

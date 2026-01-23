@@ -1,18 +1,18 @@
 CREATE OR REPLACE FUNCTION insert_speleothem(_siteid numeric,
-                                             _entityid numeric,
                                              _entityname text DEFAULT NULL,
                                              _monitoring boolean DEFAULT NULL,
                                              _rockageid numeric DEFAULT NULL,
                                              _entrancedistance numeric DEFAULT NULL,
                                              _entrancedistanceunits integer DEFAULT NULL,
                                              _speleothemtypeid integer DEFAULT NULL)
-RETURNS void
+RETURNS integer
 LANGUAGE sql
 AS $function$ 
-    INSERT INTO ndb.speleothems(siteid, entityid, entityname, monitoring,
+    INSERT INTO ndb.speleothems(siteid, entityname, monitoring,
                                 rockageid, entrancedistance, entrancedistanceunits,
                                 speleothemtypeid)
-    VALUES (_siteid, _entityid, _entityname, _monitoring,
+    VALUES (_siteid, _entityname, _monitoring,
             _rockageid, _entrancedistance, _entrancedistanceunits,
-            _speleothemtypeid);
-$function$
+            _speleothemtypeid)
+  RETURNING entityid
+  $function$
