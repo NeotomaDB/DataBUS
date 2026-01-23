@@ -117,7 +117,6 @@ def insert_sample_age(cur, yml_dict, csv_file, uploader):
                     s = {}
                     for param in ["ageyounger", "ageolder"]:
                         if param in sa:
-                            print(sa[param])
                             if isinstance(sa[param], list):
                                 s[param]= int(min([num for num in sa.get(param, sa.get('age')) if num is not None])) if param == 'ageboundyounger' else int(max([num for num in sa.get(param, sa.get('age')) if num is not None]))
                             else:

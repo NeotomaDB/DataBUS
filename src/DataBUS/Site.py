@@ -165,10 +165,10 @@ class Site:
                       "lim": limit}
             cur.execute(close_site, params)
             close_sites = cur.fetchall()
+            return close_sites
         except Exception as e:
-            close_sites = None
             print(f"Site is not formatted correctly. {e}")
-        return close_sites
+            return None
 
     def update_site(self, other, overwrite, siteresponse=None):
         if siteresponse is None:

@@ -24,9 +24,7 @@ def speleothem_reference_inserts(cur, conn, file_path="data/references_entities.
                 continue
             else:
                 try:
-                    print(f"inserting row: {row}")
                     insert_entityrelationship_to_db(cur, row[0], row[1], row[2])
                     conn.rollback()
                 except Exception as e:
-                    print(f"Error inserting row {row}: {e}")
                     conn.rollback()

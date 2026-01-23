@@ -21,12 +21,10 @@ def insert_geochroncontrols(cur, yml_dict, csv_file, uploader):
     # Filter entries to keep only positions where mask is True
     #entries['geochronid'] = [entries['geochronid'][i] for i, keep in enumerate(mask) if keep]
     positions_to_keep = [i for i, idx in enumerate(indices2) if idx in common_indices]
-    print(positions_to_keep)
     # Now filter entries using only those positions
     entries['geochronid'] = [entries['geochronid'][i] for i in positions_to_keep if i < len(entries['geochronid'])]
     entries['chroncontrolid'] = [entries['chroncontrolid'][i] for i in positions_to_keep if i < len(entries['chroncontrolid'])]
     #entries['chroncontrolid'] = [entries['chroncontrolid'][i] for i, keep in enumerate(mask) if keep]
-    print(entries)
     try:
         assert len(entries['chroncontrolid']) % len(entries['geochronid']) == 0 
         times = len(entries['chroncontrolid']) // len(entries['geochronid'])
