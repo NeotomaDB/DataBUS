@@ -5,11 +5,14 @@ on:
     branches:
       - main
 
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
 permissions:
   contents: read
   pages: write
   id-token: write
 
+# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
+# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
 concurrency:
   group: "pages"
   cancel-in-progress: false
@@ -27,11 +30,10 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Install dependencies
+      - name: Install package and dependencies
         run: |
-          pip install mkdocs>=1.6.1
-          pip install mkdocs-material>=9.6.16
-          pip install mkdocstrings[python-legacy]>=0.18
+          pip install -e .
+          pip install mkdocs mkdocstrings mkdocstrings-python
 
       - name: Build documentation
         run: mkdocs build --strict
