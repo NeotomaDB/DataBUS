@@ -42,7 +42,7 @@ def get_contacts(cur, contacts_list):
             if data:
                 d_name = data[1].lower()
                 d_id = data[0]
-                result = d_name.startswith(i.lower().rstrip("."))
+                result = d_name.startswith(i.lower().rstrip(".").rstrip(",").replace(" ,", ","))
                 result_2 = match_abbreviation_to_full(d_name, i)
                 if (result or result_2) == True:
                     contids.append({"name": d_name, "id": d_id, "order": baseid})
@@ -51,7 +51,9 @@ def get_contacts(cur, contacts_list):
                 baseid +=1
             else:
                 contactname = i.lower().strip()
-                get_contact = """SELECT contactid, familyname || ', ' || givennames AS fullname
+                contactname = contactname.strip(",")
+                contactname = contactname.replace(" ,", ",")
+                get_contact = """SELECT contactid, COALESCE(familyname, '') || ', ' || COALESCE(givennames, '') AS fullname
                                  FROM ndb.contacts
                                  WHERE LOWER(contactname) = %(contactname)s;"""
                 cur.execute(get_contact, {"contactname": contactname})
