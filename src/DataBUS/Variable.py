@@ -66,7 +66,6 @@ class Variable:
         Returns:
             int, None: The variableid or None if not found.
         """
-        # SUGGESTION: Consider parameterized NULL checks or cleaner SQL syntax
         variable_q = """
                  SELECT variableid
                 FROM ndb.variables
