@@ -1,24 +1,29 @@
 def valid_units(cur, yml_dict, df):
-    """
-    Validate the units in the DataFrame based on the vocabulary specified in the YAML configuration.
+    """Validates DataFrame column units against YAML-specified vocabularies.
+
+    Validates units in DataFrame columns by comparing against controlled
+    vocabularies defined in YAML metadata. Supports both fixed (single unique
+    value) and list-based vocabulary constraints.
 
     Args:
         cur (psycopg2.extensions.cursor): Database cursor for executing SQL queries.
-        yml_dict (dict): Dictionary containing metadata and configuration from a YAML file.
-        df (pandas.DataFrame): DataFrame containing the data to be validated.
+        yml_dict (dict): Dictionary containing metadata and configuration from YAML file.
+        df (pandas.DataFrame): DataFrame containing data to be validated.
 
     Returns:
-        dict: A dictionary with keys 'valid' (boolean indicating overall validation success),
-              and 'message' (list of strings with validation messages for each column).
+        dict: Dictionary with 'valid' (bool) and 'message' (list of strings).
+    
+    Examples:
+        >>> valid_units(cursor, config_dict, dataframe)
+        {'valid': True, 'message': ['✔ Column age contains valid units.', ...]}
     """
     response = {"valid": list(), "message": list()}
 
     # Extract entries from the yml_dict that contain a vocab
-    yml_dict = yml_dict["metadata"]
+    yml_dict = yml_dict.get("metadata", [None])
     vocab_entries = [
         entry for entry in yml_dict if "vocab" in entry and (entry["vocab"] is not None)
     ]
-
     for entry in vocab_entries:
         column_values = df[entry["column"]].tolist()
         if entry["vocab"] == ["fixed"]:
@@ -43,8 +48,5 @@ def valid_units(cur, yml_dict, df):
                 response["message"].append(
                     f"✗ Column {entry['column']} contains invalid units."
                 )
-
     response["valid"] = all(response["valid"])
     return response
-
-    # Todo: Consider using the csv file from nu.read_csv instead of a pd.DataFrame

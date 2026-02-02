@@ -1,27 +1,31 @@
 import DataBUS.neotomaHelpers as nh
 from DataBUS import Dataset, Response
+from DataBUS.Dataset import DATASET_PARAMS
 
-def valid_dataset(cur, yml_dict, csv_file, name=None):
-    """
-    Validates a dataset based on provided YAML dictionary and CSV file.
+def valid_dataset(cur, yml_dict, csv_file):
+    """Validates a dataset based on YAML configuration and CSV data.
+
+    Validates dataset name and dataset type against the Neotoma database.
+    Attempts to resolve dataset type by querying the database if not provided.
+    Creates a Dataset object with validated parameters.
 
     Args:
         cur (cursor): Database cursor to execute SQL queries.
-        yml_dict (dict): Dictionary containing YAML data.
-        csv_file (str): Path to the CSV file.
-        name (str, optional): Name of the dataset. Defaults to None.
+        yml_dict (dict): Dictionary containing YAML configuration data.
+        csv_file (str): Path to CSV file containing data.
 
     Returns:
-        Response: An object containing validation results, including messages and validity status.
+        Response: Response object containing validation messages, validity list, and overall status.
 
     Raises:
-        Exception: If there are issues with retrieving values from the YAML dictionary or creating the dataset.
-"""
+        Exception: If there are issues retrieving values from YAML dict or creating the dataset.
+    
+    Examples:
+        >>> valid_dataset(cursor, config_dict, "data.csv", name="MyDataset")
+        Response(valid=[True], message=[...], validAll=True)
+    """
     response = Response()
-
-    params = [("datasetname", "ndb.datasets.datasetname"),
-            ("datasettypeid", "ndb.datasettypes.datasettypeid"),
-            ("datasettype", "ndb.datasettypes.datasettype")]
+    params = DATASET_PARAMS
     inputs = {}
     for param in params:
         val = nh.retrieve_dict(yml_dict, param[1])
@@ -60,6 +64,5 @@ def valid_dataset(cur, yml_dict, csv_file, name=None):
     except Exception as e:
         response.message.append(f"✗ Dataset cannot be created: {e}")
         response.valid.append(False)
-    response.validAll = all(response.valid)
     response.message = list(set(response.message))
     return response

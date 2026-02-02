@@ -1,3 +1,8 @@
+GECHRON_PARAMS = ["sampleid", "geochrontypeid", "agetype",
+              "age", "errorolder", "erroryounger",
+              "infinite", "delta13c", "labnumber",
+              "materialdated", "notes"]
+
 class Geochron:
     """A geochronological age determination in Neotoma.
 

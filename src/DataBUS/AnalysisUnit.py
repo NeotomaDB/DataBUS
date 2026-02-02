@@ -1,3 +1,5 @@
+ANALYSIS_UNIT_PARAMS = ["analysisunitname", "depth", "thickness",
+                        "faciesid", "mixed", "igsn", "notes"]
 class AnalysisUnit:
     """An analysis unit in Neotoma.
 

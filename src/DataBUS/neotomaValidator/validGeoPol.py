@@ -1,24 +1,29 @@
 from DataBUS.neotomaHelpers.pull_params import pull_params
 
-
 def validGeoPol(cur, yml_dict, csv_file, geopolitical):
-    """_Is the listed geopolitical unit valid?_
+    """Validates geopolitical units against site coordinates.
+
+    Validates provided geopolitical unit names by comparing them against
+    database records intersecting with site coordinates. Uses full-text search
+    on compound geopolitical names and spatial intersection with GADM 4.1 boundaries.
 
     Args:
-        cur (_psycopg2.extensions.connection_): _A connection to a valid Neotoma database (either local or remote)_
-        geopolitical (_list_): _The set of valid geopolitical unit names assigned to the site._
-        coords (_list_): _A list containing the coordinates for the site. We expect only a single element, a string lat/long pair._
+        cur (_psycopg2.extensions.connection_): Connection to Neotoma database (local or remote).
+        yml_dict (dict): Dictionary containing YAML configuration data.
+        csv_file (str): Path to CSV file containing site data.
+        geopolitical (list): List of geopolitical unit names assigned to the site.
 
     Returns:
-        _dict_: _A dict with properties pass, fid (the unique geoplacename identifier) and the valid `placename`._
+        dict: Dictionary with keys 'pass' (bool), 'locations' (str), and 'message' (list).
+    
+    Examples:
+        >>> validGeoPol(cursor, config_dict, csv_data, ['United States', 'Colorado'])
+        {'pass': True, 'locations': 'United States of America', 'message': [...]}
     """
-
     response = {"pass": [], "locations": [], "message": []}
-    params = ["geog", "geopoliticalunit"]
-    inputs = pull_params(params, yml_dict, csv_file, "ndb.sites")
+    inputs = pull_params(["geog", "geopoliticalunit"], yml_dict, csv_file, "ndb.sites")
     coords = inputs["geog"]
     location = inputs["geopoliticalunit"]
-
     if len(coords) != 1:
         # Finish the function:
         response["message"].append("✗  Site coordinates are improperly formatted.")
@@ -64,5 +69,4 @@ def validGeoPol(cur, yml_dict, csv_file, geopolitical):
             "✗  The provided geopolitical unit does not match an existing geopolitical unit within Neotoma."
         )
         response["message"].append(f"  * Best match: {response['locations']}.")
-
     return response

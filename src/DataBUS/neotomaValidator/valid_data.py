@@ -2,22 +2,31 @@ import DataBUS.neotomaHelpers as nh
 from DataBUS import Response, Variable, Datum
 
 def valid_data(cur, yml_dict, csv_file, wide = False):
-    """
-    Validates data from a CSV file against a YAML dictionary and a database.
-    Parameters:
-    cur (psycopg2.cursor): Database cursor for executing SQL queries.
-    yml_dict (dict): Dictionary containing YAML configuration data.
-    csv_file (str): Path to the CSV file containing data to be validated.
-    validator (Validator): Validator object for additional validation logic.
+    """Validates paleontological data values against the Neotoma database.
+
+    Validates data values and associated variables (taxon, units, element, context).
+    Queries database for valid variable IDs, creates Variable and Datum objects
+    with validated parameters. Supports both long and wide data format.
+
+    Args:
+        cur (psycopg2.cursor): Database cursor for executing SQL queries.
+        yml_dict (dict): Dictionary containing YAML configuration data.
+        csv_file (str): Path to CSV file containing data to validate.
+        wide (bool, optional): Flag for wide format data handling. Defaults to False.
+
     Returns:
-    Response: A response object containing validation results and messages.
+        Response: Response object containing validation messages, validity list, and overall status.
+    
+    Examples:
+        >>> valid_data(cursor, config_dict, "data.csv", wide=False)
+        Response(valid=[True], message=[...], validAll=True)
     """
     inputs = nh.pull_params(["value"], yml_dict, csv_file, "ndb.data", values = False)
     response = Response()
-    if 'value' in inputs: 
+    if 'value' in inputs:
         if not inputs['value']:
             response.message.append("? No Values to validate.")
-            response.validAll = False
+            response.valid.append(False)
             return response
     var_query = """SELECT variableelementid FROM ndb.variableelements
                     WHERE LOWER(variableelement) = %(element)s;"""
@@ -28,8 +37,9 @@ def valid_data(cur, yml_dict, csv_file, wide = False):
     context_query = """SELECT variablecontextid FROM ndb.variablecontexts
                        WHERE LOWER(variablecontext) = %(element)s;"""
 
+    # Create a mapping class or named tuple for query/column mappings
     par = {'taxon': [taxon_query, 'taxonid'],
-           'variableelement': [var_query, 'variableelementid'], 
+           'variableelement': [var_query, 'variableelementid'],
            'variableunits': [units_query, 'variableunitsid'],
            'variablecontext': [context_query, 'variablecontextid']}
     if wide == True:
@@ -134,8 +144,6 @@ def valid_data(cur, yml_dict, csv_file, wide = False):
             except Exception as e:
                 response.valid.append(False)
                 response.message.append(f"✗  Datum cannot be created: {e}")
-            
-    response.validAll = all(response.valid)
     response.message = list(set(response.message))
     if response.validAll:
         response.message.append(f"✔  Datum can be created.")

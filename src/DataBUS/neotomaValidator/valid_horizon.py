@@ -1,16 +1,23 @@
 import DataBUS.neotomaHelpers as nh
 from DataBUS import Response
 
-
 def valid_horizon(yml_dict, csv_template):
-    """_Is the dated horizon one of the accepted dates?_
+    """Validates dated horizons against analysis unit depths.
+
+    Validates that the dating horizon (e.g., lead-210 dating level) corresponds to
+    one of the reported depths in the analysis unit data. Returns the index of the
+    matching depth if found.
 
     Args:
-        depths (_array_): _An array of numbers representing depths in the core._
-        horizon (_array_): _An array of length 1 for the 210 Dating horizon_
+        yml_dict (dict): Dictionary containing YAML configuration data.
+        csv_template (list): List of dictionaries representing CSV file data.
 
     Returns:
-        _dict_: _A dict with the validity and an index of the matched depth._
+        Response: Response object with validation results, matched depth index, and messages.
+    
+    Examples:
+        >>> valid_horizon(config_dict, csv_data)
+        Response(valid=[True], index=3, message=[...], validAll=True)
     """
     response = Response()
 
@@ -41,5 +48,4 @@ def valid_horizon(yml_dict, csv_template):
         else:
             response.message.append("✗  No dating horizon is reported.")
 
-    response.validAll = all(response.valid)
     return response

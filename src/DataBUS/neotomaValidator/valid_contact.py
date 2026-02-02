@@ -1,30 +1,31 @@
 import DataBUS.neotomaHelpers as nh
 from DataBUS import Contact, Response
+from DataBUS.Contact import CONTACT_PARAMS, CONTACT_TABLES
 
-def valid_contact(cur, csv_file, yml_dict):
-    """
-    Validate contact information against the Neotoma Paleoecology Database.
+def valid_contact(cur, yml_dict, csv_file):
+    """Validates contact information against the Neotoma Paleoecology Database.
 
-    This function checks the provided contact information (either contact IDs or contact names) 
-    against the Neotoma Paleoecology Database to ensure they exist and are valid. It processes 
-    the input data, queries the database for matches, and returns a response object containing 
-    validation results and messages.
-    
-    Parameters:
-        cur (psycopg2.extensions.cursor): A cursor pointing to the Neotoma Paleoecology Database.
-        csv_file (str): A user name or individual.
-        yml_dict (dict): The dictionary object passed by template_to_dict.
+    Validates contact data (contact IDs or names) against the Neotoma database
+    to ensure they exist and are valid. Matches contact names with database records
+    and creates Contact objects with validated parameters.
+
+    Examples:
+        >>> valid_contact(cursor, "data.csv", config_dict)  # doctest: +SKIP
+        Response(valid=[True, True], message=['Contact John Doe validated', 'Principal Investigator verified'], validAll=True)
+
+    Args:
+        cur (psycopg2.extensions.cursor): Cursor pointing to Neotoma database.
+        csv_file (str): Path to CSV file containing contact data or user name.
+        yml_dict (dict): Dictionary object from template configuration.
 
     Returns:
-        Response: An object containing validation results and messages.
+        Response: Response object containing validation results and messages.
     """
     response = Response()
-
-    params = ["contactid", "contactname"] 
-    table = ["ndb.datasetpis", "ndb.collectors",
-             "ndb.sampleanalysts", "ndb.datasetprocessor",
-              "ndb.chronologies"]
+    params = CONTACT_PARAMS
+    table = CONTACT_TABLES
     inputs = nh.pull_params(params, yml_dict, csv_file, table)
+
     for i, id in enumerate(inputs):
         if not id['contactid']:
             if isinstance(id.get('contactname', None), list):
@@ -89,5 +90,4 @@ def valid_contact(cur, csv_file, yml_dict):
                     )
                     for i in person["match"]:
                         response.message.append(f"   * {i[1]}")
-    response.validAll = all(response.valid)
     return response

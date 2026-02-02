@@ -1,21 +1,31 @@
 import re
 import os
 
-
 def check_file(filename, strict = False, validation_files = "data/validation_logs/"):
-    """_Validate the existence and result of a logfile._
+    """Checks validation log file for errors from prior validation runs.
+
+    Examines validation log files to determine if a CSV file has been successfully
+    validated. Checks both validated and not_validated directories. Counts errors
+    and warnings, removing log file if strict mode passes.
+
+    Examples:
+        >>> check_file("pollen_data.csv", strict=False)  # doctest: +SKIP
+        {'pass': True, 'match': 0, 'message': ['No errors found in the last validation.']}
+        >>> check_file("chronology.csv", strict=True)  # doctest: +SKIP
+        {'pass': False, 'match': 2, 'message': ['Errors found in the prior validation.']}
 
     Args:
-        filename (_str_): _The file path or relative path for a template CSV file._
+        filename (str): File path or relative path for a template CSV file.
+        strict (bool): If True, also count "Valid: FALSE" lines as errors. Defaults to False.
+        validation_files (str): Path to validation logs directory. Defaults to "data/validation_logs/".
 
     Returns:
-        _dict_: _A dict type object with properties `pass` (bool), `match` (int) and `message` (str[])._
+        dict: Dictionary with 'pass' (bool), 'match' (int error count), and 'message' (list).
     """
     response = {"pass": False, "match": 0, "message": []}
     modified_filename = os.path.basename(filename)
     logfile = f"{validation_files}{modified_filename}"+ ".valid.log"
     not_val_logfile = f"{validation_files}not_validated/{modified_filename}"+ ".valid.log"
-
     if os.path.exists(logfile): 
         with open(logfile, "r", encoding="utf-8") as f:
             for line in f:
@@ -45,7 +55,6 @@ def check_file(filename, strict = False, validation_files = "data/validation_log
             os.remove(not_val_logfile)
         else:
             response["message"].append("Errors found in the prior validation.")
-
     else:
         response["message"].append("No prior log file exists.")
         response["pass"] = True

@@ -2,16 +2,23 @@ import DataBUS.neotomaHelpers as nh
 from DataBUS import Response
 
 def valid_geopolitical_units(cur, yml_dict, csv_file):
-    """
-    Validate given geopolitical units with those available in Neotoma.
+    """Validates geopolitical unit assignments against Neotoma database.
+
+    Validates provided geopolitical units (country, state, county, etc.) by
+    querying the database for matching geopolitical IDs. Returns the most
+    specific (lowest level) valid geopolitical unit found.
+    
     Args:
-        cur (_psycopg2.extensions.connection_): Database connection to a Neotoma database.
+        cur (_psycopg2.extensions.connection_): Database connection to Neotoma database.
         yml_dict (dict): Dictionary containing parameters from YAML configuration.
         csv_file (str): Path to CSV file containing additional parameters.
+
     Returns:
-        An Response object containing validation results, including messages and
-              validity status for each geopolitical unit.
-    >>> response = valid_geopolitical_units(cur, yml_dict, csv_file)
+        Response: Response object containing validation results and messages.
+    
+    Examples:
+        >>> valid_geopolitical_units(cursor, config_dict, "geo_data.csv")
+        Response(valid=[True], message=[...], validAll=True)
     """
     response = Response()
 
@@ -20,7 +27,6 @@ def valid_geopolitical_units(cur, yml_dict, csv_file):
     inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.sitegeopolitical")
     query = """SELECT geopoliticalid FROM ndb.geopoliticalunits
                 WHERE LOWER(geopoliticalname) = %(geopoliticalname)s"""
-    
     geo_units = {}
     for unit in inputs:
         if inputs[unit]:
@@ -43,5 +49,4 @@ def valid_geopolitical_units(cur, yml_dict, csv_file):
         response.message.append(f"? Site GPUID not available in Neotoma.")
         response.valid.append(True)
 
-    response.validAll = all(response.valid)
     return response

@@ -1,4 +1,9 @@
 from .Geog import Geog
+CU_PARAMS = ["handle", "core", "depenvtid", "collunitname",
+              "colldate", "colldevice", "gpsaltitude", "gpserror",
+              "waterdepth", "substrateid", "slopeaspect", "slopeangle",
+              "location", "notes", "geog", "colltypeid"]
+
 class CollectionUnit:
     """Represents a sediment core or excavation collection in Neotoma.
 

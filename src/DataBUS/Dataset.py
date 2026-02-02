@@ -1,3 +1,6 @@
+DATASET_PARAMS = [("datasetname", "ndb.datasets.datasetname"),
+            ("datasettypeid", "ndb.datasettypes.datasettypeid"),
+            ("datasettype", "ndb.datasettypes.datasettype")]
 class Dataset:
     """A dataset in Neotoma.
 

@@ -1,3 +1,7 @@
+CONTACT_PARAMS = ["contactid", "contactname"]
+CONTACT_TABLES = ["ndb.datasetpis", "ndb.collectors",
+                  "ndb.sampleanalysts", "ndb.datasetprocessor",
+                  "ndb.chronologies"]
 class Contact:
     """A person who participated in data collection or processing in Neotoma.
 

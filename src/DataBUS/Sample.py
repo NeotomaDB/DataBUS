@@ -1,3 +1,5 @@
+SAMPLE_PARAMS = ["samplename", "analysisdate", "labnumber",
+                 "prepmethod", "notes","sampledate", "taxonname"]
 class Sample:
     """A sample in Neotoma.
 

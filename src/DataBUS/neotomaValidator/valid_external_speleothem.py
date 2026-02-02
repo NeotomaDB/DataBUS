@@ -1,28 +1,34 @@
 import DataBUS.neotomaHelpers as nh
 from DataBUS import Response, ExternalSpeleothem
+from DataBUS.Speleothem import EX_SP_PARAMS
 
-def valid_external_speleothem(cur, yml_dict, csv_file): 
-    """
-    Validates external speleothem data by checking required parameters and cross-referencing with the database.
-    This function pulls input parameters related to an external speleothem record from the given
-    YAML dictionary and CSV file, verifies the external database identifier by querying the database,
-    and attempts to create an ExternalSpeleothem object to ensure data integrity.
-    Parameters:
-        cur (cursor): A database cursor used to execute queries against the ndb.externaldatabases table.
-        yml_dict (dict): A dictionary of configuration parameters, likely loaded from a YAML file.
-        csv_file (str): The path or identifier of a CSV file containing external speleothem data.
+def valid_external_speleothem(cur, yml_dict, csv_file):
+    """Validates external speleothem data against the Neotoma database.
+
+    Validates external speleothem parameters including external database ID,
+    external ID, and description. Queries the database for valid external
+    database references and creates ExternalSpeleothem objects.
+
+    Args:
+        cur (cursor): Database cursor to query ndb.externaldatabases table.
+        yml_dict (dict): Dictionary of configuration parameters from YAML file.
+        csv_file (str): Path or identifier for CSV file with external speleothem data.
+
     Returns:
-        Response: An object containing two main attributes:
-            - valid (list of bool): Flags indicating the success or failure of each validation step.
-            - message (list of str): Messages detailing the outcome of each validation, including errors.
+        Response: Response object with validation results and messages.
+
     Exceptions:
-        Any exceptions raised during parameter extraction or database operations are caught,
-        and corresponding error messages are appended to the response.
+        Catches exceptions during parameter extraction and database operations,
+        appending error messages to the response.
+    
+    Examples:
+        >>> valid_external_speleothem(cursor, config_dict, "ext_speleothem_data.csv")
+        Response(valid=[True], message=[...], validAll=True)
     """
-    params = ['externalid', 'externaldescription', 'extdatabaseid']
+    params = EX_SP_PARAMS
     response = Response()
 
-    query = """SELECT extdatabaseid 
+    query = """SELECT extdatabaseid
                FROM ndb.externaldatabases
                WHERE LOWER(extdatabasename) = %(element)s OR
                LOWER(url) ILIKE %(element)s;"""
@@ -39,15 +45,14 @@ def valid_external_speleothem(cur, yml_dict, csv_file):
                 inputs['extdatabaseid'] = inputs['extdatabaseid'][0]
                 response.valid.append(True)
                 response.message.append(f"✔  extdatabaseid for {inputs.get('extdatabaseid')} found.")
-        
         if isinstance(inputs.get('externaldescription'), str):
             inputs['externaldescription'] = inputs['externaldescription'].strip(', ')
             response.valid.append(True)
         try:
             ExternalSpeleothem(entityid=2, #placeholder
-                                    externalid=inputs.get('externalid'),
-                                    extdatabaseid=inputs.get('extdatabaseid'),
-                                    externaldescription=inputs.get('externaldescription'))
+                               externalid=inputs.get('externalid'),
+                               extdatabaseid=inputs.get('extdatabaseid'),
+                               externaldescription=inputs.get('externaldescription'))
             response.valid.append(True)
         except Exception as e:
             response.message.append(f"✗  Cannot create ExternalSpeleothem object. {e}")
@@ -55,5 +60,4 @@ def valid_external_speleothem(cur, yml_dict, csv_file):
     except Exception as e:
         response.message.append(f"✗  Cannot pull external speleothem parameters from CSV file. {e}")
         response.valid.append(False)
-
     return response

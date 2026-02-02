@@ -2,37 +2,43 @@ import DataBUS.neotomaHelpers as nh
 from DataBUS import Response, DataUncertainty
 
 def valid_datauncertainty(cur, yml_dict, csv_file, wide=False):
-    """
-    Validates data uncertainty values and their associated units and basis.
+    """Validates data uncertainty values against the Neotoma database.
 
-    Parameters:
+    Validates uncertainty values, units, and basis information. Queries database
+    for valid uncertainty basis IDs and variable unit IDs, then creates DataUncertainty
+    objects with validated parameters. Supports both long and wide data formats.
+
+    Args:
         cur (cursor): Database cursor for executing SQL queries.
         yml_dict (dict): Dictionary containing YAML configuration parameters.
-        csv_file (str): Path to the CSV file containing data to be validated.
-        wide (bool, optional): Flag indicating whether to use wide format for taxa. Defaults to False.
+        csv_file (str): Path to CSV file containing data to validate.
+        wide (bool, optional): Flag for wide format taxa handling. Defaults to False.
+
     Returns:
-        Response: An object containing validation results, including messages and validity status.
+        Response: Response object containing validation messages, validity list, and overall status.
+    
+    Examples:
+        >>> valid_datauncertainty(cursor, config_dict, "uncertainty_data.csv")
+        Response(valid=[True], message=[...], validAll=True)
     """ 
     inputs = nh.pull_params(["uncertaintyvalue"], yml_dict, csv_file, "ndb.datauncertainties")
     response = Response()
     if 'value' in inputs:
         if not inputs['value']:
             response.message.append("? No Values to validate.")
-            response.validAll = False
+            response.valid.append(False)
             return response
     basis_query = """SELECT uncertaintybasisid FROM ndb.uncertaintybases
                     WHERE LOWER(uncertaintybasis) = %(element)s;"""
-    units_query = """SELECT variableunitsid FROM ndb.variableunits 
+    units_query = """SELECT variableunitsid FROM ndb.variableunits
                      WHERE LOWER(variableunits) = %(element)s;"""
-
-    par = {'uncertaintybasis': [basis_query, 'uncertaintybasisid'], 
+    par = {'uncertaintybasis': [basis_query, 'uncertaintybasisid'],
            'variableunits': [units_query, 'variableunitsid']}
     if wide == True:
         taxa = inputs.copy()
     else:
         taxa = {'value': inputs['value']}
-
-    for n, key in enumerate(taxa.keys()): #variables.variableunits
+    for n, key in enumerate(taxa.keys()):
         params = [v for k, v in taxa[key].items() if k not in ['value', 'uncertaintybasis']]
         inputs2 = nh.pull_params(params, yml_dict, csv_file, "ndb.variables", values=True)
         if 'uncertaintybasis' in taxa[key]:
@@ -85,7 +91,6 @@ def valid_datauncertainty(cur, yml_dict, csv_file, wide=False):
             except Exception as e:
                 response.valid.append(False)
                 response.message.append(f"✗  Datum Uncertainty cannot be created: {e}")
-    response.validAll = all(response.valid)
     response.message = list(set(response.message))
     if response.validAll:
         response.message.append(f"✔  Datum Uncertainty can be created.")

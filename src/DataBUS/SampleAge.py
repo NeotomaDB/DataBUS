@@ -1,3 +1,5 @@
+SAMPLE_AGE_PARAMS = ["age", "ageyounger", "ageolder", "agetype", "agemodel"]
+
 class SampleAge:
     """Age information for a sample in the Neotoma database.
 

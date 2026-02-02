@@ -1,3 +1,4 @@
+PUB_PARAMS = ["doi", "publicationid", "citation"]
 class Publication:
     """A bibliographic publication reference in Neotoma.
 

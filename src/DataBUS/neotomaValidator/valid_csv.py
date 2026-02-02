@@ -10,17 +10,25 @@ python 210Pb_Template/neotomaUploader/csvValidator.py --path=210Pb_Template/data
 
 
 def valid_csv(filename, yml_data):
-    """_Validate csv file for use in the validator._
+    """Validates CSV file structure against YAML template configuration.
+
+    Validates that CSV file column names match expected columns from YAML metadata.
+    Ensures all required columns from template are present in CSV and identifies
+    extra or missing columns.
+
+    Examples:
+        >>> valid_csv("data.csv", yaml_config)
+        {'valid': True, 'message': ['✔ The column names and flattened YAML keys match']}
 
     Args:
-        filename (_string_): _A valid csv filename._
-        yml_data (_dict_): _A dict passed from template_to_dict()_
+        filename (str): Path to CSV file to validate.
+        yml_data (dict): Dictionary from template_to_dict() containing YAML metadata.
 
     Returns:
-        _type_: _description_
+        dict: Dictionary with 'valid' (bool) and 'message' (list of validation messages).
     """
     response = {"valid": [], "message": []}
-    # response = []
+    # SUGGESTION: Extract column list to module-level constant for maintainability
     # Take directly from .yml file
     col_values = [d.get("column") for d in yml_data]
     # Remove specific columns from col_values as they are taken from the metadata in the xlsx template

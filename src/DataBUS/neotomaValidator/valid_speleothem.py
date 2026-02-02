@@ -1,24 +1,30 @@
 import DataBUS.neotomaHelpers as nh
 from DataBUS import Response, Speleothem
+from DataBUS.Speleothem import SPELEOTHEM_PARAMS
 
 def valid_speleothem(cur, yml_dict, csv_file):
-    """
-    Validates speleothem data from a CSV file against the Neotoma database.
-    Parameters:
+    """Validates speleothem data against the Neotoma database.
+
+    Validates speleothem parameters including entity properties, drip type, geology,
+    cover type, and land use information. Queries the database for valid values
+    and creates a Speleothem object with validated parameters.
+
+    Args:
         cur (psycopg2.cursor): Database cursor for executing SQL queries.
         yml_dict (dict): Dictionary containing YAML configuration data.
-        csv_file (str): Path to the CSV file containing speleothem data.
+        csv_file (str): Path to CSV file containing speleothem data.
+
     Returns:
-        Response: An object containing validation results and messages.
+        Response: Response object containing validation messages, validity list, and overall status.
+    
+    Examples:
+        >>> valid_speleothem(cursor, config_dict, "speleothem_data.csv")
+        Response(valid=[True], message=[...], validAll=True)
     """
-    params = ['siteid', 'entityid', 'entityname', 'monitoring', 'rockageid', 'entrancedistance', 
-              'entrancedistanceunitsid', 'speleothemtypeid', 'entitystatusid', 'speleothemgeologyid',
-              'speleothemdriptypeid', 'dripheight', 'dripheightunitsid', 'covertypeid', 'coverthickness',
-              'entitycoverunitsid', 'landusecovertypeid', 'landusecoverpercent', 'landusecovernotes',
-              'vegetationcovertypeid', 'vegetationcoverpercent', 'vegetationcovernotes', 'ref_id']
+    params = SPELEOTHEM_PARAMS
     response = Response()
 
-    driptype_q = """SELECT speleothemdriptypeid 
+    driptype_q = """SELECT speleothemdriptypeid
                     FROM ndb.speleothemdriptypes
                     WHERE LOWER(speleothemdriptype) = %(element)s;"""
     entity_q = """SELECT rocktypeid 
@@ -60,7 +66,6 @@ def valid_speleothem(cur, yml_dict, csv_file):
            'dripheightunitsid': [units_q, 'dripheightunitsid'],
            'entitycoverunitsid': [units_q, 'entitycoverunitsid'],
            'entrancedistanceunitsid': [units_q, 'entrancedistanceunitsid']}
-
     try:
         inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.speleothems")
     except Exception as e:
@@ -105,9 +110,7 @@ def valid_speleothem(cur, yml_dict, csv_file):
         response.valid.append(False)
         response.message.append(f"✗ Speleothem Entity cannot be created: " 
                                 f"{e}")
-    
     response.message = list(set(response.message))
-    response.validAll = all(response.valid)
     if response.validAll:
         response.message.append("✔ Speleothem can be created")
     return response

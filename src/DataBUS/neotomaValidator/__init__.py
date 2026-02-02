@@ -1,3 +1,12 @@
+"""DataBUS neotomaValidator package.
+
+This package contains validation modules for the Neotoma Paleoecology Database.
+It provides functions to validate various paleontological and geochronological data
+types before insertion into the Neotoma database.
+
+Version: 0.1.0
+"""
+
 __version__ = "0.1.0"
 
 import datetime
@@ -24,7 +33,6 @@ from .valid_dataset_database import valid_dataset_database
 from .valid_sample import valid_sample
 from .check_file import check_file
 from .valid_csv import valid_csv
-from .vocabDict import vocabDict
 from .valid_data import valid_data
 from .valid_sample_age import valid_sample_age
 from .valid_pbmodel import valid_pbmodel

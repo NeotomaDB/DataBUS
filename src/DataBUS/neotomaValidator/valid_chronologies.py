@@ -1,21 +1,44 @@
 import DataBUS.neotomaHelpers as nh
-from DataBUS import Chronology, ChronResponse
+from DataBUS import Chronology, Response
+from DataBUS.Chronology import CHRONOLOGY_PARAMS
 import datetime
 
 def valid_chronologies(cur, yml_dict, csv_file):
-    """
-        Validates chronologies based on provided parameters and data.
+    """Validates chronologies for geochronological data.
+
+    Validates chronology parameters including age type, contact ID, date prepared,
+    and age bounds. Handles age model conversions (e.g., collection date to years BP)
+    and creates Chronology objects with validated parameters.
+
     Args:
         cur (cursor): Database cursor for executing SQL queries.
         yml_dict (dict): Dictionary containing YAML configuration data.
         csv_file (list): List of dictionaries representing CSV file data.
+
     Returns:
-        ChronResponse: An object containing validation results, messages, and status.
+        Response: Response object containing validation messages, validity list, and overall status.
+
     Raises:
-        ValueError: If there is an issue with the extracted parameters.
-        AssertionError: If the date format in the CSV file is incorrect.
+        ValueError: If there are issues with extracted parameters.
+        AssertionError: If date format in CSV file is incorrect.
+    
+    Examples:
+        >>> valid_chronologies(cursor, config_dict, csv_data)
+        Response(valid=[True], message=[...])
     """
     def collapse_into_chronology(data, chron_k='chronologies'):
+        """Collapse chronology data structure into a single chronology if applicable.
+
+        Takes nested chronology data and, if only one chronology exists,
+        merges shared parameters into that chronology's data dictionary.
+
+        Args:
+            data (dict): Data dictionary containing chronologies and shared parameters.
+            chron_k (str): Key name for chronologies in data dict. Defaults to 'chronologies'.
+
+        Returns:
+            dict: Data dict with single chronology collapsed or original structure if multiple.
+        """
         chron = data.get(chron_k, {})
         if len(chron) == 1:
             key = next(iter(chron))
@@ -26,10 +49,8 @@ def valid_chronologies(cur, yml_dict, csv_file):
             return {chron_k: {key: inner}}
         return data
 
-    response = ChronResponse()
-
-    params = ['ageboundolder', 'ageboundyounger', 'agemodel', #'chronologyname', 'isdefault',  <- don't need anymore because we use a dictionary that retrieves this from yml
-              'agetype', 'contactid', 'dateprepared', 'notes', 'age']
+    response = Response()
+    params = CHRONOLOGY_PARAMS
     try:
         inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.chronologies", values = False)
     except Exception as e:
@@ -58,11 +79,10 @@ def valid_chronologies(cur, yml_dict, csv_file):
                 inputs = {}
         except Exception as inner_e:
             inputs = {}
-            response.validAll = False
+            response.valid.append(False)
             response.message.append(f"✗  Chronology parameters cannot be properly extracted. {e}\n"
                                     f"{str(inner_e)}")
             return response
-        
     inputs = collapse_into_chronology(inputs)
     if len(inputs['chronologies']) >1:
         response.message.append("✔ File with multiple chronologies")
@@ -87,7 +107,6 @@ def valid_chronologies(cur, yml_dict, csv_file):
             response.message.append("? No age type provided.")
             response.valid.append(True)
             inputs["agetypeid"] = None
-        # create the chronology
         c = {'agetypeid': ch.get('agetypeid', inputs.get('agetypeid')),
              'contactid': ch.get('contactid', inputs.get('contactid')),
              'isdefault': ch.get('isdefault', inputs.get('isdefault')),
@@ -96,9 +115,7 @@ def valid_chronologies(cur, yml_dict, csv_file):
              'agemodel': ch.get('agemodel', inputs.get('agemodel')),
              'ageboundyounger': ch.get('ageboundyounger'),
              'ageboundolder': ch.get('ageboundolder'),
-             'notes': ch.get('notes', inputs.get('notes')),
-             'recdatecreated': ch.get('recdatecreated', inputs.get('recdatecreated')),
-             'recdatemodified': ch.get('recdatemodified', inputs.get('recdatemodified'))}
+             'notes': ch.get('notes', inputs.get('notes'))}
         try:
             if ch.get('agemodel', inputs.get('agemodel')) == "collection date":
                 if isinstance(ch.get('age', inputs.get('age')), (float, int)):
@@ -125,6 +142,5 @@ def valid_chronologies(cur, yml_dict, csv_file):
         except Exception as e:
             response.valid.append(False)
             response.message.append(f"✗  Chronology cannot be created: {e}")
-    response.validAll = all(response.valid)
     response.message = list(set(response.message))
     return response

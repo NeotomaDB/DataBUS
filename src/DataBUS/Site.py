@@ -1,4 +1,6 @@
 from .Geog import Geog
+SITE_PARAMS = ["siteid", "sitename", "altitude",
+              "area", "sitedescription", "notes","geog"]
 
 class Site:
     """Represents a geographic site location in Neotoma.

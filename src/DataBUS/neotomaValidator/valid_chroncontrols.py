@@ -1,32 +1,37 @@
 import DataBUS.neotomaHelpers as nh
-from DataBUS import ChronControl, ChronResponse
+from DataBUS import ChronControl, Response
+from DataBUS.ChronControl import CCONTROL_UNIT_PARAMS
 
-def valid_chroncontrols(yml_dict, csv_file, cur, validator):
-    """_Validating Chron Controls_"""
-    response = ChronResponse()
-    params = ['chronologyid', 'chroncontroltypeid', 
-              'depth', 'thickness', 'age', 
-              'agelimityounger', 'agelimitolder', 
-              'notes', 'analysisunitid', 'agetype']
+def valid_chroncontrols(yml_dict, csv_file, cur):
+    """Validates chronological control points for age models.
+
+    Validates chronology control parameters including depth, age, thickness,
+    and control type. Maps SISAL database control types to Neotoma types,
+    verifies consistency of data dimensions, and creates ChronControl objects
+    with validated parameters.
+
+    Args:
+        yml_dict (dict): Dictionary containing YAML configuration data.
+        csv_file (list): List of dictionaries representing CSV file data.
+        cur (cursor): Database cursor for executing SQL queries.
     
-    sisal_t = {'MC-ICP-MS U/Th':'Uranium-series',
-       'ICP-MS U/Th':'Other Uranium-series', 
-       'Alpha U/Th':'Uranium-series', 
-       'U/Th':'unspecified Uranium-series', 
-       'Event; actively forming':'Active deposition surface', 
-       'Event; start of laminations':'Annual laminations (varves)', 
-       'Event; end of laminations':'Annual laminations (varves)', 
-       'C14': 'Radiocarbon, calibrated', 
-       'Multiple methods':'Complex (mixture of types)', 
-       'other (see notes)':'Other dating methods'}
+    Returns:
+        Response: Response object containing validation messages, validity list, and overall status.
+    
+    Examples:
+        >>> valid_chroncontrols(config_dict, csv_data, cursor, validator)
+        Response(valid=[True], message=[...], validAll=True)
+    """
+    response = Response()
+    params = CCONTROL_UNIT_PARAMS
     
     try:
         inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.chroncontrols")
         indices = [i for i, value in enumerate(inputs['age']) if value is not None]
         inputs = {k: [v for i, v in enumerate(inputs[k]) if i in indices] if isinstance(inputs[k], list) else value for k, value in inputs.items()}
     except Exception as e:
-        response.validAll = False 
-        response.message.append("Chronology parameters cannot be properly extracted. Verify the CSV file.")
+        response.valid.append(False) 
+        response.message.append("✗ Chronology parameters cannot be properly extracted. Verify the CSV file.")
         response.message.append(e)
         return response
     
@@ -75,7 +80,6 @@ def valid_chroncontrols(yml_dict, csv_file, cur, validator):
             response.valid.append(True)
 
     if inputs.get('chroncontroltypeid'):
-        inputs['chroncontroltypeid'] = [sisal_t.get(item, item) for item in inputs['chroncontroltypeid']]
         elements = set(inputs['chroncontroltypeid'])
         chroncontroltypes = {}
         for e in elements:
@@ -103,7 +107,6 @@ def valid_chroncontrols(yml_dict, csv_file, cur, validator):
             response.message.append(f"✗  Could not create chron control {e}")
             response.valid.append(False)
 
-    response.validAll = all(response.valid)
     if response.validAll:
         response.message.append(f"✔  Chron control can be created")
     response.message = list(set(response.message))

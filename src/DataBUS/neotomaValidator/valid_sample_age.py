@@ -1,19 +1,41 @@
 import DataBUS.neotomaHelpers as nh
 from DataBUS import SampleAge, Response
+from DataBUS.SampleAge import SAMPLE_AGE_PARAMS
 import datetime
 
-def valid_sample_age(cur, yml_dict, csv_file, validator):
-    """ 
-    Validates and processes sample age data for ostracode samples.
+def valid_sample_age(cur, yml_dict, csv_file):
+    """Validates sample age data for paleontological samples.
+
+    Validates sample age parameters including age values, uncertainty bounds, and
+    age type. Handles date parsing for collection dates, validates age types against
+    database, and creates SampleAge objects for each chronology.
+
     Args:
         cur (cursor): Database cursor for executing SQL queries.
         yml_dict (dict): Dictionary containing YAML configuration data.
         csv_file (list): List of dictionaries representing CSV file data.
-        validator (dict): Dictionary containing validation parameters.
+        validator (dict): Dictionary containing validation parameters from prior steps.
+
     Returns:
-        Response: An object containing validation results and messages.
+        Response: Response object containing validation messages, validity list, and overall status.
+    
+    Examples:
+        >>> valid_sample_age(cursor, config_dict, csv_data)
+        Response(valid=[True], message=[...], validAll=True)
     """
     def collapse_into_chronology(data, chron_k='sampleages'):
+        """Collapse sample age data structure into a single chronology if applicable.
+
+        Takes nested sample age data and, if only one chronology exists,
+        merges shared parameters into that chronology's data dictionary.
+
+        Args:
+            data (dict): Data dictionary containing sample ages and shared parameters.
+            chron_k (str): Key name for sample ages in data dict. Defaults to 'sampleages'.
+
+        Returns:
+            dict: Data dict with single chronology collapsed or original structure if multiple.
+        """
         chron = data.get(chron_k, {})
         if len(chron) == 1:
             key = next(iter(chron))
@@ -26,7 +48,7 @@ def valid_sample_age(cur, yml_dict, csv_file, validator):
     
     response = Response()
     try:
-        params = ["age", "ageyounger", "ageolder", "agetype", "agemodel"]
+        params = SAMPLE_AGE_PARAMS
         inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.sampleages")
         inputs = collapse_into_chronology(inputs, chron_k='sampleages')
         if "agetype" in inputs:
@@ -68,7 +90,7 @@ def valid_sample_age(cur, yml_dict, csv_file, validator):
                     inputs['age'] = new_date
                 response.valid.append(True)
         except Exception as inner_e:
-            response.validAll = False
+            response.valid.append(False)
             response.message.append(f"Sample Age parameters cannot be properly extracted. {e}\n {inner_e}")
             return response
     sa_id_placeholder = nh.pull_params(['depth'], yml_dict, csv_file, "ndb.analysisunits")
@@ -76,7 +98,6 @@ def valid_sample_age(cur, yml_dict, csv_file, validator):
     if inputs['sampleid'] is None:
         sa_id_placeholder['depth'] = [1]
         response.message.append("? No depths found; using placeholder ID 1.")
-    
     for chron in inputs['sampleages'].keys():
         sa = inputs['sampleages'][chron]
         if sa.get("agetype", inputs.get('agetype')) is not None: 
@@ -144,5 +165,4 @@ def valid_sample_age(cur, yml_dict, csv_file, validator):
                 response.valid.append(False)
                 response.message.append(f"✗ Samples ages cannot be created. {e}")
     response.message = list(set(response.message))
-    response.validAll = all(response.valid)
     return response

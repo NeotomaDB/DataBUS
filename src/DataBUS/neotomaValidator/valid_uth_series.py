@@ -1,23 +1,27 @@
 import DataBUS.neotomaHelpers as nh
 from DataBUS import Response, UThSeries
+from DataBUS.UThSeries import UTH_PARAMS
 
 def valid_uth_series(cur, yml_dict, csv_file):
-    """
-    Validates data from a CSV file against a YAML dictionary and a database.
-    Parameters:
-    cur (psycopg2.cursor): Database cursor for executing SQL queries.
-    yml_dict (dict): Dictionary containing YAML configuration data.
-    csv_file (str): Path to the CSV file containing data to be validated.
-    validator (Validator): Validator object for additional validation logic.
+    """Validates uranium-thorium series data for geochronological samples.
+
+    Validates U-Th series isotope data including isotope ratios, activities, and
+    associated decay constants. Verifies decay constants exist in the database and
+    creates UThSeries objects with validated parameters.
+
+    Args:
+        cur (psycopg2.cursor): Database cursor for executing SQL queries.
+        yml_dict (dict): Dictionary containing YAML configuration data with U-Th parameters.
+        csv_file (str): Path to CSV file containing U-Th series data.
+
     Returns:
-    Response: A response object containing validation results and messages.
-    """
-    params = ['geochronid', 'decayconstantid',
-              'ratio230th232th', 'ratiouncertainty230th232th',
-              'activity230th238u', 'activityuncertainty230th238u', 
-              'activity234u238u', 'activityuncertainty234u238u',  
-              'iniratio230th232th', 'iniratiouncertainty230th232th']
+        Response: Response object containing validation messages, validity list, and overall status.
     
+    Examples:
+        >>> valid_uth_series(cursor, config_dict, "uth_series_data.csv")
+        Response(valid=[True, True], message=[...], validAll=True)
+    """
+    params = UTH_PARAMS
     inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.uraniumseries")
     if isinstance(inputs.get('decayconstantid'), list):
         elements = [x for x in params if x not in {'geochronid'}]
@@ -27,7 +31,6 @@ def valid_uth_series(cur, yml_dict, csv_file):
     filtered_inputs = {k: v for k, v in inputs.items() if k in elements}
     indices = [i for i, values in enumerate(zip(*filtered_inputs.values()))
                if any(value is not None for value in values)]
-
     inputs = {k: [v for i, v in enumerate(filtered_inputs[k]) if i in indices] if k in filtered_inputs
                                                               else value for k, value in inputs.items()}
     decay_query = """SELECT decayconstantid FROM ndb.decayconstants
@@ -66,7 +69,7 @@ def valid_uth_series(cur, yml_dict, csv_file):
                 dc_id = inputs['decayconstantid'][i]
             else:
                 dc_id = inputs['decayconstantid']
-            uth = UThSeries(geochronid=inputs['geochronid'],
+            UThSeries(geochronid=inputs['geochronid'],
                             decayconstantid=dc_id,
                             ratio230th232th=inputs['ratio230th232th'][i],
                             ratiouncertainty230th232th=inputs['ratiouncertainty230th232th'][i],
@@ -81,9 +84,5 @@ def valid_uth_series(cur, yml_dict, csv_file):
         except Exception as e:
             response.valid.append(False)
             response.message.append(f"✗ UThSeries cannot be created: {e}")
-
-    # For the insert, insert UraniumSeriesData ID and the geochronID associated with the UThSeries
-    
     response.message = list(set(response.message))
-    response.validAll = all(response.valid)
     return response

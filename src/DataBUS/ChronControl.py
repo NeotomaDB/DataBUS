@@ -1,3 +1,8 @@
+CCONTROL_UNIT_PARAMS = ['chronologyid', 'chroncontroltypeid',
+                        'depth', 'thickness', 'age',
+                        'agelimityounger', 'agelimitolder',
+                        'notes', 'analysisunitid', 'agetype']
+
 class ChronControl:
     """A chronological control point in Neotoma.
 

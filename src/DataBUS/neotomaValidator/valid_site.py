@@ -1,46 +1,37 @@
 import DataBUS.neotomaHelpers as nh
-from DataBUS import Geog, WrongCoordinates, Site, SiteResponse
-
+from DataBUS import Geog, WrongCoordinates, Site, Response
+from DataBUS.Site import SITE_PARAMS
 
 def valid_site(cur, yml_dict, csv_file):
-    """
-    Validate if the provided site details correspond to a new and valid site entry.
-    This function checks the validity of a site based on its coordinates, name, and other attributes.
-    It returns a SiteResponse object containing:
-        - `validAll`: Boolean indicating if the site validation was successful.
-        - `sitelist`: List of Site objects that are close to the provided coordinates.
-        - `hemisphere`: String indicating the hemisphere of the site based on its coordinates.
-        - `message`: List of messages detailing the validation process.
+    """Validates site information against the Neotoma database.
+
+    Validates site details including coordinates, name, altitude, and area.
+    Checks if site exists in Neotoma, finds close/matching sites, and compares
+    provided data with existing database records. Handles coordinate validation
+    and hemisphere determination.
 
     Args:
-        cur (_psycopg2.extensions.connection_): Database connection to a Neotoma database.
+        cur (_psycopg2.extensions.connection_): Database connection to Neotoma database.
         yml_dict (dict): Dictionary containing parameters from YAML configuration.
-        csv_file (str): Path to CSV file containing additional parameters.
+        csv_file (str): Path to CSV file containing additional site parameters.
 
     Returns:
-        SiteResponse: Contains the results of the site validation.
+        Response: Contains validation results, site list, hemisphere info, and messages.
+    
+    Examples:
+        >>> valid_site(cursor, config_dict, "mirror_lake_site.csv")  # doctest: +SKIP
+        Response(valid=[True], message=['Site Mirror Lake validated successfully'], validAll=True, closesites=[...])
     """
-    response = SiteResponse()
-    params = ["siteid", "sitename", "altitude",
-              "area", "sitedescription", "notes",
-              "geog"]
-
+    response = Response()
+    params = SITE_PARAMS
     inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.sites")
     overwrite = nh.pull_overwrite(params, yml_dict, "ndb.sites")
 
-    if 'geog.latitude' and 'geog.longitude' in inputs:
-        inputs['geog'] = (inputs["geog.latitude"], inputs["geog.longitude"])
-        del inputs["geog.latitude"], inputs["geog.longitude"]
-    try:
-        assert all(
-            inputs.get(key) is not None and inputs[key] != []
-            for key in ["sitename", "geog"]
-        )
-    except AssertionError:
-        response.message.append(
-            f"✗ The template must contain a sitename and coordinates."
-        )
-        response.valid.append(False)
+    # SUGGESTION: Improve geog coordinate extraction with better variable unpacking
+    if 'geog.latitude' in inputs and 'geog.longitude' in inputs:
+        lat = inputs.pop('geog.latitude')
+        lon = inputs.pop('geog.longitude')
+        inputs['geog'] = (lat, lon)
     try:
         inputs["geog"] = Geog((inputs["geog"][0], inputs["geog"][1]))
         response.message.append(
@@ -158,6 +149,5 @@ def valid_site(cur, yml_dict, csv_file):
                         )
                 else:
                     response.message.append("✔  Coordinates match")
-    response.validAll = all(response.valid)
     response.message = list(set(response.message))
     return response

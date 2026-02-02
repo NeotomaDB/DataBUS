@@ -1,30 +1,32 @@
+import DataBUS.neotomaHelpers as nh
+from DataBUS import Geog, WrongCoordinates, CollectionUnit, Response
+from DataBUS.CollectionUnit import CU_PARAMS
 import itertools
 import datetime
 import re
-import DataBUS.neotomaHelpers as nh
-from DataBUS import Geog, WrongCoordinates, CollectionUnit, CUResponse
 
 def valid_collunit(cur, yml_dict, csv_file):
-    """
-    Validates whether the specified collection unit can be registered as a new unit in the Neotoma database.
+    """Validates collection unit data for sample collection sites.
+
+    Validates collection unit parameters including coordinates, collection date,
+    depositional environment, substrate, and collection device. Handles date parsing,
+    queries database for valid ID values, and detects close/duplicate collection units.
 
     Args:
-        cur (psycopg2.extensions.connection): A database connection object to interact with a Neotoma database, which can be either local or remote.
-        yml_dict (dict): A dictionary containing data from a YAML template.
-        csv_file (str): The path to a CSV file with the required data to be uploaded.
+        cur (psycopg2.extensions.connection): Database connection to Neotoma (local or remote).
+        yml_dict (dict): Dictionary containing data from YAML template.
+        csv_file (str): Path to CSV file with required data to upload.
 
     Returns:
-        CUResponse: An object containing the validation response with the following attributes:
-            - valid (bool): Indicates whether the collection unit passed the validation checks.
-            - message (list): A list of messages detailing the validation process.
-            - culist (list): A list of dictionaries containing site and collection unit names that are valid within the specified site context.
+        Response: Response object with validation results, messages, and collection unit list.
+
+    Examples:
+        >>> valid_collunit(cur, yml_dict, "data.csv")
+        Response(valid=[True], message=[...])
     """
-    response = CUResponse()
+    response = Response()
+    params = CU_PARAMS
     notes = ""
-    params = ["handle", "core", "depenvtid", "collunitname",
-              "colldate", "colldevice", "gpsaltitude", "gpserror",
-              "waterdepth", "substrateid", "slopeaspect", "slopeangle",
-              "location", "notes", "geog", "colltypeid"]
     try:
         inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.collectionunits")
     except Exception as e:
@@ -58,32 +60,27 @@ def valid_collunit(cur, yml_dict, csv_file):
                 inputs["notes"] = inputs["notes"] + notes
             response.valid.append(True)
         except Exception as inner_e:
-            response.validAll = False
+            response.valid.append(False)
             response.message.append(f"CU parameters cannot be properly extracted. {e}\n")
             response.message.append(str(inner_e))
             return response
- 
     if inputs.get("colltypeid"):
         colltype_query = """SELECT colltypeid FROM ndb.collectiontypes 
                             WHERE LOWER(colltype) = %(colltype)s"""
         cur.execute(colltype_query, {'colltype': inputs['colltypeid'].lower()})
         inputs["colltypeid"] = cur.fetchone()
-
     if inputs.get("colltypeid"):
         inputs["colltypeid"] = inputs["colltypeid"][0]
-
     if inputs.get('substrateid'):
         query = """SELECT rocktypeid FROM ndb.rocktypes
                     WHERE LOWER(rocktype) = %(rocktype)s"""
         cur.execute(query, {"rocktype": inputs["substrateid"].lower()})
         substrate = cur.fetchone()
-
         if substrate:
             inputs["substrateid"] = substrate[0]
         else:
             response.message.append(f"No substrate {inputs['substrateid']} found")
             inputs["substrateid"] = None
-            
     if inputs.get("depenvtid"):
         query = """SELECT depenvtid FROM ndb.depenvttypes
                     WHERE LOWER(depenvt) = %(depenvt)s"""
@@ -96,7 +93,6 @@ def valid_collunit(cur, yml_dict, csv_file):
                                     f"not found in Neotoma.\n"
                                     f"Depositional environment will be added to Notes.")
             inputs["depenvtid"] = None
-    
     if inputs.get('geog'):
         try:
             inputs['geog'] = Geog((inputs["geog"][0], inputs["geog"][1]))
@@ -159,14 +155,12 @@ def valid_collunit(cur, yml_dict, csv_file):
                                             f"Verify that the information is correct.")
                     for i in msg:
                         response.message.append(f"{i}")
-                    
                     required = nh.pull_required(params, yml_dict, table="ndb.collectionunits")
                     required_k = [key for key, value in required.items() if value]
                     found_keywords = [keyword for keyword in required_k if any(re.search(rf'CSV\s+\b{re.escape(keyword)}\b', text) for text in msg)]
                     csv_nonempty_fields = [key for key, value in inputs.items() if value not in (None, 'NA')]
                     found_keywords2 = [keyword for keyword in csv_nonempty_fields if any(re.search(rf'CSV\s+\b{re.escape(keyword)}\b', text) for text in msg)]
                     found_keywords = list(set(found_keywords+found_keywords2))
-
                     if 'geog' in found_keywords:
                         found_keywords.remove('geog')
                     marker = bool(found_keywords)
@@ -192,9 +186,10 @@ def valid_collunit(cur, yml_dict, csv_file):
                                             lambda x: x["sitename"])
                 sitemsg = [{"site": key, "collunits": [k["collunit"] for k in list(value)]}
                            for key, value in sitecol]
+                sites = []
                 for i in sitemsg:
                     site = {"site": i["site"], "collunits": i["collunits"]}
-                    response.culist.append(site)
+                    sites.append(site)
         else:
             response.message.append(
                 f"✔  There are no nearby sites, a new collection unit "
@@ -202,7 +197,6 @@ def valid_collunit(cur, yml_dict, csv_file):
             )
             response.valid.append(True)
     else:
-        response.message.append(f"No given coordinates for CU. Cannot find nearby CUs")
+        response.message.append(f"?  No given coordinates for CU. Cannot find nearby CUs")
         response.valid.append(True)
-    response.validAll = all(response.valid)
     return response

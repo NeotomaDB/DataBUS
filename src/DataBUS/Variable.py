@@ -68,8 +68,8 @@ class Variable:
         """
         variable_q = """
                  SELECT variableid
-                FROM ndb.variables
-                WHERE taxonid = %(taxonid)s
+                 FROM ndb.variables
+                 WHERE taxonid = %(taxonid)s
                     AND variableunitsid IS NOT DISTINCT FROM %(variableunitsid)s
                     AND variableelementid IS NOT DISTINCT FROM %(variableelementid)s
                     AND variablecontextid IS NOT DISTINCT FROM %(variablecontextid)s;

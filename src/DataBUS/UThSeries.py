@@ -5,7 +5,11 @@ with importlib.resources.open_text("DataBUS.sqlHelpers",
 with importlib.resources.open_text("DataBUS.sqlHelpers",
                                    "insert_uraniumseriesdata.sql") as sql_file:
     insert_uraniumseriesquery = sql_file.read()
-
+UTH_PARAMS = ['geochronid', 'decayconstantid',
+              'ratio230th232th', 'ratiouncertainty230th232th',
+              'activity230th238u', 'activityuncertainty230th238u',
+              'activity234u238u', 'activityuncertainty234u238u',
+              'iniratio230th232th', 'iniratiouncertainty230th232th']
 
 class UThSeries:
     """Uranium-thorium radiometric dating data in Neotoma.

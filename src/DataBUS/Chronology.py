@@ -1,3 +1,6 @@
+CHRONOLOGY_PARAMS = ['ageboundolder', 'ageboundyounger', 'agemodel', 'chronologyname',
+                     'agetype', 'contactid', 'dateprepared', 'notes', 'age']
+
 class Chronology:
     """A chronology (age model) for a collection unit in Neotoma.
 
@@ -11,7 +14,6 @@ class Chronology:
         collectionunitid (int | None): Collection unit ID.
         agetypeid (int | None): Age type ID.
         contactid (int | None): Contact ID (first element if list provided).
-        isdefault (bool | None): Whether this is the default chronology.
         chronologyname (str | None): Chronology name.
         dateprepared (str | None): Preparation date.
         agemodel (str | None): Age model description.
@@ -31,7 +33,6 @@ class Chronology:
         collectionunitid=None,
         agetypeid=None,
         contactid=None,
-        isdefault=None,
         chronologyname=None,
         dateprepared=None,
         agemodel=None,
@@ -45,7 +46,6 @@ class Chronology:
             self.contactid = contactid[0]
         else:
             self.contactid = contactid
-        self.isdefault = isdefault
         self.chronologyname = chronologyname
         self.dateprepared = dateprepared
         if isinstance(agemodel, list):
@@ -72,7 +72,6 @@ class Chronology:
         SELECT ts.insertchronology(_collectionunitid := %(collunitid)s,
                                _agetypeid := %(agetypeid)s,
                                _contactid := %(contactid)s,
-                               _isdefault := %(isdefault)s,
                                _chronologyname := %(chronologyname)s,
                                _dateprepared := %(dateprepared)s,
                                _agemodel := %(agemodel)s,
@@ -82,7 +81,6 @@ class Chronology:
         inputs = {
             "collunitid": self.collectionunitid,
             "contactid": self.contactid,
-            "isdefault": self.isdefault if self.isdefault is not None else True,
             "chronologyname": self.chronologyname,
             "agetypeid": self.agetypeid,
             "dateprepared": self.dateprepared,

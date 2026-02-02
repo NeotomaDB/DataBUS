@@ -45,6 +45,7 @@ class Response:
         self.data_id = {}
         self.name = {}
         self.indices = []
+        self.counter = 0
     
     @property
     def validAll(self):
