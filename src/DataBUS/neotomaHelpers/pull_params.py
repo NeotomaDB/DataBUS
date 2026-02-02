@@ -3,22 +3,33 @@ import re
 from .retrieve_dict import retrieve_dict
 from .clean_column import clean_column
  
-def pull_params(params, yml_dict, csv_template, table=None, name = None, values = False):
-    """
-    Pull parameters associated with an insert statement from the yml/csv tables.
+def pull_params(params, yml_dict, csv_template, table=None, values=False):
+    """Pull and process parameters for database insert statements.
+
+    Extracts parameters from YAML template and CSV data, performs type conversions
+    (date, int, float, coordinates, string), handles special cases like notes and
+    chronologies, and returns cleaned data ready for insertion.
+
     Args:
-        params (_list_): A list of strings for the columns needed to generate the insert statement.
-        yml_dict (_dict_): A `dict` returned by the YAML template.
-        csv_template (_dict_): The csv file with the required data to be uploaded.
-        table (_string_): The name of the table the parameters are being drawn for.
+        params (list): List of strings for columns needed to generate insert statement.
+        yml_dict (dict): Dictionary returned by YAML template containing 'metadata' key.
+        csv_template (dict): CSV data as list of dictionaries with column data to upload.
+        table (str or list, optional): Name of the table(s) parameters are drawn for.
+                                      If list, returns results for each table.
+        name (str, optional): Name field identifier. Defaults to None.
+        values (bool, optional): Whether to treat columns as value columns. Defaults to False.
+
     Returns:
-        _dict_: Cleaned and repeated valors for input into a ts.insert functions.
+        dict or list: Cleaned and formatted parameters ready for database insertion.
+                      If table is a list, returns list of dicts. If table is str, returns single dict.
+                      Returns hierarchical dicts for special tables like chronologies/sampleages.
     """
     results = []
     if isinstance(table, str):
         add_unit_inputs = {}
         if re.match(".*\.$", table) == None:
             table = table + "."
+        # SUGGESTION: Extract date/type parsing into separate helper function for reusability
         for param in params:
             if values == False:
                 subfields = [entry for entry in yml_dict['metadata'] if entry.get('neotoma', '').startswith(f'{table}{param}.')]
@@ -116,9 +127,7 @@ def pull_params(params, yml_dict, csv_template, table=None, name = None, values 
             else:
                 add_unit_inputs[i] = None
         if 'notes' in add_unit_inputs.keys():
-            # convert to string and remove punctuation and notes:
             add_unit_inputs['notes'] = str(add_unit_inputs['notes']).replace("[", "").replace("]", "").replace("{", "").replace("}", "").replace("'", "").replace("notes:", "").strip()
-            #add_unit_inputs['notes']=clean_notes(add_unit_inputs['notes'], name)
             return add_unit_inputs
         else:
             if any(k in add_unit_inputs.keys() for k in ('chronologies', 'sampleages')):

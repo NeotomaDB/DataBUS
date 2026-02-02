@@ -28,11 +28,13 @@ with importlib.resources.open_text("DataBUS.sqlHelpers",
     insert_entitysamples = sql_file.read()
 
 EX_SP_PARAMS = ['externalid', 'externaldescription', 'extdatabaseid']
-SPELEOTHEM_PARAMS = ['siteid', 'entityid', 'entityname', 'monitoring', 'rockageid', 'entrancedistance',
+SPELEOTHEM_PARAMS = ['entityid', 'entityname', 'monitoring', 'rockageid', 'entrancedistance', 
               'entrancedistanceunitsid', 'speleothemtypeid', 'entitystatusid', 'speleothemgeologyid',
               'speleothemdriptypeid', 'dripheight', 'dripheightunitsid', 'covertypeid', 'coverthickness',
               'entitycoverunitsid', 'landusecovertypeid', 'landusecoverpercent', 'landusecovernotes',
-              'vegetationcovertypeid', 'vegetationcoverpercent', 'vegetationcovernotes', 'ref_id']
+              'vegetationcovertypeid', 'vegetationcoverpercent', 'vegetationcovernotes', 'ref_id',
+              'organics', 'mineralogypetrologyfabric', 'clumpedisotopes', 'fluidinclusions', 
+              'noblegastemperatures', 'c14', 'odl']
 class Speleothem:
     """Represents a speleothem (stalactite, stalagmite, flowstone, etc.) in a cave in Neotoma.
 

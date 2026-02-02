@@ -1,6 +1,6 @@
 import DataBUS.neotomaHelpers as nh
 from DataBUS import ChronControl, Response
-from DataBUS.ChronControl import CCONTROL_UNIT_PARAMS
+from DataBUS.ChronControl import CCONTROL_PARAMS
 
 def valid_chroncontrols(yml_dict, csv_file, cur):
     """Validates chronological control points for age models.
@@ -23,7 +23,7 @@ def valid_chroncontrols(yml_dict, csv_file, cur):
         Response(valid=[True], message=[...], validAll=True)
     """
     response = Response()
-    params = CCONTROL_UNIT_PARAMS
+    params = CCONTROL_PARAMS
     
     try:
         inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.chroncontrols")

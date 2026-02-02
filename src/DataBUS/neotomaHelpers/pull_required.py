@@ -3,15 +3,30 @@ from .retrieve_dict import retrieve_dict
 
 
 def pull_required(params, yml_dict, table=None):
-    """_Pull parameters required value._
+    """Pull parameters required value from YAML template.
+
+    Extracts the required flag for each parameter from the YAML template.
+    Handles both single table strings and multiple tables (list).
+
+    Examples:
+        >>> params = ['siteid', 'sitename', 'altitude']
+        >>> yml = {'metadata': [{'neotoma': 'sites.siteid', 'required': True}]}
+        >>> pull_required(params, yml, 'sites')
+        {'siteid': True, 'sitename': False, 'altitude': False}
+        >>> params = ['depth', 'age', 'error']
+        >>> yml = {'metadata': [{'neotoma': 'chroncontrols.depth', 'required': True}]}
+        >>> pull_required(params, yml, 'chroncontrols')
+        {'depth': True, 'age': False, 'error': False}
 
     Args:
-        params (_list_): _A list of strings for the columns needed to generate the insert statement._
-        yml_dict (_dict_): _A `dict` returned by the YAML template._
-        table (_string_): _The name of the table the parameters are being drawn for._
+        params (list): A list of strings for the columns needed to generate the insert statement.
+        yml_dict (dict): A dict returned by the YAML template.
+        table (str or list, optional): The name of the table(s) the parameters are being drawn for.
+                                      If a list, returns results for each table.
 
     Returns:
-        _dict_: _parameters with overwrite T/F value._
+        dict or list: Parameters with required T/F value. If table is a list, returns
+                      list of dicts, one per table. If table is a str, returns single dict.
     """
     results = []
     if isinstance(table, str):

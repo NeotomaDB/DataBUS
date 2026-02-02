@@ -1,6 +1,24 @@
 import re
 
 def match_abbreviation_to_full(abbreviated, full_name):
+    """Match abbreviated name format against full name using regex patterns.
+
+    Attempts to match an abbreviated name (surname, initials) against a full name
+    using dynamic regex patterns to handle variations in initial formats.
+
+    Examples:
+        >>> match_abbreviation_to_full('Doe, J.', 'Doe, John')  # Principal Investigator
+        True
+        >>> match_abbreviation_to_full('Doe, J.D.', 'Doe, Jane D.')  # Pollen analyst
+        True
+
+    Args:
+        abbreviated (str): Name in abbreviated format (e.g., 'Smith, J.M.').
+        full_name (str): Full name to match against.
+
+    Returns:
+        bool: True if full_name matches abbreviated format, False otherwise.
+    """
     # Split the abbreviated name into surname and initials
     parts = abbreviated.split(", ")
     surname = parts[0]
@@ -17,6 +35,28 @@ def match_abbreviation_to_full(abbreviated, full_name):
              bool(re.match(regex_pattern2, full_name, re.IGNORECASE)))
 
 def get_contacts(cur, contacts_list):
+    """Retrieve contact information from database using various name matching strategies.
+
+    Queries the Neotoma database for contacts using multiple matching strategies:
+    first tries abbreviated names (with leading initials), then full given names,
+    then contact name, and finally surname matching.
+
+    Examples:
+        >>> get_contacts(cursor, ['Doe, John'])  # doctest: +SKIP
+        [{'name': 'doe, john', 'id': 123, 'order': 1}]
+        >>> get_contacts(cursor, ['Doe, Jane'])  # doctest: +SKIP
+        [{'name': 'doe, jane', 'id': 456, 'order': 2}]
+
+    Args:
+        cur: Database cursor object for executing SQL queries.
+        contacts_list (list): List of contact names in format 'Surname, Firstname' or similar.
+
+    Returns:
+        list: List of dictionaries with keys:
+              'name' (str): Contact name as found in database.
+              'id' (int): Contact ID from database, or None if not found.
+              'order' (int): Original position in contacts_list, or None if not found.
+    """
     baseid = 1
     contids = list()
     if contacts_list:
@@ -49,6 +89,7 @@ def get_contacts(cur, contacts_list):
                 else:
                     contids.append({"name": i, "id": None, "order": baseid})
                 baseid +=1
+            # SUGGESTION: Extract multiple SQL queries into separate helper functions
             else:
                 contactname = i.lower().strip()
                 contactname = contactname.strip(",")

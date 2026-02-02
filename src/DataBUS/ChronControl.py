@@ -1,4 +1,4 @@
-CCONTROL_UNIT_PARAMS = ['chronologyid', 'chroncontroltypeid',
+CCONTROL_PARAMS = ['chronologyid', 'chroncontroltypeid',
                         'depth', 'thickness', 'age',
                         'agelimityounger', 'agelimitolder',
                         'notes', 'analysisunitid', 'agetype']

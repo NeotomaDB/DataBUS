@@ -3,15 +3,27 @@ from .retrieve_dict import retrieve_dict
 
 
 def pull_overwrite(params, yml_dict, table=None):
-    """_Pull parameters overwrite value._
+    """Pull parameters overwrite value from YAML template.
+
+    Extracts the overwrite flag for each parameter from the YAML template.
+    Handles both single table strings and multiple tables (list). For 'geog'
+    parameters, duplicates the overwrite value to coordinate fields.
+
+    Examples:
+        >>> params = ['siteid', 'sitename']
+        >>> yml = {'metadata': [{'neotoma': 'sites.siteid', 'overwrite': True}]}
+        >>> pull_overwrite(params, yml, 'sites')
+        {'siteid': True, 'sitename': False}
 
     Args:
-        params (_list_): _A list of strings for the columns needed to generate the insert statement._
-        yml_dict (_dict_): _A `dict` returned by the YAML template._
-        table (_string_): _The name of the table the parameters are being drawn for._
+        params (list): A list of strings for the columns needed to generate the insert statement.
+        yml_dict (dict): A dict returned by the YAML template.
+        table (str or list, optional): The name of the table(s) the parameters are being drawn for.
+                                      If a list, returns results for each table.
 
     Returns:
-        _dict_: _parameters with overwrite T/F value._
+        dict or list: Parameters with overwrite T/F value. If table is a list, returns
+                      list of dicts, one per table. If table is a str, returns single dict.
     """
     results = []
     if isinstance(table, str):
@@ -29,6 +41,7 @@ def pull_overwrite(params, yml_dict, table=None):
             result["coordla"] = result["geog"]
             result["ns"] = result["geog"]
             result["ew"] = result["geog"]
+            # SUGGESTION: Extract geographic coordinate mapping to a separate function for reusability
         return result
 
     elif isinstance(table, list):

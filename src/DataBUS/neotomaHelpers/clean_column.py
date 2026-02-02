@@ -1,14 +1,32 @@
 def clean_column(column, template, clean=True):
-    """_cleanCol_ 
+    """Extract and clean a column from template data.
+
+    Extracts a single column from template data and optionally reduces it to unique
+    values. Handles special cases where there are multiple non-empty values by raising
+    an error, unless one value is empty/None.
+
+    Examples:
+        >>> template = [{'sampletype': 'Pollen'}, {'sampletype': 'Pollen'}]
+        >>> clean_column('sampletype', template, clean=True)
+        'Pollen'
+        >>> template = [{'sitename': 'Mirror Lake'}, {'sitename': 'Mirror Lake'}]
+        >>> clean_column('sitename', template, clean=True)
+        'Mirror Lake'
 
     Args:
-        column (_list_): _The name of the column to use_
-        template (_list_): _The CSV file as a list of dictionaries_
-        clean (bool, optional): _Does the column get reduced to only the unique values?_. Defaults to True.
+        column (str): The name of the column to extract.
+        template (list): The CSV file as a list of dictionaries.
+        clean (bool, optional): If True, reduces to unique values. If False, returns all values.
+                               Defaults to True.
 
     Returns:
-        _list_: _The cleaned column._
+        str, list, or None: Single value if all values are identical, list of values if clean=False,
+                           or None if column is empty.
+
+    Raises:
+        ValueError: If clean=True and there are multiple different non-empty values in the column.
     """
+    # SUGGESTION: Refactor to reduce lambda usage and improve readability
     if clean:
         setlist = list(set(map(lambda x: x[column] if isinstance(x[column], str) else x[column], template)))
         clean_list = list(set(map(lambda x: x[column].lower() if isinstance(x[column], str) else x[column], template)))
@@ -24,7 +42,7 @@ def clean_column(column, template, clean=True):
                                  " Correct the template or the data.")
         else:
             raise ValueError(f"There are multiple values in a not rowwiseelement {column}."
-                             " Correct the template or the data.") 
+                             " Correct the template or the data.")
     else:
         setlist = list(map(lambda x: x[column], template))
         if not setlist:
