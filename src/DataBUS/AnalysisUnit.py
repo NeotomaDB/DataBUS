@@ -1,30 +1,32 @@
 class AnalysisUnit:
-    """_A class for Neotoma Analysis Units_
-    
-    Neotoma defines analysis units as physical subsets of the collection unit. An analysis unit
-    will often ave a position within a core, or dig site associated with depth, and may have
-    one or more samples associated with it, where the sample is the intersection between the
-    analysis unit and the dataset type. Analysis units are explained further in the
-    [Neotoma Manual](https://open.neotomadb.org/manual/sample-related-tables-1.html#AnalysisUnits).
+    """An analysis unit in Neotoma.
 
-    Args:
-        collectionunitid (int): The unique identifier assigned to the collectionunit to which the analysis unit belongs.
-        analysisunitname (str, None): The name assigned to the analysis unit.
-        depth (float, None): The depth of the sample (if known).
-        thickness (float, None): The thickness of the physical sample. Some objects may not have thickness assigned, for example Water Chemistry samples, or bone records.
-        faciesid (int, None): When a sample is obtained from a sample that is also described by exposure, outcrop or rock formation, the Neotoma identifier for that formation. 
-        mixed (bool, None): Is there evidence of stratigraphic mixing within the sample.
-        igsn (str, None): Support for the use of IGSN identifiers.
-        notes (str, None): Notes associated with the analysis unit.
-        recdatecreated (datetime, None): The time the record was created in the Neotoma Database (for records already in Neotoma).
-        recdatemodified (datetime, None): Date and time of the last modification within Neotoma (for records already in Neotoma).
-    Returns:
-        _type_: _description_
-    """    
-    description = "Analysis Unit object in Neotoma"
+    Physical subsets of a collection unit, often with a position (depth)
+    within a core or dig site. Samples are the intersection between
+    analysis units and dataset types.
+    
+    See the [Neotoma Manual](https://open.neotomadb.org/manual/sample-related-tables-1.html#AnalysisUnits).
+
+    Attributes:
+        analysisunitid (int | None): Analysis unit ID (assigned after insertion).
+        collectionunitid (int | None): Parent collection unit ID.
+        analysisunitname (str | None): Name of the analysis unit.
+        depth (float | None): Depth in the core/site (if known).
+        thickness (float | None): Physical thickness of the sample.
+        faciesid (int | None): Neotoma identifier for rock formation.
+        mixed (bool | None): Evidence of stratigraphic mixing.
+        igsn (str | None): IGSN identifier.
+        notes (str | None): Additional notes.
+
+    Examples:
+        >>> au = AnalysisUnit(collectionunitid=1, depth=2.5)
+        >>> au.depth
+        2.5
+    """
 
     def __init__(
         self,
+        analysisunitid=None,
         collectionunitid=None,
         analysisunitname=None,
         depth=None,
@@ -32,25 +34,20 @@ class AnalysisUnit:
         faciesid=None,
         mixed=None,
         igsn=None,
-        notes=None,
-        recdatecreated=None,
-        recdatemodified=None):
+        notes=None):
         
-        self.analysisunitid = []  # int
-        self.collectionunitid = collectionunitid  # int
-        self.analysisunitname = analysisunitname  # str
-        self.depth = depth  # float
-        self.thickness = thickness  # float
-        self.faciesid = faciesid  # int
-        self.mixed = mixed  # bool
-        self.igsn = igsn  # str
-        self.notes = notes  # str
-        self.recdatecreated = recdatecreated  # date
-        self.recdatemodified = recdatemodified  # date
+        self.analysisunitid = analysisunitid
+        self.collectionunitid = collectionunitid
+        self.analysisunitname = analysisunitname
+        self.depth = depth
+        self.thickness = thickness
+        self.faciesid = faciesid 
+        self.mixed = mixed
+        self.igsn = igsn
+        self.notes = notes
 
     def __str__(self):
         """_Print AnalysisUnit_
-
         Returns:
             _str_: _A printed output summarizing the analysis unit._
         """        
@@ -59,10 +56,8 @@ class AnalysisUnit:
 
     def insert_to_db(self, cur):
         """_Insert the AnalysisUnit to Neotoma._
-
         Args:
             cur (_psycopg2.connect_): _A valid psycopg2 connection the the Neotoma Database._
-
         Returns:
             _AnalysisUnit_: _The function inserts the AnalysisUnit to Neotoma and adds the new `analysisunitid` to the object._
         """        

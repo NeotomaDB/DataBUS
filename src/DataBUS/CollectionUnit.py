@@ -1,6 +1,34 @@
-from .Geog import Geog, WrongCoordinates
-
+from .Geog import Geog
 class CollectionUnit:
+    """Represents a sediment core or excavation collection in Neotoma.
+
+    A collection unit is a physical collection (e.g., a sediment core, excavation)
+    at a specific site. It contains geographic, temporal, and physical information
+    about the collected material.
+
+    Collection units are explained further in the
+    [Neotoma Manual](https://open.neotomadb.org/manual/database-design-concepts.html#sitedesign).
+
+    Attributes:
+        description (str): Class description.
+        collectionunitid (int | None): Collection unit identifier.
+        handle (str): Unique handle/identifier.
+        siteid (int): Associated site ID.
+        colltypeid (int | None): Collection type ID.
+        depenvtid (int | None): Depositional environment ID.
+        collunitname (str | None): Collection unit name.
+        colldate (datetime | None): Collection date.
+        geog (Geog | None): Geographic coordinates.
+        distance (float | None): Distance from reference (computed).
+
+    Examples:
+        >>> cu = CollectionUnit(siteid=1, handle="MCL-01")  # Mirror Lake core collection
+        >>> cu.handle
+        'MCL-01'
+        >>> cu = CollectionUnit(siteid=2, handle="LC-Core-1", waterdepth=25.5, collunitname="Main core")  # Lake cave site
+        >>> cu.waterdepth
+        25.5
+    """
     description = "Collection Unit object in Neotoma"
 
     def __init__(
@@ -30,9 +58,7 @@ class CollectionUnit:
         self.handle = handle
         if self.handle is None:
             if core is not None and isinstance(core, list):
-                self.handle = core[0][
-                    :10
-                ]  # if handle is none, use core to defind handle
+                self.handle = core[0][:10]
         if isinstance(self.handle, list):
             self.handle = self.handle[0]
         if colltypeid is None:
@@ -127,6 +153,16 @@ class CollectionUnit:
             return statement + f", Distance: {self.distance:<10}"
 
     def find_close_collunits(self, cur, distance=10000, limit=10):
+        """Find geographically close collection units.
+
+        Args:
+            cur (psycopg2.cursor): Database cursor.
+            distance (float): Distance threshold in meters.
+            limit (int): Maximum number to return.
+
+        Returns:
+            list: Collection units within specified distance.
+        """
         close_handles = """
                 SELECT st.*, cu.handle,
                     ST_SetSRID(ST_Centroid(st.geog::geometry), 4326)::geography <-> ST_SetSRID(ST_Point(%(long)s, %(lat)s), 4326)::geography AS dist
@@ -160,9 +196,6 @@ class CollectionUnit:
         'colltypeid', 'depenvtid', 'handle', 'colldate', 'colldevice',
         'gpsaltitude', 'gpserror', 'waterdepth', 'substrateid', 'slopeaspect',
         'slopeangle', 'location', 'notes', 'geog']
-
-        special_atts = ['collunitname']
-
         differences = []
 
         for attr in attributes:
@@ -265,6 +298,14 @@ class CollectionUnit:
         return self.collunitid
 
     def insert_to_db(self, cur):
+        """Insert the collection unit into the database.
+
+        Args:
+            cur (psycopg2.cursor): Database cursor.
+
+        Returns:
+            int: The collectionunitid assigned.
+        """
         cu_query = """SELECT ts.insertcollectionunit(
                                _handle := %(handle)s,
                                _siteid := %(siteid)s,

@@ -1,3 +1,13 @@
+"""DataBUS: Data Bulk Uploader System for Neotoma.
+
+DataBUS is a Python package for managing paleoenvironmental data in the Neotoma
+database. It provides classes and utilities for working with sites, collections,
+samples, and various geochronological data types.
+
+Attributes:
+    __version__ (str): Current version of the package.
+"""
+
 __version__ = "0.1.0"
 
 import datetime
@@ -31,4 +41,3 @@ from .GeochronControl import GeochronControl
 from .Hiatus import Hiatus
 from .UThSeries import UThSeries
 from .UThSeries import insert_uraniumseriesdata
-from .Speleothem import insert_entityrelationship_to_db

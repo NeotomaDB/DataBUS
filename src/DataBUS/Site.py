@@ -1,8 +1,32 @@
-from .Geog import Geog, WrongCoordinates
+from .Geog import Geog
 
 class Site:
-    description = "Site object in Neotoma"
+    """Represents a geographic site location in Neotoma.
 
+    A site is a geographic location where paleoenvironmental data has been collected.
+    It contains geographic coordinates and descriptive information.
+
+    See the [Neotoma Manual](https://open.neotomadb.org/manual/site-related-tables-1.html#Sites).
+
+    Attributes:
+        description (str): Class description.
+        siteid (int | None): Site identifier.
+        sitename (str): Site name (required).
+        altitude (int | None): Elevation in meters.
+        area (float | None): Site area in square kilometers.
+        sitedescription (str | None): Detailed description.
+        notes (str | None): Additional notes.
+        geog (Geog | None): Geographic coordinates.
+        distance (float | None): Distance from reference (computed).
+    
+    Examples:
+        >>> site = Site(sitename="Mirror Lake", geog=Geog([43.3734, -71.5316]))  # Mirror Lake, NH
+        >>> site.sitename
+        'Mirror Lake'
+        >>> site = Site(sitename="Crater Lake", altitude=1949, geog=Geog([42.9453, -122.1103]))
+        >>> site.altitude
+        1949
+    """
     def __init__(
         self,
         siteid=None,
@@ -12,7 +36,6 @@ class Site:
         sitedescription=None,
         notes=None,
         geog=None):
-        
         if not (isinstance(siteid, int) or siteid is None or siteid == "NA"):
             raise TypeError("✗ Site ID must be an integer or None.")
         if siteid == ["NA"] or siteid == "NA":
@@ -61,7 +84,6 @@ class Site:
         if isinstance(self.sitedescription, str):
             if self.sitedescription == '':
                 self.sitedescription = None
-        
         if isinstance(notes, list):
             notes = notes[0]
         if not (isinstance(notes, str) or notes is None):
@@ -74,6 +96,11 @@ class Site:
         self.distance = None # This is only updated when comparing to other sites.
 
     def __str__(self):
+        """Return string representation of the Site object.
+
+        Returns:
+            str: String representation including site name, ID, and geography.
+        """
         statement = (
             f"Name: {self.sitename}, " f"ID: {self.siteid}, " f"Geog: {self.geog}"
         )
@@ -83,6 +110,14 @@ class Site:
             return statement + f", Distance: {self.distance:<10}"
 
     def __eq__(self, other):
+        """Compare two Site objects for equality.
+
+        Args:
+            other (Site): Another Site object.
+
+        Returns:
+            bool: True if all attributes match.
+        """
         return (
             self.siteid == other.siteid
             and self.sitename == other.sitename
@@ -94,9 +129,13 @@ class Site:
         )
 
     def insert_to_db(self, cur):
-        """
-        NS is latitude,
-        EW is longitude
+        """Insert the site into the Neotoma database.
+
+        Args:
+            cur (psycopg2.cursor): Database cursor.
+
+        Returns:
+            int: The siteid assigned by the database.
         """
         site_query = """SELECT ts.insertsite(_sitename := %(sitename)s, 
                         _altitude := %(altitude)s,
@@ -128,6 +167,14 @@ class Site:
         return self.siteid
 
     def upsert_to_db(self, cur):
+        """Updates a site that already exists in the database.
+
+        Args:
+            cur (psycopg2.cursor): Database cursor.
+
+        Returns:
+            int: The siteid.
+        """
         site_query = """SELECT upsert_site(_siteid := %(siteid)s,
                                     _sitename := %(sitename)s,
                                     _altitude := %(altitude)s,
@@ -152,6 +199,16 @@ class Site:
         return self.siteid
 
     def find_close_sites(self, cur, dist=10000, limit=5):
+        """Find geographically close sites using PostGIS distance.
+
+        Args:
+            cur (psycopg2.cursor): Database cursor.
+            dist (float): Distance threshold in meters (default 10km).
+            limit (int): Maximum number of sites to return (default 5).
+
+        Returns:
+            list: Tuples of site records ordered by distance.
+        """
         close_site = """SELECT st.*,
                         ST_SetSRID(st.geog::geometry, 4326)::geography <-> ST_SetSRID(ST_Point(%(long)s, %(lat)s), 4326)::geography AS dist
                         FROM   ndb.sites AS st
@@ -171,8 +228,18 @@ class Site:
             return None
 
     def update_site(self, other, overwrite, siteresponse=None):
+        """Update site attributes from another site object.
+
+        Args:
+            other (Site): Source site for updating.
+            overwrite (dict): Dictionary specifying which attributes to overwrite.
+            siteresponse (SiteResponse | None): Response object for tracking changes.
+
+        Returns:
+            Site: Updated site object.
+        """
         if siteresponse is None:
-            siteresponse = type("SiteResponse", (), {})()  # Create a simple object
+            siteresponse = type("Response", (), {})()  # Create a simple object
             siteresponse.match = {}
             siteresponse.message = []
         attributes = ["sitename",
@@ -196,6 +263,14 @@ class Site:
         return self
 
     def compare_site(self, other):
+        """Compare site attributes with another site object.
+
+        Args:
+            other (Site): Site object to compare against.
+
+        Returns:
+            list: List of differences found between sites.
+        """
         attributes = ['siteid', 'sitename', 'altitude', 'area',
                       'sitedescription', 'notes', 'geog']
         differences = []

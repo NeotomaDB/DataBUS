@@ -1,7 +1,29 @@
 class WrongCoordinates(Exception):
+    """Custom exception raised when coordinates are outside valid geographic ranges."""
     pass
 
 class Geog:
+    """Geographic coordinates with validation and hemisphere determination.
+
+    Stores latitude and longitude with validation to ensure values are within
+    valid geographic ranges. Automatically determines hemisphere from coordinates.
+
+    Attributes:
+        latitude (float | None): Latitude value (-90 to 90).
+        longitude (float | None): Longitude value (-180 to 180).
+        hemisphere (str | None): Cardinal directions ('NE', 'NW', 'SE', 'SW').
+
+    Raises:
+        TypeError: If coords is not list/tuple/None, or lat/long not numbers.
+        ValueError: If coords length is not 2.
+        WrongCoordinates: If coordinates outside valid ranges.
+
+    Examples:
+        >>> geog = Geog([43.3734, -71.5316])
+        >>> geog.hemisphere
+        'NW'
+    """
+
     def __init__(self, coords):
         if not (isinstance(coords, (list, tuple)) or coords is None):
             raise TypeError("✗ Coordinates must be a list or a tuple")
@@ -29,10 +51,23 @@ class Geog:
             self.hemisphere = None
 
     def __eq__(self, other):
+        """Compare two Geog objects for equality based on coordinates.
+
+        Args:
+            other (Geog): Another Geog object to compare.
+
+        Returns:
+            bool: True if both objects have identical latitude and longitude.
+        """
         if not isinstance(other, Geog):
             return False
         else:
             return self.latitude == other.latitude and self.longitude == other.longitude
 
     def __str__(self):
+        """Return string representation of geographic coordinates.
+
+        Returns:
+            str: Formatted string showing latitude and longitude.
+        """
         return f"(Lat:{self.latitude}, Long: {self.longitude})"
