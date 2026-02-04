@@ -23,6 +23,5 @@ from .read_csv import read_csv
 from .hash_file import hash_file
 from .template_to_dict import template_to_dict
 from .parse_arguments import parse_arguments
-from .excel_to_yaml import excel_to_yaml
 from .get_contacts import get_contacts
 from .retrieve_dict import retrieve_dict
