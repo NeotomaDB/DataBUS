@@ -1,7 +1,6 @@
 import yaml
 from yaml.loader import SafeLoader
 import os
-from .excel_to_yaml import excel_to_yaml
 
 def template_to_dict(temp_file):
     """Convert YAML or XLSX template file to Python dictionary.
@@ -30,23 +29,12 @@ def template_to_dict(temp_file):
         raise FileNotFoundError(
             f"The file '{temp_file}' could not be found within the current path."
         )
-
     file_name, file_extension = os.path.splitext(temp_file)
-
     if file_extension.lower() == ".yml" or file_extension.lower() == ".yaml":
         with open(temp_file, encoding="UTF-8") as file:
             data = yaml.load(file, Loader=SafeLoader)
         return data
-
-    elif file_extension.lower() == ".xls" or file_extension.lower() == ".xlsx":
-        excel_to_yaml(temp_file, file_name)
-        file_name = file_name + ".yml"
-        # Clean up the generated YAML file after reading it
-        with open(file_name, encoding="UTF-8") as file:
-            data = yaml.load(file, Loader=SafeLoader)
-        return data
-
     else:
         raise ValueError(
-            f"Unsupported file type: {file_extension}. Only .yml, .yaml, .xls, and .xlsx are supported."
+            f"Unsupported file type: {file_extension}. Use `.yml` or `.yaml` templates."
         )

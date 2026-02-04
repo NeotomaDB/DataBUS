@@ -22,8 +22,7 @@ def retrieve_dict(yml_dict, sql_column):
     Returns:
         list: A list of all dictionaries associated with a particular Neotoma table/column.
     """
-    # result = next((d['column'] for d in yml_dict if d['neotoma'] == sqlColumn), None)
-    # retrieving the dict instead:
+
     try:
         assert isinstance(yml_dict, dict)
         assert yml_dict.get("metadata")
