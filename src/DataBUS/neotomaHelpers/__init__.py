@@ -15,7 +15,6 @@ import itertools
 import argparse
 import os
 
-from .clean_column import clean_column
 from .pull_overwrite import pull_overwrite
 from .pull_required import pull_required
 from .pull_params import pull_params
@@ -24,4 +23,3 @@ from .hash_file import hash_file
 from .template_to_dict import template_to_dict
 from .parse_arguments import parse_arguments
 from .get_contacts import get_contacts
-from .retrieve_dict import retrieve_dict

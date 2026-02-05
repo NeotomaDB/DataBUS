@@ -1,3 +1,6 @@
+import warnings
+from .neotomaHelpers.eq import _eq
+
 class WrongCoordinates(Exception):
     """Custom exception raised when coordinates are outside valid geographic ranges."""
     pass
@@ -9,8 +12,10 @@ class Geog:
     valid geographic ranges. Automatically determines hemisphere from coordinates.
 
     Attributes:
-        latitude (float | None): Latitude value (-90 to 90).
-        longitude (float | None): Longitude value (-180 to 180).
+        longe (float | None): Longitude in decimal degrees (-180 to 180).
+        latn (float | None): Latitude in decimal degrees (-90 to 90).
+        longw (float | None): Longitude in decimal degrees (-180 to 180).
+        lats (float | None): Latitude in decimal degrees (-90 to 90).
         hemisphere (str | None): Cardinal directions ('NE', 'NW', 'SE', 'SW').
 
     Raises:
@@ -19,7 +24,7 @@ class Geog:
         WrongCoordinates: If coordinates outside valid ranges.
 
     Examples:
-        >>> geog = Geog([43.3734, -71.5316])
+        >>> geog = Geog([43.3734, -71.5316, 43.3734, -71.5316])
         >>> geog.hemisphere
         'NW'
     """
@@ -27,42 +32,55 @@ class Geog:
     def __init__(self, coords):
         if not (isinstance(coords, (list, tuple)) or coords is None):
             raise TypeError("✗ Coordinates must be a list or a tuple")
-        if coords is None or coords == [None, None]:
-            self.latitude = None
-            self.longitude = None
-        else:
-            if len(coords) != 2:
-                raise ValueError("✗ Coordinates must have a length of 2.")
-            if not (isinstance(coords[0], (int, float)) or coords[0] is None):
-                raise TypeError("✗ Latitude must be a number or None.")
-            if not (isinstance(coords[1], (int, float)) or coords[1] is None):
-                raise TypeError("✗ Longitude must be a number or None.")
-            if isinstance(coords[0], (int, float)) and not (-90 <= coords[0] <= 90):
-                raise WrongCoordinates("✗ Latitude must be between -90 and 90.")
-            if isinstance(coords[1], (int, float)) and not (-180 <= coords[1] <= 180):
-                raise WrongCoordinates("✗ Longitude must be between -180 and 180.")
-            self.latitude = coords[0]
-            self.longitude = coords[1]
-        if self.latitude is not None and self.longitude is not None:
-            self.hemisphere = ("N" if self.latitude >= 0 else "S") + (
-                "E" if self.longitude >= 0 else "W"
-            )
-        else:
+         # check if list where all values are None
+        if coords == None or all(v is None for v in coords):
+            self.latitudeN = None
+            self.longitudeE = None
+            self.latitudeS = None
+            self.longitudeW = None
             self.hemisphere = None
+        else:
+            if len(coords) != 2 and len(coords) != 4:
+                raise ValueError("✗ Coordinates must have a length of 2 or 4.")
+        try:
+            lat, lon, lat2, lon2 = coords
+        except ValueError:
+            lat, lon = coords
+            lat2, lon2 = lat, lon
+        if lat is None or lon is None:
+            warnings.warn("? No coordinates given.")
+        for val, name, lo, hi in [
+            (lat, "LatN", -90, 90),
+            (lon, "LongE", -180, 180),
+            (lat2, "LatS", -90, 90),
+            (lon2, "LongW", -180, 180)]:
+            if val is not None:
+                if not isinstance(val, (int, float)):
+                    raise TypeError(f"✗ {name} must be a number or None.")
+                if not (lo <= val <= hi):
+                    raise WrongCoordinates(f"✗ {name} must be between {lo} and {hi}.")
+        self.latitudeN = lat
+        self.longitudeE = lon
+        self.latitudeS = lat2
+        self.longitudeW = lon2
+        if self.latitudeN is not None and self.longitudeE is not None:
+            self.hemisphere = ("N" if self.latitudeN >= 0 else "S") + (
+                "E" if self.longitudeE >= 0 else "W")
 
     def __eq__(self, other):
         """Compare two Geog objects for equality based on coordinates.
-
         Args:
             other (Geog): Another Geog object to compare.
-
         Returns:
             bool: True if both objects have identical latitude and longitude.
         """
         if not isinstance(other, Geog):
             return False
         else:
-            return self.latitude == other.latitude and self.longitude == other.longitude
+            return (_eq(self.latitudeN, other.latitudeN) and
+                    _eq(self.longitudeE, other.longitudeE) and
+                    _eq(self.latitudeS, other.latitudeS) and
+                    _eq(self.longitudeW, other.longitudeW))
 
     def __str__(self):
         """Return string representation of geographic coordinates.
@@ -70,4 +88,4 @@ class Geog:
         Returns:
             str: Formatted string showing latitude and longitude.
         """
-        return f"(Lat:{self.latitude}, Long: {self.longitude})"
+        return f"(Lat: {self.latitudeN}, Long: {self.longitudeE})"

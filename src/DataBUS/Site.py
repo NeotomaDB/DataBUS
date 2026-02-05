@@ -1,6 +1,7 @@
+from .neotomaHelpers.eq import _eq
 from .Geog import Geog
 SITE_PARAMS = ["siteid", "sitename", "altitude",
-              "area", "sitedescription", "notes","geog"]
+               "area", "sitedescription", "notes", "geog"]
 
 class Site:
     """Represents a geographic site location in Neotoma.
@@ -38,64 +39,40 @@ class Site:
         sitedescription=None,
         notes=None,
         geog=None):
-        if not (isinstance(siteid, int) or siteid is None or siteid == "NA"):
+        if not (isinstance(siteid, int) or siteid is None):
             raise TypeError("✗ Site ID must be an integer or None.")
-        if siteid == ["NA"] or siteid == "NA":
-            siteid = None
         self.siteid = siteid
 
         if sitename is None:
             raise ValueError(f"✗ Sitename must be given.")
-        if not isinstance(sitename, (list, str)):
-            raise TypeError(f"✗ Sitename must be a string or list of strings.")
-        if isinstance(sitename, list):
-            verif = {s.lower() for s in sitename}
-            if len(verif) != 1:
-                raise ValueError("✗ There are multiple sitenames in your template.")
-            else:
-                sitename = sitename[0]
-        self.sitename = sitename.lower().title()
+        if not isinstance(sitename, str):
+            raise TypeError(f"✗ Sitename must be a string.")
+        self.sitename = sitename.strip().strip(',').lower().title()
 
-        if not (isinstance(altitude, (int, float, list)) or altitude is None):
-            raise TypeError("Altitude must be a number, list of numbers, or None.")
-        if isinstance(altitude, list):
-            if len(altitude)>1:
-                raise TypeError("Only one altitude per unit")
-            if isinstance(altitude[0], (float, int)):
-                self.altitude = int(altitude[0])
-            else:
-                self.altitude = altitude[0]
-        else:
-            if isinstance(altitude, (float, int)):
-                self.altitude = int(altitude)
-            else:
-                self.altitude = altitude
+        if not (isinstance(altitude, (int, float)) or altitude is None):
+            raise TypeError("Altitude must be a number or None.")
+        self.altitude = altitude
 
         if not (isinstance(area, (int, float)) or area is None):
             raise TypeError("Area must be a number or None.")
         self.area = area
 
-        if not (isinstance(sitedescription, (str, list)) or sitedescription is None):
-            raise TypeError("Site Description must be a str or None.")
-        if isinstance(sitedescription, list):
-            if len(sitedescription)>1:
-                raise TypeError("Only one site description per site")
-            self.sitedescription = sitedescription[0]
-        else:
-            self.sitedescription = sitedescription
-        if isinstance(self.sitedescription, str):
-            if self.sitedescription == '':
-                self.sitedescription = None
-        if isinstance(notes, list):
-            notes = notes[0]
+        if not (isinstance(sitedescription, str) or sitedescription is None):
+            raise TypeError("Site Description must be a string or None.")
+        self.sitedescription = sitedescription
+        if isinstance(self.sitedescription, str) and self.sitedescription.strip() == '':
+            self.sitedescription = None
+        if not (isinstance(notes, str) or notes is None):
+            raise TypeError("Site Description must be a string or None.")
+        if isinstance(self.sitedescription, str) and self.sitedescription.strip() == '':
+            self.sitedescription = None
         if not (isinstance(notes, str) or notes is None):
             raise TypeError("Notes must be a str or None.")
         self.notes = notes
-
         if not (isinstance(geog, Geog) or geog is None):
             raise TypeError("geog must be Geog or None.")
         self.geog = geog
-        self.distance = None # This is only updated when comparing to other sites.
+        self.distance = None
 
     def __str__(self):
         """Return string representation of the Site object.
@@ -103,39 +80,27 @@ class Site:
         Returns:
             str: String representation including site name, ID, and geography.
         """
-        statement = (
-            f"Name: {self.sitename}, " f"ID: {self.siteid}, " f"Geog: {self.geog}"
-        )
-        if self.distance is None:
-            return statement
-        else:
-            return statement + f", Distance: {self.distance:<10}"
+        id = f" ID: {self.siteid}, " if self.siteid is not None else ""
+        statement = f"Name: {self.sitename},{id} Geog: {self.geog}"
+        return statement
 
     def __eq__(self, other):
         """Compare two Site objects for equality.
-
-        Args:
-            other (Site): Another Site object.
-
         Returns:
             bool: True if all attributes match.
         """
-        return (
-            self.siteid == other.siteid
-            and self.sitename == other.sitename
-            and self.altitude == other.altitude
-            and self.area == other.area
-            and self.sitedescription == other.sitedescription
-            and self.notes == other.notes
-            and self.geog == other.geog
-        )
+        return (self.siteid == other.siteid
+                and self.sitename == other.sitename
+                and self.altitude == other.altitude
+                and self.area == other.area
+                and self.sitedescription == other.sitedescription
+                and self.notes == other.notes
+                and self.geog == other.geog)
 
     def insert_to_db(self, cur):
         """Insert the site into the Neotoma database.
-
         Args:
             cur (psycopg2.cursor): Database cursor.
-
         Returns:
             int: The siteid assigned by the database.
         """
@@ -144,25 +109,30 @@ class Site:
                         _area := %(area)s,
                         _descript := %(sitedescription)s,
                         _notes := %(notes)s,
-                        _east := %(ew)s,
-                        _west := %(ew)s,
-                        _north := %(ns)s,
-                        _south := %(ns)s)"""
+                        _east := %(e)s,
+                        _west := %(w)s,
+                        _north := %(n)s,
+                        _south := %(s)s)"""
         if not self.geog:
-            latitude = None
-            longitude = None
+            latitudeN = None
+            longitudeE = None
+            latitudeS = None
+            longitudeW = None
         else:
-            latitude = self.geog.latitude
-            longitude = self.geog.longitude
-
+            latitudeN = self.geog.latitudeN
+            longitudeE = self.geog.longitudeE
+            latitudeS = self.geog.latitudeS
+            longitudeW = self.geog.longitudeW
         inputs = {
             "sitename": self.sitename,
             "altitude": self.altitude,
             "area": self.area,
             "sitedescription": self.sitedescription,
             "notes": self.notes,
-            "ns": latitude,
-            "ew": longitude,
+            "n": latitudeN,
+            "s": latitudeS,
+            "e": longitudeE,
+            "w": longitudeW,
         }
         cur.execute(site_query, inputs)
         self.siteid = cur.fetchone()[0]
@@ -170,10 +140,8 @@ class Site:
 
     def upsert_to_db(self, cur):
         """Updates a site that already exists in the database.
-
         Args:
             cur (psycopg2.cursor): Database cursor.
-
         Returns:
             int: The siteid.
         """
@@ -186,15 +154,26 @@ class Site:
                                     _east := %(ew)s,
                                     _north:= %(ns)s)
                                     """
+        if not self.geog:
+            latitudeN = None
+            longitudeE = None
+            latitudeS = None
+            longitudeW = None
+        else:
+            latitudeN = self.geog.latitudeN
+            longitudeE = self.geog.longitudeE
+            latitudeS = self.geog.latitudeS
+            longitudeW = self.geog.longitudeW
         inputs = {
-            "siteid": self.siteid,
             "sitename": self.sitename,
             "altitude": self.altitude,
             "area": self.area,
             "sitedescription": self.sitedescription,
             "notes": self.notes,
-            "ns": self.geog.latitude,
-            "ew": self.geog.longitude,
+            "ns": latitudeN,
+            #"s": latitudeS,
+            "ew": longitudeE,
+            #"w": longitudeW,
         }
         cur.execute(site_query, inputs)
         self.siteid = cur.fetchone()[0]
@@ -202,12 +181,10 @@ class Site:
 
     def find_close_sites(self, cur, dist=10000, limit=5):
         """Find geographically close sites using PostGIS distance.
-
         Args:
             cur (psycopg2.cursor): Database cursor.
             dist (float): Distance threshold in meters (default 10km).
             limit (int): Maximum number of sites to return (default 5).
-
         Returns:
             list: Tuples of site records ordered by distance.
         """
@@ -218,8 +195,8 @@ class Site:
                         ORDER BY dist
                         LIMIT %(lim)s;"""
         try:
-            params = {"long": self.geog.longitude,
-                      "lat": self.geog.latitude,
+            params = {"long": self.geog.longitudeE,
+                      "lat": self.geog.latitudeN,
                       "dist": dist,
                       "lim": limit}
             cur.execute(close_site, params)
@@ -231,12 +208,10 @@ class Site:
 
     def update_site(self, other, overwrite, siteresponse=None):
         """Update site attributes from another site object.
-
         Args:
             other (Site): Source site for updating.
             overwrite (dict): Dictionary specifying which attributes to overwrite.
             siteresponse (SiteResponse | None): Response object for tracking changes.
-
         Returns:
             Site: Updated site object.
         """
@@ -266,19 +241,14 @@ class Site:
 
     def compare_site(self, other):
         """Compare site attributes with another site object.
-
         Args:
             other (Site): Site object to compare against.
-
         Returns:
             list: List of differences found between sites.
         """
-        attributes = ['siteid', 'sitename', 'altitude', 'area',
-                      'sitedescription', 'notes', 'geog']
         differences = []
-
-        for attr in attributes:
-            if getattr(self, attr) != getattr(other, attr):
+        for attr in SITE_PARAMS:
+            if _eq(getattr(self, attr), getattr(other, attr)) is False:
                 differences.append(f"CSV {attr}: {getattr(self, attr)} != Neotoma {attr}: "
                                    f"{getattr(other, attr)}")
         return differences
