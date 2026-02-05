@@ -67,7 +67,15 @@ def valid_site(cur, yml_dict, csv_file, insert = False):
                     response.siteid = new_site.siteid
                     response.elements.append(site)
                     response.valid.append(True)
-                    response.message.append(f"✔  Existing site {response.siteid}, {site.sitename} ")
+                    response.message.append(f"✔  Existing site {site.sitename}, ID {response.siteid} ")
+                    # Consider if insert is True, upsert file if overwrite fields are True
+                    # updated_site = site.update_site(new_site, overwrite, response)
+                    # cur.execute(upsert_query)  # Defines upsert_site SQL function
+                    # response.siteid = updated_site.upsert_to_db(cur)
+                    # response.sitelist.append(updated_site)
+                    # response.valid.append(True)
+                    # response.message.append(f"✔  Updated Site {site.sitename}, ID {response.siteid}.")
+                    # return response
                     break
             if response.siteid is None:
                 response.message.append("?  One or more sites exist close to the requested site.")
