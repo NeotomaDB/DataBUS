@@ -31,7 +31,7 @@ def valid_site(cur, yml_dict, csv_file, insert = False):
         inputs['geog'] = (lat, lon)
     try:
         inputs["geog"] = Geog((inputs["geog"][0], inputs["geog"][1]))
-        response.message.append(f"? This set is expected to be "
+        response.message.append(f"? This site is expected to be "
                                 f"in the {inputs['geog'].hemisphere} hemisphere.")
         response.valid.append(True)
     except (TypeError, WrongCoordinates) as e:
