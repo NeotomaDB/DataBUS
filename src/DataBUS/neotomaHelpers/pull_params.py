@@ -1,8 +1,6 @@
 import re
 from . import utils as ut
-from .retrieve_dict import retrieve_dict
-from .clean_column import clean_column
- 
+
 def pull_params(params, yml_dict, csv_template, table=None, values=False):
     """Pull and process parameters for database insert statements.
 
@@ -44,7 +42,7 @@ def _process_parameter(param_name, table, values, yml_dict, csv_template, add_un
     if values:
         valor = _get_value_subfields(param_name, yml_dict)
     else:
-        valor = retrieve_dict(yml_dict, table + param_name)
+        valor = ut.retrieve_dict(yml_dict, table + param_name)
     if not valor:
         add_unit_inputs[param_name] = None
         return
@@ -60,7 +58,7 @@ def _process_value_entry(param_name, val_entry, csv_template, table, add_unit_in
     """Process a single value entry with type conversion and special case handling.
     """
     try:
-        clean_valor = clean_column(
+        clean_valor = ut.clean_column(
             val_entry.get("column"),
             csv_template,
             clean=not val_entry.get("rowwise"))
@@ -76,5 +74,7 @@ def _process_value_entry(param_name, val_entry, csv_template, table, add_unit_in
         ut.add_chronology_entry(add_unit_inputs, val_entry, clean_valor, table, param_name)
     elif 'taxonname' in val_entry:
         ut.add_taxon_entry(add_unit_inputs, val_entry, clean_valor)
+    elif param_name == 'contactname':
+        add_unit_inputs[param_name] = [value.strip() for item in clean_valor for value in item.split("|")]
     else:
         add_unit_inputs[param_name] = clean_valor

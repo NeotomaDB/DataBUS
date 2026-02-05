@@ -44,8 +44,11 @@ class Response:
         self.id = []
         self.data_id = {}
         self.name = {}
+        self.elements = []
         self.indices = []
         self.counter = 0
+        self.nearby = []
+        self.matched = {}
     
     @property
     def validAll(self):
