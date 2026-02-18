@@ -48,7 +48,7 @@ class Geog:
             lat, lon = coords
             lat2, lon2 = lat, lon
         if lat is None or lon is None:
-            warnings.warn("? No coordinates given.")
+            warnings.warn("\n? No coordinates given.")
         for val, name, lo, hi in [
             (lat, "LatN", -90, 90),
             (lon, "LongE", -180, 180),
