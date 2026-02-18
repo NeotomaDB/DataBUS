@@ -1,9 +1,10 @@
 from .Geog import Geog
-CU_PARAMS = ["handle", "core", "depenvtid", "collunitname",
+from warnings import warn
+from .neotomaHelpers.utils import validate_int_values,validate_date_values
+CU_PARAMS = ["handle", "depenvtid", "collunitname",
               "colldate", "colldevice", "gpsaltitude", "gpserror",
               "waterdepth", "substrateid", "slopeaspect", "slopeangle",
               "location", "notes", "geog", "colltypeid"]
-
 class CollectionUnit:
     """Represents a sediment core or excavation collection in Neotoma.
 
@@ -13,9 +14,8 @@ class CollectionUnit:
 
     Collection units are explained further in the
     [Neotoma Manual](https://open.neotomadb.org/manual/database-design-concepts.html#sitedesign).
-
+    
     Attributes:
-        description (str): Class description.
         collectionunitid (int | None): Collection unit identifier.
         handle (str): Unique handle/identifier.
         siteid (int): Associated site ID.
@@ -23,9 +23,18 @@ class CollectionUnit:
         depenvtid (int | None): Depositional environment ID.
         collunitname (str | None): Collection unit name.
         colldate (datetime | None): Collection date.
+        colldevice (str | None): Collection device used.
+        gpsaltitude (float | None): GPS altitude in meters.
+        gpserror (float | None): GPS error in meters.
+        waterdepth (float | None): Water depth in meters.
+        substrateid (int | None): Substrate type ID.
+        slopeaspect (int | None): Slope aspect in degrees.
+        slopeangle (int | None): Slope angle in degrees.
+        location (str | None): Location description.
+        notes (str | None): Additional notes.
         geog (Geog | None): Geographic coordinates.
-        distance (float | None): Distance from reference (computed).
-
+        distance (float | None): Distance from reference (computed when `cu.find_close_collunits()` is executed).
+    
     Examples:
         >>> cu = CollectionUnit(siteid=1, handle="MCL-01")  # Mirror Lake core collection
         >>> cu.handle
@@ -34,13 +43,10 @@ class CollectionUnit:
         >>> cu.waterdepth
         25.5
     """
-    description = "Collection Unit object in Neotoma"
-
     def __init__(
         self,
         collectionunitid=None,
         handle=None,
-        core=None,
         siteid=None,
         colltypeid=None,
         depenvtid=None,
@@ -56,95 +62,47 @@ class CollectionUnit:
         location=None,
         notes=None,
         geog=None):
-        self.collectionunitid = collectionunitid
-        if isinstance(handle, list) and len(handle) > 1:
-            raise ValueError("✗ There can only be a single collection unit handle defined.")
-        handle = None if handle == ["NA"] else handle
-        self.handle = handle
-        if self.handle is None:
-            if core is not None and isinstance(core, list):
-                self.handle = core[0][:10]
-        if isinstance(self.handle, list):
-            self.handle = self.handle[0]
-        if colltypeid is None:
-            self.colltypeid = None
-        else:
-            self.colltypeid = int(colltypeid)
-
-        if siteid is None:
-            self.siteid = None
-        else:
-            self.siteid = int(siteid)
-        if depenvtid is None or depenvtid == '':
-            self.depenvtid = None
-        else:
-            self.depenvtid = int(depenvtid)
-
-        if collunitname is None:
-            self.collunitname = None
-        else:
-            self.collunitname = str(collunitname)
-
-        if not colldate:
-            self.colldate = None
-        else:
-            if isinstance(colldate, list):
-                self.colldate = colldate[0]
-            else:
-                self.colldate = colldate
-
-        if colldevice is None:
-            self.colldevice = None
-        else:
-            self.colldevice = str(colldevice)
-
-        if gpsaltitude is None:
-            self.gpsaltitude = None
-        else:
-            self.gpsaltitude = float(gpsaltitude)
-
-        if gpserror is None:
-            self.gpserror = None
-        else:
-            self.gpserror = float(gpserror)
-
-        if waterdepth is None:
-            self.waterdepth = None
-        else:
-            self.waterdepth = float(waterdepth)
-
-        if substrateid is None or substrateid == '':
-            self.substrateid = None
-        else:
-            self.substrateid = int(substrateid)
+        self.collectionunitid = validate_int_values(collectionunitid, "collectionunitid")
+        self.siteid = validate_int_values(siteid, "siteid")
+        self.colltypeid = validate_int_values(colltypeid, "colltypeid")
+        self.depenvtid = validate_int_values(depenvtid, "depenvtid")
+        self.colldate = validate_date_values(colldate, "colldate")
+        self.substrateid = validate_int_values(substrateid, "substrateid")
+        self.slopeaspect = validate_int_values(slopeaspect, "slopeaspect")
+        self.slopeangle = validate_int_values(slopeangle, "slopeangle")
+        self.notes = notes
+        self.colldevice = colldevice
+        self.notes = notes
+        self.distance = None
         
-        if slopeaspect is None:
-            self.slopeaspect = None
+        if handle is None:
+            raise ValueError("✗ A collection unit handle must be provided.")
+        if isinstance(handle, list) and len(list(set(handle))) > 1:
+            raise ValueError("✗ There can only be a single collection unit handle defined.")
+        elif isinstance(handle, list):
+            handle = list(set(handle))[0] 
+        elif isinstance(handle, str) and len(handle) > 10:
+            self.handle = handle[:10]  # Truncate to 10 characters
+            warning_msg = f"\n ⚠  Handle '{handle}' exceeds 10 characters and has been truncated to '{self.handle}'."
+            warn(warning_msg)
         else:
-            self.slopeaspect = int(slopeaspect)
-
-        if slopeangle is None:
-            self.slopeangle = None
+            self.handle = handle
+        if collunitname is None:
+            self.collunitname = handle
         else:
-            self.slopeangle = int(slopeangle)
-
-        if not location:
-            self.location = None
+            self.collunitname = collunitname
+        self.gpsaltitude = gpsaltitude 
+        self.gpserror = gpserror
+        self.waterdepth = waterdepth
+        if isinstance(location, list) and len(list(set(location))) > 1:
+            raise ValueError("✗ There can only be a single location defined.")
+        elif isinstance(location, list):
+            self.location = location[0]
         else:
-            if isinstance(location, list):
-                self.location = str(location[0])
-            else:
-                self.location = location
-
-        if notes is None:
-            self.notes = None
-        else:
-            self.notes = str(notes)
-
+            self.location = location
         if not (isinstance(geog, Geog) or geog is None):
             raise TypeError("geog must be Geog or None.")
         self.geog = geog
-        self.distance = None
 
     def __str__(self):
         statement = (
@@ -169,74 +127,67 @@ class CollectionUnit:
             list: Collection units within specified distance.
         """
         close_handles = """
-                SELECT st.*, cu.handle,
+                SELECT st.siteid, cu.handle, cu.collectionunitid,
                     ST_SetSRID(ST_Centroid(st.geog::geometry), 4326)::geography <-> ST_SetSRID(ST_Point(%(long)s, %(lat)s), 4326)::geography AS dist
                 FROM   ndb.sites AS st
                 INNER JOIN ndb.collectionunits AS cu ON cu.siteid = st.siteid
                 WHERE ST_SetSRID(ST_Centroid(st.geog::geometry), 4326)::geography <-> ST_SetSRID(ST_Point(%(long)s, %(lat)s), 4326)::geography < %(distance)s
                 ORDER BY dist
                 LIMIT %(lim)s;"""
-        cur.execute(
-            close_handles,
-            {
-                "long": self.geog.longitude,
-                "lat": self.geog.latitude,
-                "distance": distance,
-                "lim": limit,
-            },
-        )
-        close_handles = cur.fetchall()
+        if self.geog is None or self.geog.latitudeN is None or self.geog.longitudeE is None:
+            return []
+        else:
+            cur.execute(
+                close_handles,
+                {
+                    "long": self.geog.longitudeE,
+                    "lat": self.geog.latitudeN,
+                    "distance": distance,
+                    "lim": limit,
+                },
+            )
+            close_handles = cur.fetchall()
         return close_handles
 
     def __eq__(self, other):
-        attributes = [
-        'colltypeid', 'depenvtid', 'collunitname', 'colldate', 'colldevice',
-        'gpsaltitude', 'gpserror', 'waterdepth', 'substrateid', 'slopeaspect',
-        'slopeangle', 'location', 'notes', 'geog'
-    ]
-        return all(getattr(self, attr) == getattr(other, attr) for attr in attributes)
+        attributes = CU_PARAMS
+        validate = []
+        prs = [attr for attr in attributes if attr != "handle"]
+        for attr in prs: 
+            self_val = getattr(self, attr)
+            other_val = getattr(other, attr)
+            if self_val is None and other_val is None:
+                continue
+            else:
+                validate.append(self_val == other_val)
+        return all(validate)
     
     def compare_cu(self, other):
-        attributes = [
-        'colltypeid', 'depenvtid', 'handle', 'colldate', 'colldevice',
-        'gpsaltitude', 'gpserror', 'waterdepth', 'substrateid', 'slopeaspect',
-        'slopeangle', 'location', 'notes', 'geog']
+        attributes = CU_PARAMS
         differences = []
-
         for attr in attributes:
-            if getattr(self, attr) != getattr(other, attr):
-                differences.append(f"CSV {attr}: {getattr(self, attr)} != Neotoma {attr}: {getattr(other, attr)}")
-        
-        if getattr(self, 'handle').lower() == getattr(other, 'handle').lower():
-            if getattr(self, 'collunitname') != getattr(other, 'collunitname'):
-                differences.append(f"✗  Same handlename {getattr(self, 'handle')} for different collunits: {getattr(self, 'collunitname')} != Neotoma collunitname: {getattr(other, 'collunitname')}")
-
+            self_val = getattr(self, attr)
+            other_val = getattr(other, attr)
+            if attr == "geog":
+                if self_val is None:
+                    if other_val.latitudeN is None and other_val.longitudeE is None:
+                        continue
+            if self_val is None and other_val is None:
+                continue
+            elif self_val != other_val:
+                differences.append(f"CSV {attr}: {self_val} != Neotoma {attr}: {other_val}")
         return differences
 
     def update_collunit(self, other, overwrite, cu_response=None):
         if cu_response is None:
-            cu_response = type("cu_response", (), {})()  # Create a simple object
+            cu_response = type("response", (), {})()
             cu_response.match = {}
             cu_response.message = []
-        attributes = [
-            "colltypeid",
-            "depenvtid",
-            "collunitname",
-            "colldate",
-            "colldevice",
-            "gpsaltitude",
-            "gpserror",
-            "waterdepth",
-            "substrateid",
-            "slopeaspect",
-            "slopeangle",
-            "location",
-            "notes",
-            "geog",
-        ]
+        attributes = CU_PARAMS
+        prs = [attr for attr in attributes if attr != "handle"]
         updated_attributes = []
-        for attr in attributes:
-            if getattr(self, attr) != getattr(other, attr):
+        for attr in prs:
+            if (getattr(self, attr) != getattr(other, attr)):
                 cu_response.matched[attr] = False
                 cu_response.message.append(
                     f"? {attr} does not match. Update set to {overwrite[attr]}\n"
@@ -275,8 +226,8 @@ class CollectionUnit:
             latitude = None
             longitude = None
         else:
-            latitude = self.geog.latitude
-            longitude = self.geog.longitude
+            latitude = self.geog.latitudeN
+            longitude = self.geog.longitudeE
 
         inputs = {
             "siteid": self.siteid,
@@ -336,8 +287,8 @@ class CollectionUnit:
             "collunitname": self.collunitname,
             "colldate": self.colldate,
             "colldevice": self.colldevice,
-            "gpslatitude": self.geog.latitude if self.geog is not None else None,
-            "gpslongitude": self.geog.longitude if self.geog is not None else None,
+            "gpslatitude": self.geog.latitudeN if self.geog is not None else None,
+            "gpslongitude": self.geog.longitudeE if self.geog is not None else None,
             "gpserror": self.gpserror,
             "waterdepth": self.waterdepth,
             "substrateid": self.substrateid,
