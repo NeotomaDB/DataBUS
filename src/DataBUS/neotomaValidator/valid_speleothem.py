@@ -16,33 +16,33 @@ def valid_speleothem(cur, yml_dict, csv_file):
 
     Returns:
         Response: Response object containing validation messages, validity list, and overall status.
-    
+
     Examples:
         >>> valid_speleothem(cursor, config_dict, "speleothem_data.csv")
         Response(valid=[True], message=[...], validAll=True)
     """
-    params = SPELEOTHEM_PARAMS
     response = Response()
+    params = SPELEOTHEM_PARAMS
 
     driptype_q = """SELECT speleothemdriptypeid
                     FROM ndb.speleothemdriptypes
                     WHERE LOWER(speleothemdriptype) = %(element)s;"""
-    entity_q = """SELECT rocktypeid 
+    entity_q = """SELECT rocktypeid
                   FROM ndb.rocktypes
                   WHERE LOWER(rocktype) = %(element)s;"""
-    entitystatus_q = """SELECT entitystatusid 
+    entitystatus_q = """SELECT entitystatusid
                         FROM ndb.speleothementitystatuses
                         WHERE LOWER(entitystatus) = %(element)s;"""
-    speleothemtypes_q = """SELECT speleothemtypeid 
+    speleothemtypes_q = """SELECT speleothemtypeid
                            FROM ndb.speleothemtypes
                            WHERE LOWER(speleothemtype) = %(element)s;"""
-    covertype_q = """SELECT entitycoverid 
+    covertype_q = """SELECT entitycoverid
                      FROM ndb.entitycovertypes
                      WHERE LOWER(entitycovertype) = %(element)s;"""
-    landusecovertype_q = """SELECT landusecovertypeid 
+    landusecovertype_q = """SELECT landusecovertypeid
                             FROM ndb.landusetypes
                             WHERE LOWER(landusecovertype) = %(element)s;"""
-    vegetationcovertype_q = """SELECT vegetationcovertypeid 
+    vegetationcovertype_q = """SELECT vegetationcovertypeid
                                FROM ndb.vegetationcovertypes
                                WHERE LOWER(vegetationcovertype) = %(element)s;"""
     rockage_q = """SELECT relativeageid
@@ -73,10 +73,14 @@ def valid_speleothem(cur, yml_dict, csv_file):
             params.remove('ref_id')
             inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.speleothems")
         else:
-            inputs = {}
-        response.valid.append(False)
-        response.message.append(f"Speleothem elements in the CSV file are not properly defined.\n"
-                                f"Please verify the CSV file. {e}")
+            response.valid.append(False)
+            response.message.append(f"✗ Speleothem elements in the CSV file are not properly defined.\n"
+                                    f"Please verify the CSV file. {e}")
+            return response
+    if all(value is None for value in inputs.values()):
+        response.valid.append(True)
+        response.message.append("✔ No speleothem parameters provided.")
+        return response
     if inputs.get('monitoring', '').lower() == 'yes':
         inputs['monitoring'] = True
     else:
@@ -84,13 +88,13 @@ def valid_speleothem(cur, yml_dict, csv_file):
     if isinstance(inputs.get('ref_id'), str):
         inputs['ref_id'] = list(map(int, inputs.get('ref_id', []).split(',')))
     for inp in inputs:
-        el = inputs[inp]
-        if isinstance(inputs.get(inp), str) and 'id' in inp and inputs[inp] != None:
+        if isinstance(inputs.get(inp), str) and inp.endswith('id') and inputs[inp] is not None:
+            original_value = inputs[inp]
             query = par[inp][0]
             cur.execute(query, {'element': inputs[inp].lower()})
             inputs[inp] = cur.fetchone()
             if not inputs[inp]:
-                response.message.append(f"✗  {inp} for {el} not found. "
+                response.message.append(f"✗  {inp} for {original_value} not found. "
                                         f"Does it exist in Neotoma?")
                 response.valid.append(False)
             else:
@@ -98,19 +102,16 @@ def valid_speleothem(cur, yml_dict, csv_file):
                 response.valid.append(True)
                 response.message.append(f"✔  {inp} for {inputs[inp]} found.")
     try:
-        Speleothem(siteid=1, # Temporary siteid
-                    entityid=inputs['entityid'],
-                    entityname=inputs.get('entityname'),
-                    monitoring=inputs.get('monitoring'),
-                    rockageid=inputs.get('rockageid'),
-                    entrancedistance=inputs.get('entrancedistance'),
-                    entrancedistanceunits=inputs.get('entrancedistanceunits'),
-                    speleothemtypeid=inputs.get('speleothemtypeid'))
+        Speleothem(siteid=1,  # Temporary siteid
+                   entityname=inputs.get('entityname'),
+                   monitoring=inputs.get('monitoring'),
+                   rockageid=inputs.get('rockageid'),
+                   entrancedistance=inputs.get('entrancedistance'),
+                   entrancedistanceunits=inputs.get('entrancedistanceunits'),
+                   speleothemtypeid=inputs.get('speleothemtypeid'))
     except Exception as e:
         response.valid.append(False)
-        response.message.append(f"✗ Speleothem Entity cannot be created: " 
-                                f"{e}")
-    response.message = list(set(response.message))
+        response.message.append(f"✗ Speleothem Entity cannot be created: {e}")
     if response.validAll:
-        response.message.append("✔ Speleothem can be created")
+        response.message.append("✔ Speleothem can be created.")
     return response
