@@ -43,8 +43,15 @@ class AnalysisUnit:
         self.analysisunitname = analysisunitname
         self.depth = depth
         self.thickness = thickness
+        if not isinstance(faciesid, int) and faciesid is not None:
+            raise ValueError("faciesid must be an integer or None")
         self.faciesid = faciesid 
-        self.mixed = mixed
+        if not isinstance(mixed, bool) and mixed is not None:
+            raise ValueError("mixed must be a boolean or None")
+        if mixed is None:
+            self.mixed = False
+        else:
+            self.mixed = mixed
         self.igsn = igsn
         self.notes = notes
 
