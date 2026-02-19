@@ -1,5 +1,6 @@
 CHRONOLOGY_PARAMS = ['ageboundolder', 'ageboundyounger', 'agemodel', 'chronologyname',
-                     'agetype', 'contactid', 'dateprepared', 'notes', 'age']
+                     'agetypeid', 'contactid', 'dateprepared', 'notes']
+from .neotomaHelpers.utils import validate_int_values,validate_date_values
 
 class Chronology:
     """A chronology (age model) for a collection unit in Neotoma.
@@ -19,6 +20,7 @@ class Chronology:
         agemodel (str | None): Age model description.
         ageboundyounger (float | None): Younger age bound.
         ageboundolder (float | None): Older age bound.
+        isdefault (bool | None): Whether this is the default chronology for the collection unit.
         notes (str | None): Additional notes.
 
     Examples:
@@ -32,32 +34,53 @@ class Chronology:
         chronologyid=None,
         collectionunitid=None,
         agetypeid=None,
-        contactid=None,
+        contactid=None, 
         chronologyname=None,
         dateprepared=None,
         agemodel=None,
         ageboundyounger=None,
         ageboundolder=None,
+        isdefault = None,
         notes=None):
-        self.chronologyid = chronologyid
-        self.collectionunitid = collectionunitid
-        self.agetypeid = agetypeid
-        if isinstance(contactid, list):
-            self.contactid = contactid[0]
-        else:
-            self.contactid = contactid
+        self.chronologyid = validate_int_values(chronologyid, "chronologyid")
+        if collectionunitid is None:
+            raise ValueError("Collection Unit ID is required for Chronology.")
+        self.collectionunitid = validate_int_values(collectionunitid, "collectionunitid")
+        self.dateprepared = validate_date_values(dateprepared, "dateprepared")
+        self.agetypeid = validate_int_values(agetypeid, "agetypeid")
         self.chronologyname = chronologyname
-        self.dateprepared = dateprepared
+        self.notes = notes
         if isinstance(agemodel, list):
+            assert len(agemodel) == 1, "agemodel should only have one element"
             self.agemodel = agemodel[0]
         else:
             self.agemodel = agemodel
-        self.ageboundyounger = ageboundyounger
-        self.ageboundolder = ageboundolder
-        if isinstance(notes, list):
-            self.notes = notes[0]
+        for attr, param in [("ageboundyounger", ageboundyounger), 
+                            ("ageboundolder", ageboundolder)]:
+            if isinstance(param, list):
+                valid = [x for x in param if x is not None]
+                if valid:
+                    value = int(min(valid)) if attr == 'ageboundyounger' else int(max(valid))
+                else:
+                    value = None
+            else:
+                value = int(param) if param is not None else None
+            setattr(self, attr, value)
+        if (self.ageboundyounger is not None and self.ageboundolder is not None):
+            assert self.ageboundyounger <= self.ageboundolder, (f"Younger age bound "
+                                                              f"cannot be greater than older age bound.")
+        if isinstance(contactid, list):
+            assert len(list(set(contactid))) == 1, "Contact ID list should only contain one unique value."
+            contactid = contactid[0]
+        self.contactid = validate_int_values(contactid, "contactid")
+        if isinstance(isdefault, int):
+            if isdefault not in [0, 1]:
+                raise ValueError("isdefault should be 0 or 1 if provided as an integer.")
+            self.isdefault = bool(isdefault)
+        elif isdefault is None:
+            self.isdefault = False
         else:
-            self.notes = notes
+            self.isdefault = bool(isdefault)
 
     def insert_to_db(self, cur):
         """Insert the chronology record into the Neotoma database.
@@ -88,9 +111,7 @@ class Chronology:
             "ageboundyounger": self.ageboundyounger,
             "ageboundolder": self.ageboundolder,
         }
-        if (self.ageboundyounger is not None and self.ageboundolder is not None):
-            if self.ageboundyounger > self.ageboundolder:
-                raise ValueError("Younger age bound cannot be greater than older age bound.")
+        
         cur.execute(chron_query, inputs)
         self.chronologyid = cur.fetchone()[0]
         return self.chronologyid
