@@ -1,7 +1,7 @@
-CCONTROL_PARAMS = ['chronologyid', 'chroncontroltypeid',
-                        'depth', 'thickness', 'age',
-                        'agelimityounger', 'agelimitolder',
-                        'notes', 'analysisunitid', 'agetype']
+CCONTROL_PARAMS = ['chronologyid', 'chroncontroltypeid', 'analysisunitid',
+                   'depth', 'thickness', 'agetypeid','notes',
+                   'age', 'agelimityounger', 'agelimitolder']
+from .neotomaHelpers.utils import validate_int_values
 
 class ChronControl:
     """A chronological control point in Neotoma.
@@ -41,17 +41,20 @@ class ChronControl:
                  notes=None,
                  analysisunitid=None,
                  agetypeid=None):
+        for param in [chroncontroltypeid, chronologyid, analysisunitid, agetypeid, depth, age]:
+            if param is None:
+                raise ValueError(f"{param} is required and cannot be None.")
         self.chroncontrolid = chroncontrolid
-        self.chronologyid = chronologyid
-        self.chroncontroltypeid = chroncontroltypeid
+        self.chronologyid = validate_int_values(chronologyid, "chronologyid")
+        self.chroncontroltypeid = validate_int_values(chroncontroltypeid, "chroncontroltypeid")
+        self.analysisunitid = validate_int_values(analysisunitid, "analysisunitid")
+        self.agetypeid = validate_int_values(agetypeid, "agetypeid")
         self.depth = depth
         self.thickness = thickness
         self.age = age
         self.agelimityounger = agelimityounger
         self.agelimitolder = agelimitolder
         self.notes = notes
-        self.analysisunitid = analysisunitid
-        self.agetypeid = agetypeid
 
     def insert_to_db(self, cur):
         """Insert the chronological control point into the database.

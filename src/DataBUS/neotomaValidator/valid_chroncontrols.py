@@ -14,100 +14,69 @@ def valid_chroncontrols(yml_dict, csv_file, cur):
         yml_dict (dict): Dictionary containing YAML configuration data.
         csv_file (list): List of dictionaries representing CSV file data.
         cur (cursor): Database cursor for executing SQL queries.
-    
+
     Returns:
         Response: Response object containing validation messages, validity list, and overall status.
-    
+
     Examples:
-        >>> valid_chroncontrols(config_dict, csv_data, cursor, validator)
+        >>> valid_chroncontrols(config_dict, csv_data, cursor)
         Response(valid=[True], message=[...], validAll=True)
     """
     response = Response()
     params = CCONTROL_PARAMS
-    
     try:
         inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.chroncontrols")
+        if all(value is None for value in inputs.values()):
+            response.valid.append(True)
+            response.message.append("✔ No chronology control parameters provided, skipping validation.")
+            return response
         indices = [i for i, value in enumerate(inputs['age']) if value is not None]
-        inputs = {k: [v for i, v in enumerate(inputs[k]) if i in indices] if isinstance(inputs[k], list) else value for k, value in inputs.items()}
+        inputs = {k: [v for i, v in enumerate(inputs[k]) if i in indices]
+                  if isinstance(inputs[k], list) else inputs[k]
+                  for k in inputs}
     except Exception as e:
-        response.valid.append(False) 
-        response.message.append("✗ Chronology parameters cannot be properly extracted. Verify the CSV file.")
-        response.message.append(e)
+        response.valid.append(False)
+        response.message.append("✗ Chronology parameters cannot be properly extracted. "
+                                "Verify the CSV file.")
+        response.message.append(str(e))
         return response
-    
-    agetype_q = """SELECT agetypeid FROM ndb.agetypes
-                WHERE LOWER(agetype) = LOWER(%(agetype)s)"""
+
+    agetype_query = """SELECT agetypeid FROM ndb.agetypes
+                   WHERE LOWER(agetype) = LOWER(%(agetype)s)"""
     chroncontrol_q = """SELECT chroncontroltypeid FROM ndb.chroncontroltypes
-                WHERE LOWER(chroncontroltype) = LOWER(%(chroncontroltype)s)"""
-    try:
-        if inputs.get("agetype"):
-            cur.execute(agetype_q , {"agetype": inputs["agetype"]})
-            agetype = cur.fetchone()
-            if agetype:
-                inputs["agetypeid"] = agetype[0]
-                response.message.append("✔ The provided age type is correct.")
+                        WHERE LOWER(chroncontroltype) = LOWER(%(chroncontroltype)s)"""
+    
+    par = {'agetypeid': [agetype_query, 'agetype'],
+           'chroncontroltypeid': [chroncontrol_q, 'chroncontroltype']}
+    
+    chronos = inputs.pop('chronologyid') 
+    chronos = [1] # placeholder for chronologyid
+    inputs['analysisunitid'] = [i+1 for i in range(len(inputs['age']))] # placeholder for AU
+    
+    for chron in chronos:
+        for row in zip(*inputs.values()):
+            control = dict(zip(inputs.keys(), row))
+            control['chronologyid'] = chron
+            for param, (query, key) in par.items():
+                if control.get(param):
+                    if isinstance(control[param], str):
+                        cur.execute(query, {key: control[param].lower().strip()})
+                        result = cur.fetchone()
+                        if result:
+                            control[param] = result[0]
+                            if f"✔ The provided {param} is correct: {result[0]}" not in response.message:
+                                response.message.append(f"✔ The provided {param} is correct: {result[0]}")
+                            response.valid.append(True)
+                        else:
+                            if f"✗ The provided {param} with value {control[param]} does not exist in Neotoma DB." not in response.message:
+                                response.message.append(f"✗ The provided {param} with value {control[param]} does not exist in Neotoma DB.")
+                            response.valid.append(False)
+            try:
+                ChronControl(**control)
                 response.valid.append(True)
-            else:
-                response.message.append("✗ The provided age type is incorrect..")
+            except Exception as e:
+                response.message.append(f"✗  Could not create chron control with provided parameters: {e}")
                 response.valid.append(False)
-                inputs["agetypeid"] = None
-            del inputs["agetype"]
-        else:
-            response.message.append("? No age type provided.")
-            response.valid.append(True)
-            inputs["agetypeid"] = None
-    except KeyError as e:
-        inputs["agetype"] = None
-        response.message.append("? No age type provided.")
-        response.valid.append(True)
-        inputs["agetypeid"] = None
-    try:
-        if len(inputs["depth"]) == len(inputs["age"]) == len(inputs["thickness"]):
-            response.message.append(f"✔ The number of depths (analysis units), ages, and thicknesses are the same.")
-            response.valid.append(True)
-        else:
-            response.message.append(f"✗ The number of depths (analysis units), ages, "
-                                    f"and thicknesses is not the same. Please check.")
-            response.valid.append(False)
-    except Exception as e:
-        response.message.append("? Depth, Age, or Thickness are not given.")
-
-    for k in inputs:
-        if not inputs[k]:
-            response.message.append(f"? {k} has no values.")
-        else:
-            response.message.append(f"✔ {k} looks valid.")
-            response.valid.append(True)
-
-    if inputs.get('chroncontroltypeid'):
-        elements = set(inputs['chroncontroltypeid'])
-        chroncontroltypes = {}
-        for e in elements:
-            cur.execute(chroncontrol_q, {"chroncontroltype": e})
-            chroncontrol = cur.fetchone()
-            if chroncontrol:
-                chroncontroltypes[e] = chroncontrol[0]
-            else:
-                response.message.append(f"✗  Chron control type {e} not found in database")
-                response.valid.append(False)
-                chroncontroltypes[e] = None
-
-    if inputs.get('chroncontroltypeid') is not None:
-        inputs['chroncontroltypeid'] = [chroncontroltypes.get(item, item) for item in inputs.get('chroncontroltypeid',[])]
-
-    iterable_params = {k: v for k, v in inputs.items() if isinstance(v, list)}
-    static_params = {k: v for k, v in inputs.items() if not isinstance(v, list)}
-    for values in zip(*iterable_params.values()):
-        try:
-            kwargs = dict(zip(iterable_params.keys(), values))
-            kwargs.update(static_params) 
-            ChronControl(**kwargs)
-            response.valid.append(True)
-        except Exception as e:
-            response.message.append(f"✗  Could not create chron control {e}")
-            response.valid.append(False)
-
     if response.validAll:
-        response.message.append(f"✔  Chron control can be created")
-    response.message = list(set(response.message))
+        response.message.append("✔  Chron controls can be created.")
     return response
