@@ -68,7 +68,8 @@ def _resolve_faciesid(cur, faciesid, response):
     cur.execute(query, {'faciesid': faciesid.lower().strip()})
     result = cur.fetchone()
     if result is not None:
-        response.message.append(f"✔ Facies ID {result[0]} found in database.")
+        if not any(f"✔ Facies ID {result[0]} found in database." in msg for msg in response.message):
+            response.message.append(f"✔ Facies ID {result[0]} found in database.")
         return result[0]
     # if the message exists, dont add it again
     if not any(f"✗ Facies ID {faciesid} not found in database." in msg for msg in response.message):
