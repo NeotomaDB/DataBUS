@@ -17,11 +17,8 @@ def valid_dataset(cur, yml_dict, csv_file):
     Returns:
         Response: Response object containing validation messages, validity list, and overall status.
 
-    Raises:
-        Exception: If there are issues retrieving values from YAML dict or creating the dataset.
-    
     Examples:
-        >>> valid_dataset(cursor, config_dict, "data.csv", name="MyDataset")
+        >>> valid_dataset(cursor, config_dict, "data.csv")
         Response(valid=[True], message=[...], validAll=True)
     """
     response = Response()
@@ -32,37 +29,46 @@ def valid_dataset(cur, yml_dict, csv_file):
         if val:
             try:
                 inputs[param[0]] = val[0]['value']
-                response.message.append(f"")
             except Exception as e:
                 response.valid.append(False)
                 response.message.append(f"✗ {param[0]} value is missing in template: {e}")
         else:
             inputs[param[0]] = None
-
-    query = """SELECT datasettypeid 
-            FROM ndb.datasettypes 
-            WHERE LOWER(datasettype) = %(ds_type)s"""
-    if isinstance(inputs.get('datasettype'), str) and not(inputs.get('datasettypeid')):
-        cur.execute(query, {"ds_type": f"{inputs.get('datasettype').lower()}"})
+    query = """SELECT datasettypeid
+               FROM ndb.datasettypes
+               WHERE LOWER(datasettype) = %(ds_type)s"""
+    if isinstance(inputs.get('datasettypeid'), str):
+        cur.execute(query, {"ds_type": inputs.get("datasettypeid").lower().strip()})
         datasettypeid = cur.fetchone()
-        del inputs['datasettype']
+        if datasettypeid:
+            inputs["datasettypeid"] = datasettypeid[0]
+            response.valid.append(True)
+        else:
+            inputs["datasettypeid"] = None
+            response.message.append("✗ Dataset type is not known to Neotoma and needs to be created first.")
+            response.valid.append(False)
     else:
-        datasettypeid = None
-
-    if datasettypeid:
-        inputs["datasettypeid"] = datasettypeid[0]
-        response.valid.append(True)
-    else:
-        inputs["datasettypeid"] = None
-        response.message.append(f"✗ Dataset type is not known to Neotoma and needs to be created first")
-        response.valid.append(False)
-    inputs["notes"] = nh.pull_params(["notes"], yml_dict, csv_file, "ndb.datasets").get('notes', "")
+        datasettypeid = inputs.get('datasettypeid')
+        ch = """SELECT datasettypeid, datasettype
+               FROM ndb.datasettypes
+               WHERE datasettypeid = %(ds_typeid)s"""
+        cur.execute(ch, {"ds_typeid": datasettypeid})
+        datasettypeid = cur.fetchone()
+        if datasettypeid:
+            inputs["datasettypeid"] = datasettypeid[0]
+            response.message.append(f"✔ Dataset type ID {datasettypeid[0]} corresponds to dataset type '{datasettypeid[1]}'.")
+            response.valid.append(True)
+        else:
+            inputs["datasettypeid"] = None
+            response.message.append("✗ Dataset type is not known to Neotoma and needs to be created first.")
+            response.valid.append(False)
+    inputs["notes"] = nh.pull_params(["notes"], yml_dict, csv_file, "ndb.datasets").get('notes')
+    inputs["collectionunitid"] = 1 #placeholder for validation
     try:
         Dataset(**inputs)
-        response.message.append(f"✔ Dataset can be created.")
+        response.message.append("✔ Dataset can be created.")
         response.valid.append(True)
     except Exception as e:
         response.message.append(f"✗ Dataset cannot be created: {e}")
         response.valid.append(False)
-    response.message = list(set(response.message))
     return response

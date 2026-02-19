@@ -1,6 +1,7 @@
+from .neotomaHelpers.utils import validate_int_values,validate_date_values
 DATASET_PARAMS = [("datasetname", "ndb.datasets.datasetname"),
-            ("datasettypeid", "ndb.datasettypes.datasettypeid"),
-            ("datasettype", "ndb.datasettypes.datasettype")]
+                  ("datasettypeid", "ndb.datasettypes.datasettypeid")]
+
 class Dataset:
     """A dataset in Neotoma.
 
@@ -33,12 +34,14 @@ class Dataset:
         collectionunitid=None,
         datasetname=None,
         notes=None):
-        self.datasetid = datasetid
-        self.collectionunitid = collectionunitid
-        if isinstance(datasettypeid, int):
-            self.datasettypeid = datasettypeid
-        else:
-            raise ValueError("Dataset type ID must be integer")
+        #if collunit is none or datasettypeid is none, fail creation
+        if datasettypeid is None:
+            raise ValueError("Datasettype ID is required to create a Dataset.")
+        if collectionunitid is None:
+            raise ValueError("Collection Unit ID is required to create a Dataset.")
+        self.datasetid = validate_int_values(datasetid, "datasetid")
+        self.collectionunitid = validate_int_values(collectionunitid, "collectionunitid")
+        self.datasettypeid = validate_int_values(datasettypeid, "datasettypeid")
         self.datasetname = datasetname
         self.notes = notes
 
