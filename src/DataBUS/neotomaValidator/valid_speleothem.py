@@ -27,9 +27,6 @@ def valid_speleothem(cur, yml_dict, csv_file):
     driptype_q = """SELECT speleothemdriptypeid
                     FROM ndb.speleothemdriptypes
                     WHERE LOWER(speleothemdriptype) = %(element)s;"""
-    entity_q = """SELECT rocktypeid
-                  FROM ndb.rocktypes
-                  WHERE LOWER(rocktype) = %(element)s;"""
     entitystatus_q = """SELECT entitystatusid
                         FROM ndb.speleothementitystatuses
                         WHERE LOWER(entitystatus) = %(element)s;"""
@@ -57,7 +54,7 @@ def valid_speleothem(cur, yml_dict, csv_file):
     par = {'speleothemdriptypeid': [driptype_q, 'speleothemdriptypeid'],
            'entitystatusid': [entitystatus_q, 'entitystatusid'],
            'speleothemtypeid': [speleothemtypes_q, 'speleothemtypeid'],
-           'speleothemgeologyid': [entity_q, 'speleothemgeologyid'],
+           'speleothemgeologyid': [rocktype_q, 'speleothemgeologyid'], # also uses rocktype_q
            'covertypeid': [covertype_q, 'entitycoverid'],
            'landusecovertypeid': [landusecovertype_q, 'landusecovertypeid'],
            'vegetationcovertypeid': [vegetationcovertype_q, 'vegetationcovertypeid'],
