@@ -36,11 +36,9 @@ def valid_chroncontrols(yml_dict, csv_file, cur):
                   for k in inputs}
     except Exception as e:
         response.valid.append(False)
-        response.message.append("✗ Chronology parameters cannot be properly extracted. "
-                                "Verify the CSV file.")
-        response.message.append(str(e))
+        response.message.append(f"✗ Chronology parameters cannot be properly extracted. "
+                                "Verify the CSV file.: {e}")
         return response
-
     agetype_query = """SELECT agetypeid FROM ndb.agetypes
                    WHERE LOWER(agetype) = LOWER(%(agetype)s)"""
     chroncontrol_q = """SELECT chroncontroltypeid FROM ndb.chroncontroltypes
@@ -48,11 +46,9 @@ def valid_chroncontrols(yml_dict, csv_file, cur):
     
     par = {'agetypeid': [agetype_query, 'agetype'],
            'chroncontroltypeid': [chroncontrol_q, 'chroncontroltype']}
-    
     chronos = inputs.pop('chronologyid') 
     chronos = [1] # placeholder for chronologyid
     inputs['analysisunitid'] = [i+1 for i in range(len(inputs['age']))] # placeholder for AU
-    
     for chron in chronos:
         for row in zip(*inputs.values()):
             control = dict(zip(inputs.keys(), row))
