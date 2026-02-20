@@ -14,7 +14,7 @@ def valid_dataset_database(cur, yml_dict):
 
     Returns:
         Response: Response object with validation results, messages, and database ID.
-    
+
     Examples:
         >>> valid_dataset_database(cursor, config_dict)
         Response(valid=[True], message=[...], validAll=True, id=1)
@@ -23,19 +23,22 @@ def valid_dataset_database(cur, yml_dict):
     db_name = nh.retrieve_dict(yml_dict, "ndb.datasetdatabases.databasename")
     inputs = {"databasename": db_name[0]["value"]}
 
-    query = """SELECT databaseid from ndb.constituentdatabases
-                WHERE LOWER(databasename) LIKE %(databasename)s"""
-    cur.execute(query, {"databasename": f"%{inputs['databasename'].lower()}%"})
-    inputs["databaseid"] = cur.fetchone()
-    if inputs["databaseid"]:
-        inputs["databaseid"] = inputs["databaseid"][0]
+    db_query = """SELECT databaseid FROM ndb.constituentdatabases
+               WHERE LOWER(databasename) LIKE %(databasename)s"""
+    if isinstance(inputs["databasename"], str):
+        cur.execute(db_query, {"databasename": inputs["databasename"].lower().strip()})
+        inputs["databaseid"] = cur.fetchone()
+        if inputs["databaseid"]:
+            inputs["databaseid"] = inputs["databaseid"][0]
+        else:
+            response.valid.append(False)
+            response.message.append(f"✗ Database '{inputs['databasename']}' not found in Neotoma.")
+            return response
     try:
-        DatasetDatabase(databaseid=int(inputs["databaseid"]))
+        DatasetDatabase(databaseid = inputs["databaseid"], datasetid = 1) # placeholder for datasetid
         response.valid.append(True)
-        response.message.append(f"✔ Database ID {inputs['databaseid']} " f"created.")
+        response.message.append(f"✔ Dataset linked to Database ID {inputs['databaseid']} created.")
     except Exception as e:
         response.message.append(f"✗ Cannot create Database object: {e}")
         response.valid.append(False)
-    response.id.append(inputs["databaseid"])
-    response.message = list(set(response.message)) 
     return response

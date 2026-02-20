@@ -1,3 +1,4 @@
+from .neotomaHelpers.utils import validate_int_values
 class DatasetDatabase:
     """A link between a dataset and a constituent database in Neotoma.
 
@@ -16,17 +17,11 @@ class DatasetDatabase:
         >>> ds_db.databaseid
         1
     """
-
     def __init__(self, databaseid, datasetid=None):
-        if isinstance(datasetid, int) or datasetid is None:
-            self.datasetid = datasetid
-        else:
-            raise ValueError("Dataset ID must be an integer.")
-        self.datasetid = datasetid
-        if isinstance(databaseid, int) or databaseid is None:
-            self.databaseid = databaseid
-        else:
-            raise ValueError("DatabaseID must be an integer.")
+        if databaseid is None or datasetid is None:
+            raise ValueError("Both databaseid and datasetid are required to create a DatasetDatabase.")
+        self.datasetid = validate_int_values(datasetid, "datasetid")
+        self.databaseid = validate_int_values(databaseid, "databaseid")
 
     def insert_to_db(self, cur):
         """Insert the dataset-database relationship into the database.
