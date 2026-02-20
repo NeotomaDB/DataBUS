@@ -1,32 +1,7 @@
 import DataBUS.neotomaHelpers as nh
 from DataBUS import Hiatus, Response
 from itertools import groupby
-
-def find_clusters(indices):
-    """Group consecutive indices into clusters.
-
-    Takes a list of indices and groups consecutive integers together.
-    Used to identify contiguous analysis units for hiatus definition.
-
-    Examples:
-        >>> find_clusters([1, 2, 3, 5, 6])
-        [[1, 2, 3], [5, 6]]
-
-    Args:
-        indices (list): List of integer indices.
-
-    Returns:
-        list: List of lists containing grouped consecutive indices.
-    """
-    if not indices:
-        return []
-    indices = sorted(indices)
-    clusters = [
-        [x[1] for x in group]
-        for k, group in groupby(enumerate(indices), lambda x: x[1] - x[0])
-    ]
-    return clusters
-
+ 
 def valid_hiatus(cur, yml_dict, csv_file):
     """Validates hiatus data for chronological models.
 
@@ -41,41 +16,52 @@ def valid_hiatus(cur, yml_dict, csv_file):
 
     Returns:
         Response: Response object containing validation messages and overall validity status.
-    
+
     Examples:
         >>> valid_hiatus(cursor, config_dict, "hiatus_data.csv")
         Response(valid=[True], message=[...], validAll=True)
-
     """
     response = Response()
     params = ['hiatus', 'notes']
     inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.hiatuses")
 
-    if inputs['hiatus'] is not None:
+    if inputs.get('hiatus'):
         indices = [i for i, value in enumerate(inputs['hiatus']) if value is not None]
     else:
-        indices = []
-    clusters = find_clusters(indices)
-
-    inputs = {k: [v for i, v in enumerate(inputs[k]) if i in indices] if isinstance(inputs[k], list) else value for k, value in inputs.items()}
-    inputs['indices'] = indices # Only as placeholder for analysis unit IDs
+        response.valid.append(True)
+        response.message.append("✔ No hiatuses found in the data.")
+        return response
     
-    # For insert I need to check the following as well:
-    # ['hiatuslength', 'hiatusuncertainty'] for "ndb.hiatuschronology"
+    clusters = _find_clusters(indices)
+    inputs = {k: [v for i, v in enumerate(inputs[k]) if i in indices]
+              if isinstance(inputs[k], list) else inputs[k]
+              for k in inputs}
+    inputs['indices'] = indices  # Only as placeholder for analysis unit IDs
 
     for values in clusters:
         try:
-            h = Hiatus(analysisunitstart=values[0],
-                       analysisunitend=values[-1],
-                       notes=inputs['notes'])
+            Hiatus(analysisunitstart=values[0],
+                   analysisunitend=values[-1],
+                   notes=inputs.get('notes'))
             response.valid.append(True)
-            response.message.append("✔ Hiatus can be created")
+            if f"✔ Hiatus can be created." not in response.message:
+                response.message.append("✔ Hiatus can be created.")
         except Exception as e:
             response.valid.append(False)
-            response.message.append(f"✗ Hiatus cannot be created: {e}")
-
-    if not clusters:
-        response.valid.append(True)
-        response.message.append("✔ No hiatuses found in the data")
-    response.message = list(set(response.message))
+            if f"✗ Hiatus cannot be created: {e}" not in response.message:
+             response.message.append(f"✗ Hiatus cannot be created: {e}")
     return response
+
+def _find_clusters(indices):
+    """Group consecutive indices into clusters.
+    Takes a list of indices and groups consecutive integers together.
+    Used to identify contiguous analysis units for hiatus definition.
+    """
+    if not indices:
+        return []
+    indices = sorted(indices)
+    clusters = [
+        [x[1] for x in group]
+        for k, group in groupby(enumerate(indices), lambda x: x[1] - x[0])
+    ]
+    return clusters

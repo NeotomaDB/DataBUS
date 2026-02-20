@@ -1,4 +1,5 @@
 import importlib.resources
+from .neotomaHelpers.utils import validate_int_values,validate_date_values
 with importlib.resources.open_text("DataBUS.sqlHelpers", "insert_hiatus.sql") as sql_file:
     insert_hiatus = sql_file.read()
 
@@ -34,24 +35,11 @@ class Hiatus:
         analysisunitstart=None,
         analysisunitend=None,
         notes=None):
-        if not (isinstance(hiatusid, int) or hiatusid is None or hiatusid == "NA"):
-            raise TypeError("✗ Hiatus ID must be an integer or None.")
-        if hiatusid == ["NA"] or hiatusid == "NA":
-            hiatusid = None
-        self.hiatusid = hiatusid
-
-        if not (isinstance(analysisunitstart, (int))):
-            raise TypeError("analysisunitstart must be a number.")
-        self.analysisunitstart = analysisunitstart
-
-        if not (isinstance(analysisunitend, (int))):
-            raise TypeError("analysisunitstart must be a number.")
-        self.analysisunitend = analysisunitend
-
-        if isinstance(notes, list):
-            notes = notes[0]
-        if not (isinstance(notes, str) or notes is None):
-            raise TypeError("Notes must be a str or None.")
+        if not analysisunitstart or not analysisunitend:
+            raise ValueError("Both analysisunitstart and analysisunitend are required.")
+        self.hiatusid = validate_int_values(hiatusid, "hiatusid")
+        self.analysisunitstart = validate_int_values(analysisunitstart, "analysisunitstart")
+        self.analysisunitend = validate_int_values(analysisunitend, "analysisunitend")
         self.notes = notes
 
     def __str__(self):
