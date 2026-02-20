@@ -23,9 +23,8 @@ def valid_collunit(cur, yml_dict, csv_file):
         Response(valid=[True], message=[...])
     """
     response = Response()
-    params = CU_PARAMS
     try:
-        inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.collectionunits")
+        inputs = nh.pull_params(CU_PARAMS, yml_dict, csv_file, "ndb.collectionunits")
         if 'geog.latitude' in inputs and 'geog.longitude' in inputs:
             lat = inputs.pop('geog.latitude')
             lon = inputs.pop('geog.longitude')
@@ -124,7 +123,7 @@ def valid_collunit(cur, yml_dict, csv_file):
     response.message.append("? Fields at the CU level differ. Verify that the information is correct.")
     for i in diff:
         response.message.append(f"{i}")
-    required = nh.pull_required(params, yml_dict, table="ndb.collectionunits")
+    required = nh.pull_required(CU_PARAMS, yml_dict, table="ndb.collectionunits")
     required_k = [key for key, value in required.items() if value]
     csv_nonempty_fields = [key for key, value in inputs.items() if value not in (None, 'NA')]
     found_keywords = set(

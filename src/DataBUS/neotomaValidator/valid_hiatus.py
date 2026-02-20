@@ -1,5 +1,6 @@
 import DataBUS.neotomaHelpers as nh
 from DataBUS import Hiatus, Response
+from DataBUS.Hiatus import HIATUS_PARAMS
 from itertools import groupby
  
 def valid_hiatus(cur, yml_dict, csv_file):
@@ -22,8 +23,7 @@ def valid_hiatus(cur, yml_dict, csv_file):
         Response(valid=[True], message=[...], validAll=True)
     """
     response = Response()
-    params = ['hiatus', 'notes']
-    inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.hiatuses")
+    inputs = nh.pull_params(HIATUS_PARAMS, yml_dict, csv_file, "ndb.hiatuses")
 
     if inputs.get('hiatus'):
         indices = [i for i, value in enumerate(inputs['hiatus']) if value is not None]

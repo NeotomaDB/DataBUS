@@ -16,28 +16,32 @@ def valid_datauncertainty(cur, yml_dict, csv_file, wide=False):
 
     Returns:
         Response: Response object containing validation messages, validity list, and overall status.
-    
+
     Examples:
         >>> valid_datauncertainty(cursor, config_dict, "uncertainty_data.csv")
         Response(valid=[True], message=[...], validAll=True)
-    """ 
-    inputs = nh.pull_params(["uncertaintyvalue"], yml_dict, csv_file, "ndb.datauncertainties")
+    """
     response = Response()
+    inputs = nh.pull_params(["uncertaintyvalue"], yml_dict, csv_file, "ndb.datauncertainties")
+
     if 'value' in inputs:
         if not inputs['value']:
             response.message.append("? No Values to validate.")
             response.valid.append(False)
             return response
+
     basis_query = """SELECT uncertaintybasisid FROM ndb.uncertaintybases
-                    WHERE LOWER(uncertaintybasis) = %(element)s;"""
+                     WHERE LOWER(uncertaintybasis) = %(element)s;"""
     units_query = """SELECT variableunitsid FROM ndb.variableunits
                      WHERE LOWER(variableunits) = %(element)s;"""
     par = {'uncertaintybasis': [basis_query, 'uncertaintybasisid'],
            'variableunits': [units_query, 'variableunitsid']}
-    if wide == True:
+
+    if wide:
         taxa = inputs.copy()
     else:
         taxa = {'value': inputs['value']}
+
     for n, key in enumerate(taxa.keys()):
         params = [v for k, v in taxa[key].items() if k not in ['value', 'uncertaintybasis']]
         inputs2 = nh.pull_params(params, yml_dict, csv_file, "ndb.variables", values=True)
@@ -46,14 +50,13 @@ def valid_datauncertainty(cur, yml_dict, csv_file, wide=False):
         inputs2['taxon'] = key
         entries = {}
         counter = 0
-        for k,v in par.items():
-            key_ = f"{key}_{k}"
+        for k, v in par.items():
             if k in inputs2:
                 if isinstance(inputs2[k], list):
-                    cur.execute(v[0], {'element': inputs2[k][i].lower()})
+                    cur.execute(v[0], {'element': inputs2[k][0].lower()})
                     entries[v[1]] = cur.fetchone()
                     if not entries[v[1]]:
-                        counter +=1
+                        counter += 1
                         response.message.append(f"✗  {k} ID for {key} not found. "
                                                 f"Does it exist in Neotoma?")
                         response.valid.append(False)
@@ -64,34 +67,35 @@ def valid_datauncertainty(cur, yml_dict, csv_file, wide=False):
                     cur.execute(v[0], {'element': inputs2[k].lower()})
                     entries[v[1]] = cur.fetchone()
                     if not entries[v[1]]:
-                        counter +=1
+                        counter += 1
                         response.message.append(f"✗  {k} ID for {inputs2[k]} not found. "
                                                 f"Does it exist in Neotoma?")
                         response.valid.append(False)
-                        entries[v[1]] = None 
+                        entries[v[1]] = None
                     else:
                         entries[v[1]] = entries[v[1]][0]
                 else:
-                    inputs[key_] = None
                     entries[v[1]] = None
-                    response.message.append(f"?  {key} {k} ID not given. ")
+                    response.message.append(f"?  {key} {k} ID not given.")
                     response.valid.append(True)
             else:
-                    response.message.append(f"?  {key} {k} ID not given. ")
-                    response.valid.append(True)
-                    entries[v[1]] = counter
+                response.message.append(f"?  {key} {k} ID not given.")
+                response.valid.append(True)
+                entries[v[1]] = counter
+
         for i in taxa[key]['value']:
             try:
-                DataUncertainty(dataid = 3, # Placeholder required for the validation.
-                                uncertaintyvalue= i, 
-                                uncertaintyunitid=entries['variableunitsid'], 
+                DataUncertainty(dataid=3,  # Placeholder required for validation
+                                uncertaintyvalue=i,
+                                uncertaintyunitid=entries['variableunitsid'],
                                 uncertaintybasisid=entries['uncertaintybasisid'],
                                 notes=None)
                 response.valid.append(True)
             except Exception as e:
                 response.valid.append(False)
                 response.message.append(f"✗  Datum Uncertainty cannot be created: {e}")
-    response.message = list(set(response.message))
+
+    
     if response.validAll:
-        response.message.append(f"✔  Datum Uncertainty can be created.")
+        response.message.append("✔  Datum Uncertainty can be created.")
     return response

@@ -9,10 +9,6 @@ def valid_sample(cur, yml_dict, csv_file, validator):
     preparation methods. Creates Sample objects for each analysis unit with validated
     parameters.
 
-    Examples:
-        >>> valid_sample(cursor, config_dict, "sample_data.csv", validator)
-        Response(valid=[True], message=[...], validAll=True, counter=5)
-
     Args:
         cur (psycopg2.cursor): Database cursor for executing SQL queries.
         yml_dict (dict): Dictionary containing YAML configuration data.
@@ -21,39 +17,39 @@ def valid_sample(cur, yml_dict, csv_file, validator):
 
     Returns:
         Response: Response object containing validation messages, validity list, and sample counter.
+
+    Examples:
+        >>> valid_sample(cursor, config_dict, "sample_data.csv", validator)
+        Response(valid=[True], message=[...], validAll=True, counter=5)
     """
     response = Response()
-    params = SAMPLE_PARAMS
-    inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.samples")
-
+    try:
+        inputs = nh.pull_params(SAMPLE_PARAMS, yml_dict, csv_file, "ndb.samples")
+        inputs['analysisunitid'] = list(range(1, validator['analysisunit'].counter+1))
+        inputs['datasetid'] = list(range(1, validator['analysisunit'].counter+1))
+        inputs = {k: v for k, v in inputs.items() if v is not None}
+    except Exception as e:
+        response.message.append(f"✗ Error pulling sample parameters: {e}")
+        response.valid.append(False)
+        return response
     response.counter = 0
-    get_taxonid = """SELECT * FROM ndb.taxa 
+    get_taxonid = """SELECT taxonid FROM ndb.taxa
                      WHERE LOWER(taxonname) %% %(taxonname)s;"""
-    for j in range(0, validator["analysisunit"].counter):
+    for row in zip(*inputs.values()):
         response.counter += 1
-        if 'taxonname' in inputs and isinstance(inputs['taxonname'], str):
-            inputs['taxonname']=inputs['taxonname'].lower()
-            cur.execute(get_taxonid, {"taxonname": inputs["taxonname"]})
-            inputs['taxonid'] = cur.fetchone()
-            if inputs['taxonid']:
-                inputs['taxonid'] = int(inputs['taxonid'][0])
-            else:
-                inputs['taxonid'] = None
-                inputs['taxonid']
-        elif 'taxonid' in inputs and isinstance(inputs['taxonid'], int):
-            inputs['taxonid'] = int(inputs['taxonid'][0])
-        else:
-            inputs['taxonid'] = None
-
+        sample = dict(zip(inputs.keys(), row))
+        if isinstance(sample.get('taxonid'), str):
+            cur.execute(get_taxonid, {"taxonname": sample["taxonid"].lower().strip()})
+            sample['taxonid'] = cur.fetchone()
+            if sample['taxonid']:
+                sample['taxonid'] = sample['taxonid'][0]
         try:
-            if 'taxonname' in inputs:
-                del inputs['taxonname'] 
-            Sample(**inputs)
+            Sample(**sample)
             response.valid.append(True)
+            if f"✔ Sample can be created." not in response.message:
+                response.message.append(f"✔ Sample can be created.")
         except Exception as e:
-            response.message.append(f"✗ Samples data is not correct: {e}")
+            if f"✗  Samples in AU ID {sample.get('analysisunitid')} is not correct: {e}" not in response.message:
+                response.message.append(f"✗  Samples in AU ID {sample.get('analysisunitid')} is not correct: {e}")
             response.valid.append(False)
-    if response.validAll:
-        response.message.append(f"✔ Sample can be created.")
-    response.message = list(set(response.message))
     return response

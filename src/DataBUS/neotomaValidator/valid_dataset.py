@@ -22,9 +22,8 @@ def valid_dataset(cur, yml_dict, csv_file):
         Response(valid=[True], message=[...], validAll=True)
     """
     response = Response()
-    params = DATASET_PARAMS
     inputs = {}
-    for param in params:
+    for param in DATASET_PARAMS:
         val = nh.retrieve_dict(yml_dict, param[1])
         if val:
             try:

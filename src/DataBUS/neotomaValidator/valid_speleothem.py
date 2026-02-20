@@ -22,8 +22,6 @@ def valid_speleothem(cur, yml_dict, csv_file):
         Response(valid=[True], message=[...], validAll=True)
     """
     response = Response()
-    params = SPELEOTHEM_PARAMS
-
     driptype_q = """SELECT speleothemdriptypeid
                     FROM ndb.speleothemdriptypes
                     WHERE LOWER(speleothemdriptype) = %(element)s;"""
@@ -64,12 +62,8 @@ def valid_speleothem(cur, yml_dict, csv_file):
            'entitycoverunitsid': [units_q, 'entitycoverunitsid'],
            'entrancedistanceunitsid': [units_q, 'entrancedistanceunitsid']}
     try:
-        inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.speleothems")
+        inputs = nh.pull_params(SPELEOTHEM_PARAMS, yml_dict, csv_file, "ndb.speleothems")
     except Exception as e:
-        if 'ref_id' in str(e):
-            params.remove('ref_id')
-            inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.speleothems")
-        else:
             response.valid.append(False)
             response.message.append(f"✗ Speleothem elements in the CSV file are not properly defined.\n"
                                     f"Please verify the CSV file. {e}")

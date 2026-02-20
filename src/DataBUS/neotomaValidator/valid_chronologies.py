@@ -22,9 +22,8 @@ def valid_chronologies(cur, yml_dict, csv_file):
         Response(valid=[True], message=[...])
     """
     response = Response()
-    params = CHRONOLOGY_PARAMS
     try:
-        inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.chronologies", values=False)
+        inputs = nh.pull_params(CHRONOLOGY_PARAMS, yml_dict, csv_file, "ndb.chronologies", values=False)
         if "chronologies" in inputs:
             inputs=inputs.get("chronologies")
         else:

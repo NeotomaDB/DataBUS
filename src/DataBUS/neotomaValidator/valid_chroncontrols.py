@@ -23,9 +23,8 @@ def valid_chroncontrols(yml_dict, csv_file, cur):
         Response(valid=[True], message=[...], validAll=True)
     """
     response = Response()
-    params = CCONTROL_PARAMS
     try:
-        inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.chroncontrols")
+        inputs = nh.pull_params(CCONTROL_PARAMS, yml_dict, csv_file, "ndb.chroncontrols")
         if all(value is None for value in inputs.values()):
             response.valid.append(True)
             response.message.append("✔ No chronology control parameters provided, skipping validation.")

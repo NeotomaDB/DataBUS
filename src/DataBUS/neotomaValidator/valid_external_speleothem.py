@@ -17,47 +17,45 @@ def valid_external_speleothem(cur, yml_dict, csv_file):
     Returns:
         Response: Response object with validation results and messages.
 
-    Exceptions:
-        Catches exceptions during parameter extraction and database operations,
-        appending error messages to the response.
-    
     Examples:
         >>> valid_external_speleothem(cursor, config_dict, "ext_speleothem_data.csv")
         Response(valid=[True], message=[...], validAll=True)
     """
-    params = EX_SP_PARAMS
     response = Response()
-
     query = """SELECT extdatabaseid
                FROM ndb.externaldatabases
                WHERE LOWER(extdatabasename) = %(element)s OR
                LOWER(url) ILIKE %(element)s;"""
     try:
-        inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.externalspeleothemdata")
-        if isinstance(inputs.get('extdatabaseid'), str):
-            cur.execute(query, {'element': inputs['extdatabaseid'].lower()})
-            inputs['extdatabaseid'] = cur.fetchone()
-            if not inputs['extdatabaseid']:
-                response.message.append(f"✗  extdatabaseid for {inputs.get('extdatabaseid')} not found. "
-                                        f"Does it exist in Neotoma?")
-                response.valid.append(False)
-            else:
-                inputs['extdatabaseid'] = inputs['extdatabaseid'][0]
-                response.valid.append(True)
-                response.message.append(f"✔  extdatabaseid for {inputs.get('extdatabaseid')} found.")
-        if isinstance(inputs.get('externaldescription'), str):
-            inputs['externaldescription'] = inputs['externaldescription'].strip(', ')
-            response.valid.append(True)
-        try:
-            ExternalSpeleothem(entityid=2, #placeholder
-                               externalid=inputs.get('externalid'),
-                               extdatabaseid=inputs.get('extdatabaseid'),
-                               externaldescription=inputs.get('externaldescription'))
-            response.valid.append(True)
-        except Exception as e:
-            response.message.append(f"✗  Cannot create ExternalSpeleothem object. {e}")
-            response.valid.append(False)
+        inputs = nh.pull_params(EX_SP_PARAMS, yml_dict, csv_file, "ndb.externalspeleothemdata")
     except Exception as e:
         response.message.append(f"✗  Cannot pull external speleothem parameters from CSV file. {e}")
+        response.valid.append(False)
+        return response
+
+    if isinstance(inputs.get('extdatabaseid'), str):
+        cur.execute(query, {'element': inputs['extdatabaseid'].lower()})
+        result = cur.fetchone()
+        if not result:
+            response.message.append(f"✗  extdatabaseid for {inputs.get('extdatabaseid')} not found. "
+                                    f"Does it exist in Neotoma?")
+            response.valid.append(False)
+        else:
+            inputs['extdatabaseid'] = result[0]
+            response.valid.append(True)
+            response.message.append(f"✔  extdatabaseid for {inputs.get('extdatabaseid')} found.")
+
+    if isinstance(inputs.get('externaldescription'), str):
+        inputs['externaldescription'] = inputs['externaldescription'].strip(', ')
+        response.valid.append(True)
+
+    try:
+        ExternalSpeleothem(entityid=2,  # placeholder
+                           externalid=inputs.get('externalid'),
+                           extdatabaseid=inputs.get('extdatabaseid'),
+                           externaldescription=inputs.get('externaldescription'))
+        response.valid.append(True)
+    except Exception as e:
+        response.message.append(f"✗  Cannot create ExternalSpeleothem object. {e}")
         response.valid.append(False)
     return response

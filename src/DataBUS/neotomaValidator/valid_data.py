@@ -1,7 +1,7 @@
 import DataBUS.neotomaHelpers as nh
 from DataBUS import Response, Variable, Datum
 
-def valid_data(cur, yml_dict, csv_file, wide = False):
+def valid_data(cur, yml_dict, csv_file, wide=False):
     """Validates paleontological data values against the Neotoma database.
 
     Validates data values and associated variables (taxon, units, element, context).
@@ -16,59 +16,62 @@ def valid_data(cur, yml_dict, csv_file, wide = False):
 
     Returns:
         Response: Response object containing validation messages, validity list, and overall status.
-    
+
     Examples:
         >>> valid_data(cursor, config_dict, "data.csv", wide=False)
         Response(valid=[True], message=[...], validAll=True)
     """
-    inputs = nh.pull_params(["value"], yml_dict, csv_file, "ndb.data", values = False)
     response = Response()
+    inputs = nh.pull_params(["value"], yml_dict, csv_file, "ndb.data", values=False)
+
     if 'value' in inputs:
         if not inputs['value']:
             response.message.append("? No Values to validate.")
             response.valid.append(False)
             return response
+
     var_query = """SELECT variableelementid FROM ndb.variableelements
-                    WHERE LOWER(variableelement) = %(element)s;"""
-    taxon_query = """SELECT * FROM ndb.taxa 
+                   WHERE LOWER(variableelement) = %(element)s;"""
+    taxon_query = """SELECT * FROM ndb.taxa
                      WHERE LOWER(taxonname) = %(element)s;"""
-    units_query = """SELECT variableunitsid FROM ndb.variableunits 
+    units_query = """SELECT variableunitsid FROM ndb.variableunits
                      WHERE LOWER(variableunits) = %(element)s;"""
     context_query = """SELECT variablecontextid FROM ndb.variablecontexts
                        WHERE LOWER(variablecontext) = %(element)s;"""
 
-    # Create a mapping class or named tuple for query/column mappings
     par = {'taxon': [taxon_query, 'taxonid'],
            'variableelement': [var_query, 'variableelementid'],
            'variableunits': [units_query, 'variableunitsid'],
            'variablecontext': [context_query, 'variablecontextid']}
-    if wide == True:
+
+    if wide:
         taxa = inputs.copy()
     else:
         taxa_in = nh.pull_params(['taxon', 'variableunits',
-                                  'variableelement', 'variablecontext'], 
-                                  yml_dict, csv_file, "ndb.variables", 
-                                  values=wide)
+                                  'variableelement', 'variablecontext'],
+                                 yml_dict, csv_file, "ndb.variables",
+                                 values=wide)
         values = inputs['value']
-        taxa_d = taxa_in.get('taxon', None)    
+        taxa_d = taxa_in.get('taxon', None)
         variables = {"variableunits": taxa_in.get('variableunits', None),
                      "variableelement": taxa_in.get('variableelement', None),
                      "variablecontext": taxa_in.get('variablecontext', None)}
-        taxa = {}    
+        taxa = {}
         for i, (taxon, value) in enumerate(zip(taxa_d, values)):
             if taxon not in taxa:
                 taxa[taxon] = {'value': [],
                                'variablecontext': [],
-                               'variableelement': [], 
+                               'variableelement': [],
                                'variableunits': []}
             taxa[taxon]['value'].append(int(value))
             for n, p in variables.items():
                 if isinstance(p, list):
-                    taxa[taxon][f'{n}'].append(p[i])
+                    taxa[taxon][n].append(p[i])
                 else:
-                    taxa[taxon][f'{n}'].append(p)
+                    taxa[taxon][n].append(p)
+
     for key in taxa.keys():
-        if wide == True:
+        if wide:
             params = [v for k, v in taxa[key].items() if k != 'value']
             inputs2 = nh.pull_params(params, yml_dict, csv_file, "ndb.variables", values=wide)
             inputs2['taxon'] = key
@@ -77,7 +80,7 @@ def valid_data(cur, yml_dict, csv_file, wide = False):
             inputs2['taxon'] = key
         entries = {}
         counter = 0
-        for k,v in par.items():
+        for k, v in par.items():
             if k in inputs2:
                 if isinstance(inputs2[k], list):
                     if inputs2[k][0]:
@@ -85,14 +88,14 @@ def valid_data(cur, yml_dict, csv_file, wide = False):
                     cur.execute(v[0], {'element': inputs2[k][0]})
                     entries[v[1]] = cur.fetchone()
                     if not entries[v[1]]:
-                        counter +=1
+                        counter += 1
                         if v[1] == 'taxonid':
-                           response.valid.append(False)
-                           response.message.append(f"✗  {k} ID for {inputs2[k][0]} not found. "
-                                                f"Does it exist in Neotoma?")
+                            response.valid.append(False)
+                            response.message.append(f"✗  {k} ID for {inputs2[k][0]} not found. "
+                                                    f"Does it exist in Neotoma?")
                         else:
-                           response.message.append(f"?  {k} not found. "
-                                                   f"Does it exist in Neotoma?")
+                            response.message.append(f"?  {k} not found. "
+                                                    f"Does it exist in Neotoma?")
                         entries[v[1]] = None
                     else:
                         entries[v[1]] = entries[v[1]][0]
@@ -100,21 +103,22 @@ def valid_data(cur, yml_dict, csv_file, wide = False):
                     cur.execute(v[0], {'element': inputs2[k].lower()})
                     entries[v[1]] = cur.fetchone()
                     if not entries[v[1]]:
-                        counter +=1
+                        counter += 1
                         response.message.append(f"✗  {k} ID for {inputs2[k]} not found. "
                                                 f"Does it exist in Neotoma?")
                         response.valid.append(False)
-                        entries[v[1]] = None 
+                        entries[v[1]] = None
                     else:
                         entries[v[1]] = entries[v[1]][0]
-                else: 
+                else:
                     entries[v[1]] = None
-                    response.message.append(f"?  {inputs2[k]} ID not given. ")
+                    response.message.append(f"?  {inputs2[k]} ID not given.")
                     response.valid.append(True)
             else:
-                response.message.append(f"?  {k} ID not given. ")
+                response.message.append(f"?  {k} ID not given.")
                 response.valid.append(True)
                 entries[v[1]] = counter
+
         var = Variable(**entries)
         response.valid.append(True)
         try:
@@ -124,19 +128,28 @@ def valid_data(cur, yml_dict, csv_file, wide = False):
             response.valid.append(False)
             response.message.append(f"✗  Var ID cannot be retrieved from db: {e}")
             varid = None
+
         if varid:
             varid = varid[0]
             response.valid.append(True)
         else:
-            varunits = inputs2['variableunits'][0] if isinstance(inputs2.get('variableunits', None), list) else inputs2.get('variableunits')
-            varcontextid = inputs2['variablecontext'][0] if isinstance(inputs2.get('variablecontext', None), list) else inputs2.get('variablecontext')
-            varelement = inputs2['variableelement'][0] if isinstance(inputs2.get('variableelement', None), list) else inputs2.get('variableelement')
-            response.message.append(f"? Var ID not found for: \n "
-                                    f"variableunitsid: {varunits}, ID: {entries['variableunitsid']},\n"
-                                    f"taxon: {key.lower()}, ID: {entries['taxonid']},\n"
-                                    f"variableelement: {varelement}, ID: {entries['variableelementid']},\n"
-                                    f"variablecontextid: {varcontextid}, ID: {entries['variablecontextid']}\n")
+            varunits = (inputs2['variableunits'][0]
+                        if isinstance(inputs2.get('variableunits'), list)
+                        else inputs2.get('variableunits'))
+            varcontextid = (inputs2['variablecontext'][0]
+                            if isinstance(inputs2.get('variablecontext'), list)
+                            else inputs2.get('variablecontext'))
+            varelement = (inputs2['variableelement'][0]
+                          if isinstance(inputs2.get('variableelement'), list)
+                          else inputs2.get('variableelement'))
+            response.message.append(
+                f"? Var ID not found for:\n"
+                f" variableunitsid: {varunits}, ID: {entries['variableunitsid']},\n"
+                f" taxon: {key.lower()}, ID: {entries['taxonid']},\n"
+                f" variableelement: {varelement}, ID: {entries['variableelementid']},\n"
+                f" variablecontextid: {varcontextid}, ID: {entries['variablecontextid']}")
             response.valid.append(True)
+
         for i in taxa[key]['value']:
             try:
                 Datum(sampleid=int(3), variableid=varid, value=i)
@@ -144,7 +157,8 @@ def valid_data(cur, yml_dict, csv_file, wide = False):
             except Exception as e:
                 response.valid.append(False)
                 response.message.append(f"✗  Datum cannot be created: {e}")
-    response.message = list(set(response.message))
+
+    
     if response.validAll:
-        response.message.append(f"✔  Datum can be created.")
-    return response 
+        response.message.append("✔  Datum can be created.")
+    return response

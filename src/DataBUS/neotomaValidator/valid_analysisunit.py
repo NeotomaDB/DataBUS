@@ -20,9 +20,8 @@ def valid_analysisunit(cur, yml_dict, csv_file):
         Response(valid=[True], message=[...], validAll=True, counter=1)
     """
     response = Response()
-    params = ANALYSIS_UNIT_PARAMS
     try:
-        inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.analysisunits")
+        inputs = nh.pull_params(ANALYSIS_UNIT_PARAMS, yml_dict, csv_file, "ndb.analysisunits")
     except Exception as e:
         response.valid.append(False)
         response.message.append(f"✗ AU elements in the CSV file are not properly inserted. "

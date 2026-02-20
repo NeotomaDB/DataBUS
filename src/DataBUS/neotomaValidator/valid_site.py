@@ -24,8 +24,7 @@ def valid_site(cur, yml_dict, csv_file, insert=False):
         Response(valid=[True], message=[...], validAll=True, closesites=[...])
     """
     response = Response()
-    params = SITE_PARAMS
-    inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.sites")
+    inputs = nh.pull_params(SITE_PARAMS, yml_dict, csv_file, "ndb.sites")
     if 'geog.latitude' in inputs and 'geog.longitude' in inputs:
         lat = inputs.pop('geog.latitude')
         lon = inputs.pop('geog.longitude')
