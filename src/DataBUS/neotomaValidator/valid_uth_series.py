@@ -16,73 +16,61 @@ def valid_uth_series(cur, yml_dict, csv_file):
 
     Returns:
         Response: Response object containing validation messages, validity list, and overall status.
-    
+
     Examples:
         >>> valid_uth_series(cursor, config_dict, "uth_series_data.csv")
         Response(valid=[True, True], message=[...], validAll=True)
     """
-    params = UTH_PARAMS
-    inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.uraniumseries")
-    if isinstance(inputs.get('decayconstantid'), list):
-        elements = [x for x in params if x not in {'geochronid'}]
-    else:
-        elements = [x for x in params if x not in {'geochronid', 'decayconstantid'}]
     response = Response()
-    filtered_inputs = {k: v for k, v in inputs.items() if k in elements}
-    indices = [i for i, values in enumerate(zip(*filtered_inputs.values()))
-               if any(value is not None for value in values)]
-    inputs = {k: [v for i, v in enumerate(filtered_inputs[k]) if i in indices] if k in filtered_inputs
-                                                              else value for k, value in inputs.items()}
-    decay_query = """SELECT decayconstantid FROM ndb.decayconstants
-                                WHERE LOWER(decayconstant) = %(decayconstant)s;"""
-    if inputs.get('decayconstantid') is not None:
-        if isinstance(inputs['decayconstantid'], list):
-            new_dc = []
-            for dc in inputs['decayconstantid']:
-                cur.execute(decay_query, {'decayconstant': dc.lower()})
-                decayconstantid = cur.fetchone()
-                if decayconstantid is not None:
-                    new_dc.append(decayconstantid[0])
-                    response.valid.append(True)
-                    response.message.append("✔ Decay constant found in database")
-                else:
-                    response.valid.append(False)
-                    response.message.append(f"✗ Decay constant {dc} not found in database")
-            inputs['decayconstantid'] = new_dc
-        elif isinstance(inputs['decayconstantid'], str):
-            decay_query = """SELECT decayconstantid FROM ndb.decayconstants
-                        WHERE LOWER(decayconstant) = %(decayconstant)s;"""
-            cur.execute(decay_query, {'decayconstant': inputs['decayconstantid'].lower()})
-            decayconstantid = cur.fetchone()
-            if decayconstantid is not None:
-                inputs['decayconstantid'] = decayconstantid[0]
-                response.valid.append(True)
-                response.message.append("✔ Decay constant found in database")
-            else:
-                inputs['decayconstantid'] = None
-                response.valid.append(False)
-                response.message.append(f"✗ Decay constant {inputs['decayconstantid']} not found in database")
-    
-    for i in range(len(indices)):
-        try:
-            if isinstance(inputs.get('decayconstantid'), list):
-                dc_id = inputs['decayconstantid'][i]
-            else:
-                dc_id = inputs['decayconstantid']
-            UThSeries(geochronid=inputs['geochronid'],
-                            decayconstantid=dc_id,
-                            ratio230th232th=inputs['ratio230th232th'][i],
-                            ratiouncertainty230th232th=inputs['ratiouncertainty230th232th'][i],
-                            activity230th238u=inputs['activity230th238u'][i],
-                            activityuncertainty230th238u=inputs['activityuncertainty230th238u'][i],
-                            activity234u238u=inputs['activity234u238u'][i],
-                            activityuncertainty234u238u=inputs['activityuncertainty234u238u'][i],
-                            iniratio230th232th=inputs['iniratio230th232th'][i],
-                            iniratiouncertainty230th232th=inputs['iniratiouncertainty230th232th'][i])
+    params = UTH_PARAMS
+    try:
+        inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.uraniumseries")
+        if all(value is None for value in inputs.values()):
             response.valid.append(True)
-            response.message.append("✔ UThSeries can be created")
+            response.message.append("✔ No U-Th series parameters provided, skipping validation.")
+            return response
+        indices = [i for i, value in enumerate(inputs['decayconstantid']) if value is not None]
+        inputs = {k: [v for i, v in enumerate(inputs[k]) if i in indices]
+                  if isinstance(inputs[k], list) else inputs[k]
+                  for k in inputs}
+        inputs['geochronid'] = [i+1 for i in range(len(inputs['decayconstantid']))] # placeholder for geochronologyid
+    except Exception as e:
+        response.valid.append(False)
+        response.message.append(f"✗ U-Th series parameters cannot be properly extracted: {e}.")
+        return response
+    decay_query = """SELECT decayconstantid FROM ndb.decayconstants
+                     WHERE LOWER(decayconstant) = %(decayconstant)s;"""
+    for row in zip(*inputs.values()):
+        uth = dict(zip(inputs.keys(), row))
+        if isinstance(uth.get('decayconstantid'), str):
+            n = uth.get('decayconstantid')
+            cur.execute(decay_query, {'decayconstant': uth.get('decayconstantid').lower().strip()})
+            uth['decayconstantid'] = cur.fetchone()
+            if uth['decayconstantid']:
+                uth['decayconstantid'] = uth['decayconstantid'][0]
+                response.valid.append(True)
+                if f"✔ Decay constant {n} found in database." not in response.message:
+                    response.message.append(f"✔ Decay constant {n} found in database.")
+            else:
+                response.valid.append(False)
+                if f"✗ Decay constant {n} not found in database." not in response.message:
+                    response.message.append(f"✗ Decay constant {n} not found in database.")
+        try:
+            UThSeries(geochronid=uth['geochronid'],
+                      decayconstantid=uth['decayconstantid'],
+                      ratio230th232th=uth['ratio230th232th'],
+                      ratiouncertainty230th232th=uth['ratiouncertainty230th232th'],
+                      activity230th238u=uth['activity230th238u'],
+                      activityuncertainty230th238u=uth['activityuncertainty230th238u'],
+                      activity234u238u=uth['activity234u238u'],
+                      activityuncertainty234u238u=uth['activityuncertainty234u238u'],
+                      iniratio230th232th=uth['iniratio230th232th'],
+                      iniratiouncertainty230th232th=uth['iniratiouncertainty230th232th'])
+            response.valid.append(True)
+            if "✔ UThSeries can be created." not in response.message:
+                response.message.append("✔ UThSeries can be created.")
         except Exception as e:
             response.valid.append(False)
-            response.message.append(f"✗ UThSeries cannot be created: {e}")
-    response.message = list(set(response.message))
+            if f"✗ UThSeries cannot be created: {e}" not in response.message:
+                response.message.append(f"✗ UThSeries cannot be created: {e}")
     return response

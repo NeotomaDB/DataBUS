@@ -1,4 +1,6 @@
 import importlib.resources
+from .neotomaHelpers.utils import validate_int_values
+
 with importlib.resources.open_text("DataBUS.sqlHelpers",
                                    "insert_speleothem.sql") as sql_file:
     insert_speleothem = sql_file.read()
@@ -70,15 +72,16 @@ class Speleothem:
         entrancedistance=None,
         entrancedistanceunits=None,
         speleothemtypeid=None):
-        
-        self.siteid = siteid
-        self.entityid = entityid
+        if siteid is None or speleothemtypeid is None:
+            raise ValueError("Site ID and Speleothem Type ID are required to create a Speleothem.")
+        self.siteid = validate_int_values(siteid, "siteid")
+        self.entityid = validate_int_values(entityid, "entityid")
         self.entityname = entityname
         self.monitoring = monitoring
-        self.rockageid=rockageid
-        self.entrancedistance=entrancedistance
-        self.entrancedistanceunits=entrancedistanceunits
-        self.speleothemtypeid=speleothemtypeid
+        self.rockageid = validate_int_values(rockageid, "rockageid")
+        self.entrancedistance = entrancedistance
+        self.entrancedistanceunits = validate_int_values(entrancedistanceunits)
+        self.speleothemtypeid = validate_int_values(speleothemtypeid)
 
     def __str__(self):
         """Return string representation of the Speleothem object.
@@ -119,7 +122,7 @@ class Speleothem:
             "speleothemtypeid": self.speleothemtypeid}
         cur.execute(query, inputs)
         spid = cur.fetchone()[0]
-        return spid
+        return spid 
     
     def insert_entitygeology_to_db(self, cur, id, speleothemgeologyid, notes):
         """Insert speleothem geology information into the database.

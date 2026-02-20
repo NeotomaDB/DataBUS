@@ -1,4 +1,5 @@
-import importlib.resources
+import importlib.resources 
+from .neotomaHelpers.utils import validate_int_values
 with importlib.resources.open_text("DataBUS.sqlHelpers",
                                    "insert_uthseries.sql") as sql_file:
     insert_uthseries = sql_file.read()
@@ -38,18 +39,20 @@ class UThSeries:
 
     def __init__(
         self,
-        geochronid=None,
-        decayconstantid=None,
-        ratio230th232th=None,
-        ratiouncertainty230th232th=None,
-        activity230th238u=None,
-        activityuncertainty230th238u=None,
-        activity234u238u=None,
-        activityuncertainty234u238u=None,
-        iniratio230th232th=None,
-        iniratiouncertainty230th232th=None):
-        self.geochronid = geochronid
-        self.decayconstantid = decayconstantid
+        geochronid = None,
+        decayconstantid = None,
+        ratio230th232th = None,
+        ratiouncertainty230th232th = None,
+        activity230th238u = None,
+        activityuncertainty230th238u = None,
+        activity234u238u = None,
+        activityuncertainty234u238u = None,
+        iniratio230th232th = None,
+        iniratiouncertainty230th232th = None):
+        if geochronid is None or decayconstantid is None:
+            raise ValueError("Geochronology ID is required to create a UThSeries object.")
+        self.geochronid = validate_int_values(geochronid, "geochronid")
+        self.decayconstantid = validate_int_values(decayconstantid, "decayconstantid")
         self.ratio230th232th = ratio230th232th
         self.ratiouncertainty230th232th = ratiouncertainty230th232th
         self.activity230th238u = activity230th238u
