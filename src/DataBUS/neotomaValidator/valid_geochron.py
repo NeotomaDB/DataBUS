@@ -6,7 +6,7 @@ def valid_geochron(cur, yml_dict, csv_file):
     """Validates geochronological dating data.
 
     Validates geochronology parameters including dating type, age, error bounds,
-    and material dated. 
+    and material dated.
 
     Args:
         cur (psycopg2.cursor): Database cursor for executing SQL queries.
@@ -15,61 +15,61 @@ def valid_geochron(cur, yml_dict, csv_file):
 
     Returns:
         Response: Response object containing validation messages, validity list, and overall status.
-    
-     Examples:
+
+    Examples:
         >>> valid_geochron(cursor, config_dict, "dating_data.csv")
         Response(valid=[True], message=[...], validAll=True)
     """
     response = Response()
-    params = GECHRON_PARAMS
-    
-    inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.geochronology")
-    indices = [i for i, value in enumerate(inputs['age']) if value is not None]
-    inputs = {k: [v for i, v in enumerate(inputs[k]) if i in indices] if isinstance(inputs[k], list) else value for k, value in inputs.items()}
-    geochron_q = """SELECT geochrontypeid FROM ndb.geochrontypes
-                    WHERE LOWER(geochrontype) = LOWER(%(geochrontype)s)"""
-    agetype_q = """SELECT agetypeid FROM ndb.agetypes
-                   WHERE LOWER(agetype) = LOWER(%(agetype)s)"""
-    if inputs.get('geochrontypeid'):
-        elements = set(inputs['geochrontypeid'])
-        geochron = {}
-        for e in elements:
-            cur.execute(geochron_q, {"geochrontype": e})
-            geochronid = cur.fetchone()
-            if geochronid:
-                geochron[e] = geochronid[0]
-            else:
-                response.message.append(f"✗  Geochron type {e} not found in database")
-                response.valid.append(False)
-                geochron[e] = None
-    if inputs.get('geochrontypeid') is not None:
-        inputs['geochrontypeid'] = [geochron.get(item, item) for item in inputs['geochrontypeid']]
     try:
-        cur.execute(agetype_q, {"agetype": inputs['agetype']})
-        agetypeid = cur.fetchone()
-    except KeyError as e:
-        agetypeid = None
-        response.message.append("? No age type provided.")
-        response.valid.append(False)
-    if agetypeid:
-        inputs['agetypeid'] = agetypeid[0]
-        response.valid.append(True)
-    else:
-        inputs['agetypeid'] = None
-        response.valid.append(False)
-        response.message.append(f"Age Type {inputs['agetype']} not found in database")
-    del inputs['agetype']
-    iterable_params = {k: v for k, v in inputs.items() if isinstance(v, list)}
-    static_params = {k: v for k, v in inputs.items() if not isinstance(v, list)}
-    for values in zip(*iterable_params.values()):
-        try:
-            kwargs = dict(zip(iterable_params.keys(), values))
-            kwargs.update(static_params) 
-            Geochron(**kwargs)
+        inputs = nh.pull_params(GECHRON_PARAMS, yml_dict, csv_file, "ndb.geochronology")
+        if not inputs.get('age'):
             response.valid.append(True)
-            response.message.append("✔ Geochronology created successfully.")
+            response.message.append("✔  No age values provided.")
+            return response
+    except Exception as e:
+        response.valid.append(False)
+        response.message.append(f"✗ Geochronology parameters cannot be properly extracted. "
+                                "Verify the CSV file.: {e}")
+        return response
+    indices = [i for i, value in enumerate(inputs.get('age')) if value is not None]
+    inputs = {k: [v for i, v in enumerate(inputs[k]) if i in indices]
+              if isinstance(inputs[k], list) else inputs[k] for k in inputs}
+    inputs["geochrontypeid"] = inputs["geochrontypeid"] if isinstance(inputs["geochrontypeid"], list) else [inputs["geochrontypeid"]] * len(indices)
+    inputs["agetypeid"] = inputs["agetypeid"] if isinstance(inputs["agetypeid"], list) else [inputs["agetypeid"]] * len(indices)
+    inputs["sampleid"] = [i+1 for i in range(len(indices))] # placeholder for sampleid
+    inputs = {k: v for k, v in inputs.items() if v is not None}
+
+    geochron_query = """SELECT geochrontypeid FROM ndb.geochrontypes
+                    WHERE LOWER(geochrontype) = LOWER(%(geochrontype)s)"""
+    agetype_query = """SELECT agetypeid FROM ndb.agetypes
+                   WHERE LOWER(agetype) = LOWER(%(agetype)s)"""
+    par = {"agetypeid": [agetype_query, "agetype"],
+           "geochrontypeid": [geochron_query, "geochrontype"]}
+    
+    for row in zip(*inputs.values()):
+        geochron = dict(zip(inputs.keys(), row))
+        for param, (query, key) in par.items():
+            if geochron.get(param):
+                if isinstance(geochron[param], str):
+                    cur.execute(query, {key: geochron[param].lower().strip()})
+                    result = cur.fetchone()
+                    if result:
+                        geochron[param] = result[0]
+                        if f"✔ The provided {param} is correct: {result[0]}" not in response.message:
+                            response.message.append(f"✔ The provided {param} is correct: {result[0]}")
+                        response.valid.append(True)
+                    else:
+                        if f"✗ The provided {param} with value {geochron[param]} does not exist in Neotoma DB." not in response.message:
+                            response.message.append(f"✗ The provided {param} with value {geochron[param]} does not exist in Neotoma DB.")
+                        response.valid.append(False)
+        try:
+            Geochron(**geochron)
+            response.valid.append(True)
+            if f"✔ Geochronology created successfully." not in response.message:
+                response.message.append(f"✔ Geochronology created successfully.")
         except Exception as e:
+            if f"✗  Geochronology cannot be created: {e}" not in response.message:
+                response.message.append(f"✗  Geochronology cannot be created: {e}")
             response.valid.append(False)
-            response.message.append(f"✗  Geochronology cannot be created: {e}")
-    response.message = list(set(response.message))
     return response

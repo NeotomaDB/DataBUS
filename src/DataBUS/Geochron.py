@@ -1,7 +1,8 @@
-GECHRON_PARAMS = ["sampleid", "geochrontypeid", "agetype",
-              "age", "errorolder", "erroryounger",
-              "infinite", "delta13c", "labnumber",
-              "materialdated", "notes"]
+from .neotomaHelpers.utils import validate_int_values
+GECHRON_PARAMS = ["sampleid", "geochrontypeid", "agetypeid",
+                  "age", "errorolder", "erroryounger",
+                  "infinite", "delta13c", "labnumber",
+                  "materialdated", "notes"]
 
 class Geochron:
     """A geochronological age determination in Neotoma.
@@ -35,22 +36,39 @@ class Geochron:
         3250
     """
 
-    def __init__(self, sampleid,
-                 geochrontypeid,
-                 agetypeid, age,
-                 errorolder, erroryounger,
-                 infinite, delta13c,
-                 labnumber, materialdated, notes):
-        self.sampleid = sampleid
-        self.geochrontypeid = geochrontypeid
-        self.agetypeid = agetypeid
+    def __init__(self, 
+                 sampleid = None,
+                 geochrontypeid = None,
+                 agetypeid = None,
+                 age = None,
+                 errorolder = None, 
+                 erroryounger = None,
+                 infinite = None,
+                 delta13c = None,
+                 labnumber = None,
+                 materialdated = None,
+                 notes = None):
+        missing = [name for name, val in [
+            ("sampleid", sampleid),
+            ("geochrontypeid", geochrontypeid),
+            ("agetypeid", agetypeid),
+            ("age", age)] if val is None]
+        if missing:
+            raise ValueError(f"Missing required fields: {', '.join(missing)}")
+        self.sampleid = validate_int_values(sampleid, "sampleid")
+        self.geochrontypeid = validate_int_values(geochrontypeid, "geochrontypeid")
+        self.agetypeid = validate_int_values(agetypeid, "agetypeid")
         self.age = age
         self.errorolder = errorolder
         self.erroryounger = erroryounger
-        if infinite is None:
+        if not infinite:
             self.infinite = False
         else:
-            self.infinite = infinite
+            if not isinstance(infinite, bool):
+                try:
+                    self.infinite = bool(int(infinite))
+                except ValueError:
+                    raise TypeError("Infinite must be a boolean value.")
         self.delta13c = delta13c
         self.labnumber = labnumber
         self.materialdated = materialdated
