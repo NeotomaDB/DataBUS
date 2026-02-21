@@ -197,7 +197,9 @@ def add_taxon_entry(add_unit_inputs, value_meta, clean_value):
 def finalize_output(add_unit_inputs):
     """Finalize output by cleaning up chronologies/sampleages and notes.
 
-    Removes entries where all values are None and formats notes string.
+    Removes entries where all values are None, formats notes string,
+    and removes orphaned chronology-related keys that aren't nested
+    inside a named chronology.
 
     Args:
         add_unit_inputs (dict): Accumulator dictionary to finalize.
@@ -209,6 +211,14 @@ def finalize_output(add_unit_inputs):
     if any(k in add_unit_inputs for k in ('chronologies', 'sampleages')):
         key = 'chronologies' if 'chronologies' in add_unit_inputs else 'sampleages'
         add_unit_inputs[key] = _filter_empty_chronologies(add_unit_inputs[key])
+    # Remove orphaned chronology-related keys at the top level.
+    # These belong inside a named chronology, not as standalone entries.
+    orphan_keys = ('ageboundolder', 'ageboundyounger', 'chronologyname',
+                   'agetypeid', 'contactid', 'dateprepared', 'isdefault',
+                   'ageyounger', 'ageolder', 'age', 'notes')
+    for k in orphan_keys:
+        if k in add_unit_inputs and add_unit_inputs[k] is None:
+            del add_unit_inputs[k]
     return add_unit_inputs
 
 
@@ -312,3 +322,28 @@ def _extract_unique_column_value(template, column):
         f"Multiple different values found in non-rowwise element '{column}'. "
         "Correct the template or the data."
     )
+
+def validate_int_values(value, name: str) -> int | None:
+    """Validates that a value is an int, float, or None, returning it as int or None."""
+    if value is not None and not isinstance(value, (int, float)):
+        raise ValueError(f"✗ {name} must be an integer or None.")
+    return int(value) if value is not None else None
+
+def validate_date_values(value, name: str) -> datetime.date | None:
+    """Validates that a value is an date or None, returning it as date or None."""
+    if isinstance(value, list):
+        len(set(value)) == 1 and all(isinstance(v, datetime.date) or v is None for v in value)
+        value = value[0] if value else None
+    if value is not None and not isinstance(value, datetime.date):
+        raise ValueError(f"✗ {name} must be a date or None.")
+    return value
+
+def convert_to_bp(value):
+    """Convert a CE/BCE date (or list of them) to radiocarbon years BP."""
+    if isinstance(value, (float, int)):
+        return round(1950 - value, 6)
+    elif isinstance(value, (datetime.date, datetime.datetime)):
+        return round(1950 - value.year, 6)
+    elif isinstance(value, list):
+        return [round(1950 - v.year, 6) if isinstance(v, (datetime.date, datetime.datetime)) else round(1950 - v, 6) for v in value]
+    return value

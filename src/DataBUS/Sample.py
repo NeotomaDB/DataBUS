@@ -1,5 +1,6 @@
 SAMPLE_PARAMS = ["samplename", "analysisdate", "labnumber",
-                 "prepmethod", "notes","sampledate", "taxonname"]
+                 "prepmethod", "notes", "sampledate", "taxonid"]
+from .neotomaHelpers.utils import validate_int_values
 class Sample:
     """A sample in Neotoma.
 
@@ -36,17 +37,15 @@ class Sample:
         taxonid=None,
         labnumber=None,
         prepmethod=None,
-        notes=None,
-    ):
-        self.analysisunitid = analysisunitid
-        self.datasetid = datasetid
-        if isinstance(samplename, (tuple,list)):
-            self.samplename = samplename[0]
-        else:
-            self.samplename = samplename
+        notes=None):
+        if analysisunitid is None or datasetid is None:
+            raise ValueError("Both analysisunitid and datasetid are required to create a Sample.")
+        self.analysisunitid = validate_int_values(analysisunitid, "analysisunitid")
+        self.datasetid = validate_int_values(datasetid, "datasetid")
+        self.taxonid = validate_int_values(taxonid, "taxonid")
+        self.samplename = samplename
         self.sampledate = sampledate
         self.analysisdate = analysisdate
-        self.taxonid = taxonid
         self.labnumber = labnumber
         self.prepmethod = prepmethod
         self.notes = notes

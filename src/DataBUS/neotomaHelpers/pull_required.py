@@ -1,5 +1,5 @@
 import re
-from .retrieve_dict import retrieve_dict
+from .utils import retrieve_dict
 
 
 def pull_required(params, yml_dict, table=None):

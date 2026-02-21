@@ -5,7 +5,7 @@ with importlib.resources.open_text("DataBUS.sqlHelpers", "insert_hiatus.sql") as
 
 with importlib.resources.open_text("DataBUS.sqlHelpers", "insert_hiatuschronology.sql") as sql_file:
     insert_hiatuschronology = sql_file.read()
-
+HIATUS_PARAMS = ['hiatus', 'notes']
 class Hiatus:
     """A hiatus or stratigraphic gap in a sediment sequence.
 

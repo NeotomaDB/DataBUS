@@ -1,4 +1,5 @@
-SAMPLE_AGE_PARAMS = ["age", "ageyounger", "ageolder", "agetype", "agemodel"]
+SAMPLE_AGE_PARAMS = ["age", "ageyounger", "ageolder", "agemodel"]
+from .neotomaHelpers.utils import validate_int_values
 
 class SampleAge:
     """Age information for a sample in the Neotoma database.
@@ -9,24 +10,27 @@ class SampleAge:
     See the [Neotoma Manual](https://open.neotomadb.org/manual/sample-related-tables-1.html#SampleAges)
     
     Attributes:
-        sampleid (int | None): Sample identifier.
+        sampleid (int | None): Sample identifier. Assigned after insertion.
         chronologyid (int | None): Chronology identifier.
         age (float | None): Age estimate.
         ageyounger (float | None): Younger age bound.
         ageolder (float | None): Older age bound.
-        sampleage (int | None): Database ID (assigned after insertion).
 
     Examples:
-        >>> sample_age = SampleAge(sampleid=1, chronologyid=2, age=75)
+        >>> sample_age = SampleAge(chronologyid=2, age=75)
         >>> sample_age.age
         75
     """
 
     def __init__(
-        self, sampleid=None, chronologyid=None, age=None, ageyounger=None, ageolder=None
-    ):
-        self.sampleid = sampleid
-        self.chronologyid = chronologyid
+        self,
+        sampleid=None,
+        chronologyid=None,
+        age=None,
+        ageyounger=None,
+        ageolder=None):
+        self.sampleid = validate_int_values(sampleid, "sampleid")
+        self.chronologyid = validate_int_values(chronologyid, "chronologyid")
         self.age = age
         self.ageyounger = ageyounger
         self.ageolder = ageolder

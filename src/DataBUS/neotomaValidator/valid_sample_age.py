@@ -1,7 +1,6 @@
 import DataBUS.neotomaHelpers as nh
 from DataBUS import SampleAge, Response
 from DataBUS.SampleAge import SAMPLE_AGE_PARAMS
-import datetime
 
 def valid_sample_age(cur, yml_dict, csv_file):
     """Validates sample age data for paleontological samples.
@@ -24,159 +23,50 @@ def valid_sample_age(cur, yml_dict, csv_file):
     """
     response = Response()
     try:
-        params = SAMPLE_AGE_PARAMS
-        inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.sampleages")
-        inputs = _collapse_into_chronology(inputs, chron_k='sampleages')
-        if "agetype" in inputs:
-            if isinstance(inputs.get("agetype"), list):
-                inputs["agetype"] = set(inputs.get("agetype"))
-                inputs['agetype'].discard("Event; hiatus")
-                inputs["agetype"].discard(None)
-                inputs["agetype"] = list(inputs.get("agetype"))
-                if not inputs["agetype"]:
-                    inputs["agetype"] = ""
-            if isinstance(inputs.get("agetype"), list) and len(inputs.get("agetype", [])) == 1:
-                inputs["agetype"] = inputs["agetype"][0]
-                response.valid.append(True)
-            elif isinstance(inputs.get("agetype"), list) and len(inputs.get("agetype", [])) > 1:
-                at = inputs["agetype"].copy()
-                inputs["agetype"] = inputs["agetype"][0]
-                response.valid.append(False)
-                response.message.append(
-                    f"✗ Sample Age agetype must be unique for all entries: {set(at)}.")
-    except Exception as e:
-        error = str(e)
-        try:
-            if "time data" in error.lower():
-                age_dict = nh.retrieve_dict(yml_dict, "ndb.sampleages.age")
-                column = age_dict[0]['column']
-                if isinstance(csv_file[0][column], str) and len(csv_file[0][column]) >= 4:
-                    if (len(csv_file[0][column]) == 7
-                            and csv_file[0][column][4] == '-'
-                            and csv_file[0][column][5:7].isdigit()):
-                        new_date = f"{csv_file[0][column]}-01"
-                        new_date = new_date.replace('-', '/')
-                        new_date = datetime.strptime(new_date, "%Y/%m/%d")
-                    elif csv_file[0][column][:4].isdigit():
-                        new_date = int(csv_file[0][column][:4])
-                    else:
-                        new_date = None
-                else:
-                    new_date = None
-                if "age" in params:
-                    params.remove('age')
-                    inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.sampleages")
-                    inputs['age'] = new_date
-                response.valid.append(True)
-        except Exception as inner_e:
-            response.valid.append(False)
-            response.message.append(
-                f"✗ Sample Age parameters cannot be properly extracted. {e}\n {inner_e}")
-            return response
-
-    sa_id_placeholder = nh.pull_params(['depth'], yml_dict, csv_file, "ndb.analysisunits")
-    inputs['sampleid'] = sa_id_placeholder['depth']
-    if inputs['sampleid'] is None:
-        sa_id_placeholder['depth'] = [1]
-        response.message.append("? No depths found; using placeholder ID 1.")
-
-    agetype_query = """SELECT agetypeid FROM ndb.agetypes
-                       WHERE LOWER(agetype) = %(agetype)s"""
-
-    for chron in inputs['sampleages'].keys():
-        sa = inputs['sampleages'][chron]
-        if sa.get("agetype", inputs.get('agetype')) is not None:
-            sa.get("agetype", inputs.get('agetype')).replace("cal yr BP", 'Calendar years BP')
-            cur.execute(agetype_query,
-                        {'agetype': sa.get("agetype", inputs.get('agetype')).lower()})
-            result = cur.fetchone()
-            if result:
-                sa['agetypeid'] = result[0]
-                response.message.append(f"✔ The provided age type is correct: {result[0]}")
-                response.valid.append(True)
-            else:
-                response.message.append("✗ The provided age type does not exist in Neotoma DB.")
-                response.valid.append(False)
-                inputs["agetypeid"] = None
-        else:
-            response.message.append("? No age type provided.")
+        inputs = nh.pull_params(SAMPLE_AGE_PARAMS, yml_dict, csv_file, "ndb.sampleages")
+        response.valid.append(True)
+        if not inputs.get("sampleages"):
             response.valid.append(True)
-            inputs["agetypeid"] = None
-
-        chron_id = 3  # placeholder
-        for idx, sa_id in enumerate(sa_id_placeholder['depth']):
+            response.message.append("? No sample age parameters provided.")
+            return response
+        else:
+            agemodel = inputs.get("agemodel")
+            inputs = inputs.get("sampleages")
+    except Exception as e:
+        response.valid.append(False)
+        response.message.append(
+            f"✗ Sample Age parameters cannot be properly extracted. {e}")
+        return response
+    # retrieve a tuple with chronIds and chronnames
+    for chron in inputs:
+        sa = inputs[chron]
+        sa = {k: v if isinstance(v, list) else [v] for k, v in sa.items()}
+        for row in zip(*sa.values()):
+            sa_age = dict(zip(sa.keys(), row))
+            sa_age['agemodel'] = agemodel
+            sa_age['chronologyid'] = 1 # placeholder for chronologyid
+            sa_age['sampleid'] = 1 # placeholder for sampleid
+            if not sa_age.get('age'):
+                continue
+            if isinstance(sa_age.get('agemodel'), str):
+                if (sa_age.get('agemodel').lower() == 'collection date' or
+                    'calendar years' in sa_age.get('agemodel').lower()): 
+                    try:
+                        sa_age['age'] = nh.convert_to_bp(sa_age.get('age'))
+                        sa_age['ageolder'] = nh.convert_to_bp(sa_age.get('ageolder'))
+                        sa_age['ageyounger'] = nh.convert_to_bp(sa_age.get('ageyounger'))
+                    except Exception as e:
+                        response.valid.append(False)
+                        response.message.append(f"✗ Error parsing collection date: {e}")
+                        continue  
             try:
-                if isinstance(sa.get('agemodel'), str):
-                    if sa.get('agemodel', inputs.get('agemodel')).lower() == "collection date":
-                        if isinstance(sa.get('age', inputs.get('age')), (float, int)):
-                            sa['age'] = 1950 - sa.get('age', inputs.get('age'))
-                        elif isinstance(sa.get('age', inputs.get('age')), datetime.date):
-                            sa['age'] = 1950 - sa.get('age', inputs.get('age')).year
-                        elif isinstance(sa.get('age', inputs.get('age')), list):
-                            sa['age'] = [
-                                1950 - value.year if isinstance(value, datetime.date)
-                                else 1950 - value
-                                for value in sa.get('age', inputs.get('age'))
-                            ]
-                if sa["age"] is None:
-                    continue
-
-                s = {}
-                for param in ["ageyounger", "ageolder"]:
-                    if param in sa:
-                        if isinstance(sa[param], list):
-                            filtered = [num for num in sa.get(param, sa.get('age'))
-                                        if num is not None]
-                            s[param] = (int(min(filtered)) if param == 'ageboundyounger'
-                                        else int(max(filtered)))
-                        else:
-                            s[param] = sa[param]
-                    else:
-                        if isinstance(sa['age'], list):
-                            filtered = [num for num in sa.get('age') if num is not None]
-                            s[param] = (int(min(filtered)) if param == 'ageboundyounger'
-                                        else int(max(filtered)))
-                        else:
-                            s[param] = None
-                    sa[param] = s[param]
-
-                if sa_id is None:
-                    continue
-
-                sa_age = sa['age'][idx] if isinstance(sa['age'], list) else sa['age']
-                SampleAge(sampleid=int(sa_id),
-                          chronologyid=int(chron_id),
-                          age=sa_age,
-                          ageyounger=sa['ageyounger'],
-                          ageolder=sa['ageolder'])
+                sa_age.pop('agemodel')
+                SampleAge(**sa_age)
                 response.valid.append(True)
-                response.message.append("✔ Sample Age is valid.")
+                if not f"✔ Sample Age is valid." in response.message:
+                    response.message.append("✔ Sample Age is valid.")
             except Exception as e:
                 response.valid.append(False)
-                response.message.append(f"✗ Samples ages cannot be created. {e}")
-    
+                if not f"✗ Samples ages cannot be created. {e}" in response.message:
+                  response.message.append(f"✗ Samples ages cannot be created. {e}")
     return response
-
-
-def _collapse_into_chronology(data, chron_k='sampleages'):
-    """Collapse sample age data structure into a single chronology if applicable.
-
-    Takes nested sample age data and, if only one chronology exists,
-    merges shared parameters into that chronology's data dictionary.
-
-    Args:
-        data (dict): Data dictionary containing sample ages and shared parameters.
-        chron_k (str): Key name for sample ages in data dict. Defaults to 'sampleages'.
-
-    Returns:
-        dict: Data dict with single chronology collapsed or original structure if multiple.
-    """
-    chron = data.get(chron_k, {})
-    if len(chron) == 1:
-        key = next(iter(chron))
-        inner = chron[key]
-        for k, v in data.items():
-            if k != chron_k:
-                inner[k] = v
-        return {chron_k: {key: inner}}
-    return data
