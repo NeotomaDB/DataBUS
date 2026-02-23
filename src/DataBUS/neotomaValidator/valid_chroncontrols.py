@@ -53,19 +53,18 @@ def valid_chroncontrols(yml_dict, csv_file, cur):
             control = dict(zip(inputs.keys(), row))
             control['chronologyid'] = chron
             for param, (query, key) in par.items():
-                if control.get(param):
-                    if isinstance(control[param], str):
-                        cur.execute(query, {key: control[param].lower().strip()})
-                        result = cur.fetchone()
-                        if result:
-                            control[param] = result[0]
-                            if f"✔ The provided {param} is correct: {result[0]}" not in response.message:
-                                response.message.append(f"✔ The provided {param} is correct: {result[0]}")
-                            response.valid.append(True)
-                        else:
-                            if f"✗ The provided {param} with value {control[param]} does not exist in Neotoma DB." not in response.message:
-                                response.message.append(f"✗ The provided {param} with value {control[param]} does not exist in Neotoma DB.")
-                            response.valid.append(False)
+                if isinstance(control.get(param), str):
+                    cur.execute(query, {key: control[param].lower().strip()})
+                    result = cur.fetchone()
+                    if result:
+                        control[param] = result[0]
+                        if f"✔ The provided {param} is correct: {result[0]}" not in response.message:
+                            response.message.append(f"✔ The provided {param} is correct: {result[0]}")
+                        response.valid.append(True)
+                    else:
+                        if f"✗ The provided {param} with value {control[param]} does not exist in Neotoma DB." not in response.message:
+                            response.message.append(f"✗ The provided {param} with value {control[param]} does not exist in Neotoma DB.")
+                        response.valid.append(False)
             try:
                 ChronControl(**control)
                 response.valid.append(True)

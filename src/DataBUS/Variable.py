@@ -1,3 +1,4 @@
+from .neotomaHelpers.utils import validate_int_values
 class Variable:
     """A variable (taxon or measurement) in Neotoma.
 
@@ -27,10 +28,10 @@ class Variable:
         variablecontextid=None,
     ):
         self.varid = None
-        self.taxonid = taxonid
-        self.variableelementid = variableelementid
-        self.variableunitsid = variableunitsid
-        self.variablecontextid = variablecontextid
+        self.taxonid = validate_int_values(taxonid, "taxonid")
+        self.variableelementid = validate_int_values(variableelementid, "variableelementid")
+        self.variableunitsid = validate_int_values(variableunitsid, "variableunitsid")
+        self.variablecontextid = validate_int_values(variablecontextid, "variablecontextid")
 
     def insert_to_db(self, cur):
         """Insert the variable record into the database.

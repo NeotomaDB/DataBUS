@@ -18,147 +18,98 @@ def valid_data(cur, yml_dict, csv_file, wide=False):
         Response: Response object containing validation messages, validity list, and overall status.
 
     Examples:
-        >>> valid_data(cursor, config_dict, "data.csv", wide=False)
+        >>> valid_data(cursor, config_dict, "data.csv")
         Response(valid=[True], message=[...], validAll=True)
     """
-    response = Response()
-    inputs = nh.pull_params(["value"], yml_dict, csv_file, "ndb.data", values=False)
-
-    if 'value' in inputs:
-        if not inputs['value']:
-            response.message.append("? No Values to validate.")
-            response.valid.append(False)
-            return response
-
     var_query = """SELECT variableelementid FROM ndb.variableelements
-                   WHERE LOWER(variableelement) = %(element)s;"""
-    taxon_query = """SELECT * FROM ndb.taxa
-                     WHERE LOWER(taxonname) = %(element)s;"""
-    units_query = """SELECT variableunitsid FROM ndb.variableunits
-                     WHERE LOWER(variableunits) = %(element)s;"""
+                    WHERE LOWER(variableelement) = %(variableelementid)s;"""
+    taxon_query = """SELECT * FROM ndb.taxa 
+                        WHERE LOWER(taxonname) = %(taxonid)s;"""
+    units_query = """SELECT variableunitsid FROM ndb.variableunits 
+                        WHERE LOWER(variableunits) = %(variableunitsid)s;"""
     context_query = """SELECT variablecontextid FROM ndb.variablecontexts
-                       WHERE LOWER(variablecontext) = %(element)s;"""
+                        WHERE LOWER(variablecontext) = %(variablecontextid)s;"""
 
-    par = {'taxon': [taxon_query, 'taxonid'],
-           'variableelement': [var_query, 'variableelementid'],
-           'variableunits': [units_query, 'variableunitsid'],
-           'variablecontext': [context_query, 'variablecontextid']}
-
-    if wide:
-        taxa = inputs.copy()
+    par = {'taxonid': [taxon_query, 'taxonid'],
+            'variableelementid': [var_query, 'variableelementid'], 
+            'variableunitsid': [units_query, 'variableunitsid'],
+            'variablecontextid': [context_query, 'variablecontextid']}
+    response = Response()
+    try:
+        inputs = nh.pull_params(["value"], yml_dict, csv_file, "ndb.data")
+        inputs2 = nh.pull_params(['taxonid', 'variableunitsid', 'variableelementid', 'variablecontextid'],
+                                 yml_dict, csv_file, "ndb.variables")
+    except Exception as e:
+        response.valid.append(False)
+        response.message.append(f"✗  Error pulling parameters: {e}")
+        return response
+    data = {}
+    if inputs.get('value'):
+        data = inputs2.copy()
+        data['value'] = inputs['value']
+        data = {k: (v if isinstance(v, list) 
+                    else [v] * len(inputs['value']))
+                    for k, v in data.items()}
     else:
-        taxa_in = nh.pull_params(['taxon', 'variableunits',
-                                  'variableelement', 'variablecontext'],
-                                 yml_dict, csv_file, "ndb.variables",
-                                 values=wide)
-        values = inputs['value']
-        taxa_d = taxa_in.get('taxon', None)
-        variables = {"variableunits": taxa_in.get('variableunits', None),
-                     "variableelement": taxa_in.get('variableelement', None),
-                     "variablecontext": taxa_in.get('variablecontext', None)}
-        taxa = {}
-        for i, (taxon, value) in enumerate(zip(taxa_d, values)):
-            if taxon not in taxa:
-                taxa[taxon] = {'value': [],
-                               'variablecontext': [],
-                               'variableelement': [],
-                               'variableunits': []}
-            taxa[taxon]['value'].append(int(value))
-            for n, p in variables.items():
-                if isinstance(p, list):
-                    taxa[taxon][n].append(p[i])
+        data = {k: v for k, v in inputs2.items() if v is not None}
+        for key in inputs:
+            data[key]['taxonid'] = [key] * len(inputs[key]['value'])
+            data[key]['value'] = inputs[key]['value']
+        for key in list(data.keys()):
+            if 'value' not in data[key] or all(v is None for v in data[key]['value']):
+                data.pop(key)
+        combined_data = {}
+        for key in data:
+            length = len(data[key]['value'])
+            for k, v in data[key].items():
+                if k not in combined_data:
+                    combined_data[k] = []
+                if v is None:
+                    combined_data[k].extend([None] * length)
                 else:
-                    taxa[taxon][n].append(p)
-
-    for key in taxa.keys():
-        if wide:
-            params = [v for k, v in taxa[key].items() if k != 'value']
-            inputs2 = nh.pull_params(params, yml_dict, csv_file, "ndb.variables", values=wide)
-            inputs2['taxon'] = key
-        else:
-            inputs2 = taxa[key]
-            inputs2['taxon'] = key
-        entries = {}
-        counter = 0
-        for k, v in par.items():
-            if k in inputs2:
-                if isinstance(inputs2[k], list):
-                    if inputs2[k][0]:
-                        inputs2[k][0] = inputs2[k][0].lower()
-                    cur.execute(v[0], {'element': inputs2[k][0]})
-                    entries[v[1]] = cur.fetchone()
-                    if not entries[v[1]]:
-                        counter += 1
-                        if v[1] == 'taxonid':
-                            response.valid.append(False)
-                            response.message.append(f"✗  {k} ID for {inputs2[k][0]} not found. "
-                                                    f"Does it exist in Neotoma?")
-                        else:
-                            response.message.append(f"?  {k} not found. "
-                                                    f"Does it exist in Neotoma?")
-                        entries[v[1]] = None
+                    combined_data[k].extend(v if isinstance(v, list) else [v] * length)
+        data = combined_data
+    vals = {}
+    for datum in zip(*data.values()):
+        datum = dict(zip(list(data.keys()), datum))
+        for param, (query, key) in par.items():
+            if isinstance(datum.get(param), str):
+                if datum[param].lower().strip() in vals:
+                    datum[param] = vals[datum[param].lower().strip()]
+                else:
+                    cur.execute(query, {key: datum[param].lower().strip()})
+                    result = cur.fetchone()
+                    if result:
+                        vals[datum[param].lower().strip()] = result[0]
+                        datum[param] = result[0]
+                        if f"✔ The provided {param} is correct: {result[0]}" not in response.message:
+                            response.message.append(f"✔ The provided {param} is correct: {result[0]}")
+                        response.valid.append(True)
                     else:
-                        entries[v[1]] = entries[v[1]][0]
-                elif isinstance(inputs2[k], str):
-                    cur.execute(v[0], {'element': inputs2[k].lower()})
-                    entries[v[1]] = cur.fetchone()
-                    if not entries[v[1]]:
-                        counter += 1
-                        response.message.append(f"✗  {k} ID for {inputs2[k]} not found. "
-                                                f"Does it exist in Neotoma?")
+                        if f"✗ The provided {param} with value {datum[param]} does not exist in Neotoma DB." not in response.message:
+                            response.message.append(f"✗ The provided {param} with value {datum[param]} does not exist in Neotoma DB.")
                         response.valid.append(False)
-                        entries[v[1]] = None
-                    else:
-                        entries[v[1]] = entries[v[1]][0]
-                else:
-                    entries[v[1]] = None
-                    response.message.append(f"?  {inputs2[k]} ID not given.")
-                    response.valid.append(True)
-            else:
-                response.message.append(f"?  {k} ID not given.")
-                response.valid.append(True)
-                entries[v[1]] = counter
-
-        var = Variable(**entries)
+        var = Variable(**{k: v for k, v in datum.items() if k != 'value'})
         response.valid.append(True)
         try:
             varid = var.get_id_from_db(cur)
+            varid = varid[0]
+            if f"✔ Variable ID retrieved from db: {varid}" not in response.message:
+                response.message.append(f"✔ Variable ID retrieved from db: {varid}")
             response.valid.append(True)
         except Exception as e:
             response.valid.append(False)
-            response.message.append(f"✗  Var ID cannot be retrieved from db: {e}")
-            varid = None
-
-        if varid:
-            varid = varid[0]
+            if f"✗  Var ID cannot be retrieved from db: {e}" not in response.message:
+                response.message.append(f"✗  Var ID cannot be retrieved from db: {e}")
+            if f"✗  Variable ID needed to create datum for taxon." not in response.message:
+                response.message.append(f"✗  Variable ID needed to create datum for taxon.")
+        try:
+            d = Datum(sampleid = 3, # Placeholder
+                      variableid = varid,
+                      value=datum.get('value'))
             response.valid.append(True)
-        else:
-            varunits = (inputs2['variableunits'][0]
-                        if isinstance(inputs2.get('variableunits'), list)
-                        else inputs2.get('variableunits'))
-            varcontextid = (inputs2['variablecontext'][0]
-                            if isinstance(inputs2.get('variablecontext'), list)
-                            else inputs2.get('variablecontext'))
-            varelement = (inputs2['variableelement'][0]
-                          if isinstance(inputs2.get('variableelement'), list)
-                          else inputs2.get('variableelement'))
-            response.message.append(
-                f"? Var ID not found for:\n"
-                f" variableunitsid: {varunits}, ID: {entries['variableunitsid']},\n"
-                f" taxon: {key.lower()}, ID: {entries['taxonid']},\n"
-                f" variableelement: {varelement}, ID: {entries['variableelementid']},\n"
-                f" variablecontextid: {varcontextid}, ID: {entries['variablecontextid']}")
-            response.valid.append(True)
-
-        for i in taxa[key]['value']:
-            try:
-                Datum(sampleid=int(3), variableid=varid, value=i)
-                response.valid.append(True)
-            except Exception as e:
-                response.valid.append(False)
+        except Exception as e:
+            response.valid.append(False)
+            if "✗  Datum cannot be created: {e}" not in response.message:
                 response.message.append(f"✗  Datum cannot be created: {e}")
-
-    
-    if response.validAll:
-        response.message.append("✔  Datum can be created.")
     return response
