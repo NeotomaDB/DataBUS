@@ -1,7 +1,7 @@
 import re
 from . import utils as ut
 
-def pull_params(params, yml_dict, csv_template, table=None, wide=False):
+def pull_params(params, yml_dict, csv_template, table=None):
     """Pull and process parameters for database insert statements.
 
     Extracts parameters from YAML template and CSV data, performs type conversions
@@ -28,21 +28,15 @@ def pull_params(params, yml_dict, csv_template, table=None, wide=False):
     add_unit_inputs = {}
     if re.match(".*\.$", table) == None:
         table = table + "."
-    if wide:
-        params = ut.prepare_value_parameters(params, yml_dict)
-    else:
-        params = ut.prepare_parameters(params, yml_dict, table)
+    params = ut.prepare_parameters(params, yml_dict, table)
     for i in params:
-        _process_parameter(i, table, wide, yml_dict, csv_template, add_unit_inputs)
+        _process_parameter(i, table, yml_dict, csv_template, add_unit_inputs)
     return ut.finalize_output(add_unit_inputs)
             
-def _process_parameter(param_name, table, wide, yml_dict, csv_template, add_unit_inputs):
+def _process_parameter(param_name, table, yml_dict, csv_template, add_unit_inputs):
     """Process a single parameter, handling all special cases.
     """
-    if wide:
-        valor = _get_value_subfields(param_name, yml_dict)
-    else:
-        valor = ut.retrieve_dict(yml_dict, table + param_name)
+    valor = ut.retrieve_dict(yml_dict, table + param_name)
     if not valor:
         add_unit_inputs[param_name] = None
         return

@@ -1,7 +1,7 @@
 import DataBUS.neotomaHelpers as nh
 from DataBUS import Response, Variable, Datum
 
-def valid_data(cur, yml_dict, csv_file, wide=False):
+def valid_data(cur, yml_dict, csv_file):
     """Validates paleontological data values against the Neotoma database.
 
     Validates data values and associated variables (taxon, units, element, context).
