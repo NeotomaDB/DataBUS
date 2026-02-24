@@ -1,3 +1,4 @@
+from .neotomaHelpers.utils import validate_int_values
 class Datum:
     """A data point measurement in the Neotoma database.
 
@@ -20,8 +21,8 @@ class Datum:
     """
 
     def __init__(self, sampleid=None, variableid=None, value=None):
-        self.sampleid = sampleid
-        self.variableid = variableid
+        self.sampleid = validate_int_values(sampleid, "sampleid")
+        self.variableid = validate_int_values(variableid, "variableid")
         self.value = value
 
     def insert_to_db(self, cur):

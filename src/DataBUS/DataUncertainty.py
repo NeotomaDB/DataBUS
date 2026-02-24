@@ -1,5 +1,6 @@
 import importlib.resources
-
+from .neotomaHelpers.utils import validate_int_values
+DATAUNCERTAINTY_PARAMS = ["uncertaintyvalue", "uncertaintyunitid", "notes"]
 with importlib.resources.open_text(
     "DataBUS.sqlHelpers", "insert_data_uncertainty.sql"
 ) as sql_file:
@@ -28,16 +29,10 @@ class DataUncertainty:
     def __init__(
         self, dataid, uncertaintyvalue, uncertaintyunitid, uncertaintybasisid, notes
     ):
-        self.dataid = dataid
-        if uncertaintyvalue == "NA":
-            uncertaintyvalue = None
+        self.dataid = validate_int_values(dataid, "dataid")
+        self.uncertaintyunitid = validate_int_values(uncertaintyunitid, "uncertaintyunitid")
+        self.uncertaintybasisid = validate_int_values(uncertaintybasisid, "uncertaintybasisid")
         self.uncertaintyvalue = uncertaintyvalue
-        if uncertaintyunitid == "NA":
-            uncertaintyunitid = None
-        self.uncertaintyunitid = (uncertaintyunitid)
-        if uncertaintybasisid == "NA":
-            uncertaintybasisid = None
-        self.uncertaintybasisid = (uncertaintybasisid)
         self.notes = notes
 
     def insert_to_db(self, cur):

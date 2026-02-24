@@ -59,9 +59,14 @@ def _process_value_entry(param_name, val_entry, csv_template, table, add_unit_in
     except KeyError:
         return
     if not clean_valor:
-        add_unit_inputs[param_name] = None
+        if 'taxonname' not in val_entry:
+            add_unit_inputs[param_name] = None
         return
     clean_valor = ut.convert_value_by_type(val_entry, clean_valor)
+    if not clean_valor:
+        if 'taxonname' not in val_entry:
+            add_unit_inputs[param_name] = None
+        return
     if param_name == 'notes':
         ut.add_note_entry(add_unit_inputs)
     elif any(k in table for k in ('chronologies', 'sampleages')):

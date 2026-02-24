@@ -1,7 +1,8 @@
 import DataBUS.neotomaHelpers as nh
 from DataBUS import Response, DataUncertainty
+from DataBUS.DataUncertainty import DATAUNCERTAINTY_PARAMS
 
-def valid_datauncertainty(cur, yml_dict, csv_file, wide=False):
+def valid_datauncertainty(cur, yml_dict, csv_file):
     """Validates data uncertainty values against the Neotoma database.
 
     Validates uncertainty values, units, and basis information. Queries database
@@ -22,80 +23,63 @@ def valid_datauncertainty(cur, yml_dict, csv_file, wide=False):
         Response(valid=[True], message=[...], validAll=True)
     """
     response = Response()
-    inputs = nh.pull_params(["uncertaintyvalue"], yml_dict, csv_file, "ndb.datauncertainties")
 
-    if 'value' in inputs:
-        if not inputs['value']:
-            response.message.append("? No Values to validate.")
-            response.valid.append(False)
+    try:
+        inputs = nh.pull_params(DATAUNCERTAINTY_PARAMS, yml_dict, csv_file, "ndb.datauncertainties")
+        if all(v is None for v in inputs.values()):
+            response.message.append("? No Uncertainty Values to validate.")
+            response.valid.append(True)
             return response
+    except Exception as e:
+        response.message.append(f"✗  Error pulling parameters for data uncertainty validation: {e}")
+        response.valid.append(False)
+        return response
 
     basis_query = """SELECT uncertaintybasisid FROM ndb.uncertaintybases
-                     WHERE LOWER(uncertaintybasis) = %(element)s;"""
+                     WHERE LOWER(uncertaintybasis) = %(uncertaintybasisid)s;"""
     units_query = """SELECT variableunitsid FROM ndb.variableunits
-                     WHERE LOWER(variableunits) = %(element)s;"""
-    par = {'uncertaintybasis': [basis_query, 'uncertaintybasisid'],
-           'variableunits': [units_query, 'variableunitsid']}
-
-    if wide:
-        taxa = inputs.copy()
-    else:
-        taxa = {'value': inputs['value']}
-
-    for n, key in enumerate(taxa.keys()):
-        params = [v for k, v in taxa[key].items() if k not in ['value', 'uncertaintybasis']]
-        inputs2 = nh.pull_params(params, yml_dict, csv_file, "ndb.variables", values=True)
-        if 'uncertaintybasis' in taxa[key]:
-            inputs2['uncertaintybasis'] = taxa[key]['uncertaintybasis']
-        inputs2['taxon'] = key
-        entries = {}
-        counter = 0
-        for k, v in par.items():
-            if k in inputs2:
-                if isinstance(inputs2[k], list):
-                    cur.execute(v[0], {'element': inputs2[k][0].lower()})
-                    entries[v[1]] = cur.fetchone()
-                    if not entries[v[1]]:
-                        counter += 1
-                        response.message.append(f"✗  {k} ID for {key} not found. "
-                                                f"Does it exist in Neotoma?")
-                        response.valid.append(False)
-                        entries[v[1]] = None
+                     WHERE LOWER(variableunits) = %(uncertaintyunitid)s;"""
+    par = {'uncertaintybasisid': [basis_query, 'uncertaintybasisid'],
+           'uncertaintyunitid': [units_query, 'uncertaintyunitid']}
+    
+    vals = {}
+    for taxon in inputs:
+        if inputs[taxon].get('uncertaintyvalue') is None:
+            continue
+        inputs[taxon]['uncertaintybasisid'] = [inputs[taxon].get('uncertaintybasisid')] * len(inputs[taxon].get('uncertaintyvalue'))
+        for datum in zip(*inputs.get(taxon).values()):
+            datum = dict(zip(list(inputs[taxon].keys()), datum))
+            if datum.get('uncertaintyvalue') is None:
+                continue
+            for param, (query, key) in par.items():
+                if isinstance(datum.get(param), str):
+                    if datum[param].lower().strip() in vals:
+                        datum[param] = vals[datum[param].lower().strip()]
                     else:
-                        entries[v[1]] = entries[v[1]][0]
-                elif isinstance(inputs2[k], str):
-                    cur.execute(v[0], {'element': inputs2[k].lower()})
-                    entries[v[1]] = cur.fetchone()
-                    if not entries[v[1]]:
-                        counter += 1
-                        response.message.append(f"✗  {k} ID for {inputs2[k]} not found. "
-                                                f"Does it exist in Neotoma?")
-                        response.valid.append(False)
-                        entries[v[1]] = None
-                    else:
-                        entries[v[1]] = entries[v[1]][0]
-                else:
-                    entries[v[1]] = None
-                    response.message.append(f"?  {key} {k} ID not given.")
-                    response.valid.append(True)
-            else:
-                response.message.append(f"?  {key} {k} ID not given.")
-                response.valid.append(True)
-                entries[v[1]] = counter
-
-        for i in taxa[key]['value']:
+                        cur.execute(query, {key: datum[param].lower().strip()})
+                        result = cur.fetchone()
+                        if result:
+                            name = datum[param]
+                            vals[datum[param].lower().strip()] = result[0]
+                            datum[param] = result[0]
+                            if f"✔ The provided {param} is correct: {result[0]}" not in response.message:
+                                response.message.append(f"✔ The provided {param} ({name}) is correct: {result[0]}")
+                            response.valid.append(True)
+                        else:
+                            if f"✗ The provided {param} with value {datum[param]} does not exist in Neotoma DB." not in response.message:
+                                response.message.append(f"✗ The provided {param} with value {datum[param]} does not exist in Neotoma DB.")
+                            response.valid.append(False)
             try:
-                DataUncertainty(dataid=3,  # Placeholder required for validation
-                                uncertaintyvalue=i,
-                                uncertaintyunitid=entries['variableunitsid'],
-                                uncertaintybasisid=entries['uncertaintybasisid'],
-                                notes=None)
+                DataUncertainty(dataid = 3,  # Placeholder required for validation
+                                uncertaintyvalue = datum.get('uncertaintyvalue'),
+                                uncertaintyunitid = datum.get('variableunitsid'),
+                                uncertaintybasisid = datum.get('uncertaintybasisid'),
+                                notes = datum.get('notes'))
                 response.valid.append(True)
             except Exception as e:
                 response.valid.append(False)
-                response.message.append(f"✗  Datum Uncertainty cannot be created: {e}")
-
-    
+                if f"✗  Datum Uncertainty cannot be created: {e}" not in response.message:
+                    response.message.append(f"✗  Datum Uncertainty cannot be created: {e}")
     if response.validAll:
         response.message.append("✔  Datum Uncertainty can be created.")
     return response

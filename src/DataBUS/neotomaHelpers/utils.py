@@ -186,15 +186,11 @@ def add_taxon_entry(add_unit_inputs, value_meta, clean_value):
     taxon_name = value_meta['taxonname']
     # retrieve the last word after the last `.` neotoma: ndb.variables.variableunitsid -> variableunitsid
     key = value_meta['neotoma'].split('.')[-1]
-    add_unit_inputs[taxon_name] = {
-        key: clean_value
-    }
-    # if 'unitcolumn' in value_meta:
-    #     add_unit_inputs[taxon_name]['unitcolumn'] = value_meta['unitcolumn']
-    # if 'uncertaintyunit' in value_meta:
-    #     add_unit_inputs[taxon_name]['uncertaintyunit'] = value_meta['uncertaintyunit']
-    # if 'uncertaintybasis' in value_meta:
-    #     add_unit_inputs[taxon_name]['uncertaintybasis'] = value_meta['uncertaintybasis']
+    if taxon_name not in add_unit_inputs:
+        add_unit_inputs[taxon_name] = {}
+    add_unit_inputs[taxon_name][key] = clean_value
+    if 'uncertaintybasisid' in value_meta:
+        add_unit_inputs[taxon_name]['uncertaintybasisid'] = value_meta['uncertaintybasisid']
 
 def finalize_output(add_unit_inputs):
     """Finalize output by cleaning up chronologies/sampleages and notes.
