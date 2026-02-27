@@ -6,23 +6,23 @@ def parse_arguments():
     """Parse commandline arguments for the Neotoma data uploader.
 
     Parses command-line arguments for paths to data directory, template file,
-    validation logs directory, and overwrite option. Validates that specified
+    logs directory, and overwrite option. Validates that specified
     paths exist before returning.
 
     Examples:
         >>> parse_arguments()  # doctest: +SKIP
-        {'data': 'data/', 'template': 'pollen_template.yml', 'validation_logs': 'data/validation_logs/', 'overwrite': False}
+        {'data': 'data/', 'template': 'pollen_template.yml', 'logs': 'data/logs/', 'overwrite': False}
         >>> parse_arguments()  # doctest: +SKIP (with --data paleolake_core --template chronology.xlsx)
-        {'data': 'paleolake_core/', 'template': 'chronology.xlsx', 'validation_logs': 'data/validation_logs/', 'overwrite': False}
+        {'data': 'paleolake_core/', 'template': 'chronology.xlsx', 'logs': 'data/logs/', 'overwrite': False}
 
     Args:
         None
 
     Returns:
-        dict: Dictionary with keys 'data', 'template', 'validation_logs', and 'overwrite'.
+        dict: Dictionary with keys 'data', 'template', 'logs', and 'overwrite'.
               'data': Path to the data directory (str)
               'template': Path to the YAML/XLSX template file (str)
-              'validation_logs': Path to validation logs folder (str)
+              'logs': Path to validation logs folder (str)
               'overwrite': Boolean flag for overwriting option (bool)
 
     Raises:
@@ -43,16 +43,17 @@ def parse_arguments():
         nargs="?",
         const="template.yml",
         default="template.yml",
-        help="YAML/XLSX Template file to use for validation",
+        help="YAML/XLSX Template file to map to Neotoma",
     )
     parser.add_argument(
-        "--validation_logs",
+        "--logs",
         type=str,
         nargs="?",
-        const="data/validation_logs/",
-        default="data/validation_logs/",
-        help="Folder where the validation templates are.",
+        const="data/logs/",
+        default="data/logs/",
+        help="Validation logs. In order to get logs, validation must be run with --upload False first.",
     )
+
     parser.add_argument(
         "--overwrite",
         type=bool,
@@ -60,6 +61,15 @@ def parse_arguments():
         const=False,
         default=False,
         help="True/False overwriting option for uploader",
+    )
+
+    parser.add_argument(
+        "--upload",
+        type=bool,
+        nargs="?",
+        const=False,
+        default=False,
+        help="Set to True if data should be uploaded to the database after validation.",
     )
 
     args = parser.parse_args()
@@ -74,5 +84,4 @@ def parse_arguments():
             f"The file '{args.template}' could not be found within the current path."
         )
 
-    # SUGGESTION: Add validation_logs to the returned dictionary for consistency with parser definition
     return {"data": args.data, "template": args.template, "overwrite": args.overwrite}

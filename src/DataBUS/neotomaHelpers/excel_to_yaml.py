@@ -63,8 +63,8 @@ def excel_to_yaml(temp_file, file_name):
     df1 = df1.replace({np.nan: None})
     df1.columns = map(str.lower, df1.columns)
     df1["vocab"] = df1["vocab"].str.replace("'", '"')
-    df1["vocab"] = df1["vocab"].str.replace("‘", '"')
-    df1["vocab"] = df1["vocab"].str.replace("’", '"')
+    df1["vocab"] = df1["vocab"].str.replace("'", '"')
+    df1["vocab"] = df1["vocab"].str.replace("'", '"')
 
     # Metadata
     df2 = pd.read_excel(temp_file, sheet_name="Metadata")

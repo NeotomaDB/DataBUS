@@ -100,37 +100,6 @@ def prepare_parameters(params, yml_dict, table):
     return expanded_params
 
 
-def prepare_value_parameters(params, yml_dict):
-    """Expand parameters based on column field matches.
-
-    Converts individual parameters into detailed parameter list by checking
-    for entries where the 'column' field matches the parameter name.
-
-    Used when values=True (value column processing).
-
-    Args:
-        params (list): Original list of parameter names.
-        yml_dict (dict): Dictionary containing 'metadata' key with param definitions.
-
-    Returns:
-        list: Expanded parameter list with column-matched subfield details.
-    """
-    expanded_params = list(params)
-
-    for param in params:
-        subfields = [
-            entry for entry in yml_dict['metadata']
-            if entry.get('column', '') == param
-        ]
-        if subfields:
-            for entry in subfields:
-                param_name = entry['neotoma'].replace('neotoma.', "")
-                expanded_params.append(param_name)
-            if param in expanded_params:
-                expanded_params.remove(param)
-    return expanded_params
-
-
 def add_note_entry(add_unit_inputs):
     """Add a note entry to the accumulator, handling list aggregation.
 

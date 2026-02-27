@@ -10,7 +10,7 @@ def template_to_dict(temp_file):
 
     Examples:
         >>> template_to_dict('pollen_template.yml')  # doctest: +SKIP
-        {'apiVersion': 'neotoma v2.0', 'metadata': [...], 'kind': 'Dataset'}
+        {'apiVersion': 'neotoma v2.0', 'metadata': [...], 'kind': 'datasets'}
         >>> template_to_dict('chronology_template.xlsx')  # doctest: +SKIP
         {'apiVersion': 'neotoma v2.0', 'metadata': [...], 'kind': 'Chronology'}
 

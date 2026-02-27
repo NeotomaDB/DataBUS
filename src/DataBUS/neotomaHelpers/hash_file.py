@@ -28,7 +28,7 @@ def hash_file(filename, validation_files="data/validation_logs/"):
     modified_filename = os.path.basename(filename)
     logfile = f"{validation_files}{modified_filename}"+ ".valid.log"
     not_val_logfile = f"{validation_files}not_validated/{modified_filename}"+ ".valid.log"
-    # SUGGESTION: Use a context manager (with statement) to ensure file handle is properly closed
+    # Use a context manager (with statement) to ensure file handle is properly closed
     response["hash"] = hashlib.md5(open(filename, "rb").read()).hexdigest()
     response["message"].append(response["hash"])
     if os.path.exists(logfile):

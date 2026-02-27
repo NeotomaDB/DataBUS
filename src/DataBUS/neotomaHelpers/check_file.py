@@ -1,7 +1,7 @@
 import re
 import os
 
-def check_file(filename, strict = False, validation_files = "data/validation_logs/"):
+def check_file(filename, strict = False, validation_files = "data/logs/"):
     """Checks validation log file for errors from prior validation runs.
 
     Examines validation log files to determine if a CSV file has been successfully
@@ -26,7 +26,7 @@ def check_file(filename, strict = False, validation_files = "data/validation_log
     modified_filename = os.path.basename(filename)
     logfile = f"{validation_files}{modified_filename}"+ ".valid.log"
     not_val_logfile = f"{validation_files}not_validated/{modified_filename}"+ ".valid.log"
-    if os.path.exists(logfile): 
+    if os.path.exists(logfile):
         with open(logfile, "r", encoding="utf-8") as f:
             for line in f:
                 error = re.match("✗", line)
@@ -40,7 +40,7 @@ def check_file(filename, strict = False, validation_files = "data/validation_log
             response["message"].append("No errors found in the last validation.")
         else:
             response["message"].append("Errors found in the prior validation.")
-    elif os.path.exists(not_val_logfile): 
+    elif os.path.exists(not_val_logfile):
         with open(not_val_logfile, "r", encoding="utf-8") as f:
             for line in f:
                 error = re.match("✗", line)
