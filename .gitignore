@@ -1,11 +1,27 @@
-uv.lock
-
-src/DataBUS.egg-info/
-src/DataBUS/__pycache__/
-
-src/DataBUS/neotomaHelpers/__pycache__/
-src/DataBUS/neotomaValidator/__pycache__/
-src/DataBUS/sqlHelpers/__pycache__/
 
 .DS_Store
+uv.lock
+.env
+.venv
+.claude
+**/__pycache__/
+**.egg-info/
+
+data/*
+# But keep these two files
+!data/template_example.yml
+!data/data_example.csv
+
 build/
+validation_playground.py
+docs/*.md
+
+playground_results.yml
+src/DataBUS/neotomaUploader/tests/
+src/DataBUS/neotomaHelpers/tests/
+
+
+# Eventually Add:
+
+.github/workflows/ci.yml
+.github/workflows/release.yml

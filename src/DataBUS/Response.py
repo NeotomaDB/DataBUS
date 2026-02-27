@@ -40,8 +40,6 @@ class Response:
         self.name = {}
         self.indices = []
         self.counter = 0
-        #self.nearby = []
-        #self.matched = {}
     
     @property
     def validAll(self):

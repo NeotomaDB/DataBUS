@@ -1,0 +1,480 @@
+apiVersion: neotoma v2.0
+headers: 2
+kind: Development
+# ─────────────────────────────────────────────────────────────────────────────
+# Universal DataBUS Template
+#
+# This template covers the union of fields seen across SISAL, 210Pb, NODE-OST,
+# EANODE-OST, and Pollen datasets. Each entry maps a CSV column name to its
+# target field in the Neotoma database.
+#
+# Columns marked "required: true" must be present and non-null for a dataset
+# to pass validation. Everything else is optional and may be left blank (or
+# the row omitted from the CSV entirely).
+#
+# "rowwise: true"  → the column has one value per sample row.
+# "rowwise: false" → the column has a single value shared by all rows.
+# ─────────────────────────────────────────────────────────────────────────────
+metadata:
+
+# ── Dataset metadata (constants) ─────────────────────────────────────────────
+- column: datasettypeid
+  neotoma: ndb.datasettypes.datasettypeid
+  required: true
+  value: null
+  notes: >
+    Set to the dataset type name string, e.g. "pollen", "Lead 210",
+    "speleothem", "ostracode surface sample", etc.
+
+- column: databasename
+  neotoma: ndb.datasetdatabases.databasename
+  required: true
+  value: null
+  notes: Name of the contributing database (e.g. SISAL, African Pollen Database).
+
+# ── Site ─────────────────────────────────────────────────────────────────────
+- column: SiteName
+  neotoma: ndb.sites.sitename
+  required: true
+  rowwise: false
+  type: string
+
+- column: Latitude
+  neotoma: ndb.sites.geog.latitude
+  required: true
+  rowwise: false
+  type: float
+
+- column: Longitude
+  neotoma: ndb.sites.geog.longitude
+  required: true
+  rowwise: false
+  type: float
+
+- column: Altitude
+  neotoma: ndb.sites.altitude
+  required: false
+  rowwise: false
+  type: float
+
+- column: SiteArea
+  neotoma: ndb.sites.area
+  required: false
+  rowwise: false
+  type: float
+
+- column: SiteDescription
+  neotoma: ndb.sites.sitedescription
+  required: false
+  rowwise: false
+  type: string
+
+- column: SiteNotes
+  neotoma: ndb.sites.notes
+  required: false
+  rowwise: false
+  type: string
+
+# ── Geopolitical Units ────────────────────────────────────────────────────────
+- column: Country
+  neotoma: ndb.sitegeopolitical.national_unit
+  required: false
+  rowwise: false
+  type: string
+  vocab: [fixed]
+
+- column: StateProvince
+  neotoma: ndb.sitegeopolitical.subnational_unit_lv1
+  required: false
+  rowwise: false
+  type: string
+  vocab: [fixed]
+
+- column: County
+  neotoma: ndb.sitegeopolitical.subnational_unit_lv2
+  required: false
+  rowwise: false
+  type: string
+  vocab: [fixed]
+
+# ── Collection Unit ───────────────────────────────────────────────────────────
+- column: Handle
+  neotoma: ndb.collectionunits.handle
+  required: false
+  overwrite: true
+  rowwise: false
+  type: string
+  notes: Short unique identifier for the collection unit (≤10 chars recommended).
+
+- column: CollectionUnitName
+  neotoma: ndb.collectionunits.collunitname
+  required: false
+  rowwise: false
+  type: string
+
+- column: CollectionType
+  neotoma: ndb.collectionunits.colltypeid
+  required: false
+  rowwise: false
+  type: string
+
+- column: DepositionalEnvironment
+  neotoma: ndb.collectionunits.depenvtid
+  required: false
+  rowwise: false
+  type: string
+
+- column: CollectionDate
+  neotoma: ndb.collectionunits.colldate
+  formatorrange: '%Y-%m-%d'
+  required: false
+  rowwise: false
+  type: date
+
+- column: CollectionDevice
+  neotoma: ndb.collectionunits.colldevice
+  required: false
+  rowwise: false
+  type: string
+
+- column: GPSLatitude
+  neotoma: ndb.collectionunits.geog.latitude
+  required: false
+  rowwise: false
+  type: float
+
+- column: GPSLongitude
+  neotoma: ndb.collectionunits.geog.longitude
+  required: false
+  rowwise: false
+  type: float
+
+- column: GPSAltitude
+  neotoma: ndb.collectionunits.gpsaltitude
+  required: false
+  rowwise: false
+  type: float
+
+- column: GPSError
+  neotoma: ndb.collectionunits.gpserror
+  required: false
+  rowwise: false
+  type: float
+
+- column: WaterDepth
+  neotoma: ndb.collectionunits.waterdepth
+  required: false
+  rowwise: false
+  type: float
+
+- column: Substrate
+  neotoma: ndb.collectionunits.substrateid
+  required: false
+  rowwise: false
+  type: string
+
+- column: SlopeAngle
+  neotoma: ndb.collectionunits.slopeangle
+  required: false
+  rowwise: false
+  type: float
+
+- column: SlopeAspect
+  neotoma: ndb.collectionunits.slopeaspect
+  required: false
+  rowwise: false
+  type: float
+
+- column: Location
+  neotoma: ndb.collectionunits.location
+  required: false
+  rowwise: false
+  type: string
+
+- column: CollectionUnitNotes
+  neotoma: ndb.collectionunits.notes
+  required: false
+  rowwise: false
+  type: string
+
+# ── Dataset ──────────────────────────────────────────────────────────────────
+- column: DatasetName
+  neotoma: ndb.datasets.datasetname
+  required: false
+  rowwise: false
+  type: string
+
+- column: DatasetNotes
+  neotoma: ndb.datasets.notes
+  required: false
+  rowwise: false
+  type: string
+
+# ── Analysis Units ────────────────────────────────────────────────────────────
+- column: Depth
+  neotoma: ndb.analysisunits.depth
+  required: false
+  overwrite: true
+  rowwise: true
+  type: float
+
+- column: Thickness
+  neotoma: ndb.analysisunits.thickness
+  required: false
+  overwrite: true
+  rowwise: true
+  type: float
+
+- column: AnalysisUnitName
+  neotoma: ndb.analysisunits.analysisunitname
+  required: false
+  rowwise: true
+  type: string
+
+# ── Chronology ────────────────────────────────────────────────────────────────
+- column: ChronologyName
+  neotoma: ndb.chronologies.chronologyname
+  required: false
+  rowwise: false
+  type: string
+  chronologyname: DefaultChronology
+
+- column: AgeModel
+  neotoma: ndb.chronologies.agemodel
+  required: false
+  rowwise: false
+  type: string
+  chronologyname: DefaultChronology
+
+- column: AgeType
+  neotoma: ndb.chronologies.agetypeid
+  required: false
+  rowwise: false
+  type: string
+  chronologyname: DefaultChronology
+
+- column: AgeBoundOlder
+  neotoma: ndb.chronologies.ageboundolder
+  required: false
+  rowwise: false
+  type: float
+  chronologyname: DefaultChronology
+
+- column: AgeBoundYounger
+  neotoma: ndb.chronologies.ageboundyounger
+  required: false
+  rowwise: false
+  type: float
+  chronologyname: DefaultChronology
+
+- column: DatePrepared
+  neotoma: ndb.chronologies.dateprepared
+  required: false
+  rowwise: false
+  type: string
+  chronologyname: DefaultChronology
+
+- column: ChronologyNotes
+  neotoma: ndb.chronologies.notes
+  required: false
+  rowwise: false
+  type: string
+  chronologyname: DefaultChronology
+
+- column: ChronPreparer
+  neotoma: ndb.chronologies.contactname
+  required: false
+  rowwise: false
+  type: string
+  chronologyname: DefaultChronology
+
+# ── Chron Controls ────────────────────────────────────────────────────────────
+- column: Depth
+  neotoma: ndb.chroncontrols.depth
+  required: false
+  rowwise: true
+  type: float
+
+- column: Thickness
+  neotoma: ndb.chroncontrols.thickness
+  required: false
+  rowwise: true
+  type: float
+
+- column: ChronControlAge
+  neotoma: ndb.chroncontrols.age
+  required: false
+  rowwise: true
+  type: float
+
+- column: ChronControlAgeYounger
+  neotoma: ndb.chroncontrols.agelimityounger
+  required: false
+  rowwise: true
+  type: float
+
+- column: ChronControlAgeOlder
+  neotoma: ndb.chroncontrols.agelimitolder
+  required: false
+  rowwise: true
+  type: float
+
+- column: ChronControlType
+  neotoma: ndb.chroncontrols.chroncontroltypeid
+  required: false
+  rowwise: true
+  type: string
+
+- column: AgeType
+  neotoma: ndb.chroncontrols.agetypeid
+  required: false
+  rowwise: true
+  type: string
+
+# ── Geochronology ─────────────────────────────────────────────────────────────
+- column: GeochronAge
+  neotoma: ndb.geochronology.age
+  required: false
+  rowwise: true
+  type: float
+
+- column: GeochronType
+  neotoma: ndb.geochronology.geochrontypeid
+  required: false
+  rowwise: true
+  type: string
+
+- column: GeochronAgeType
+  neotoma: ndb.geochronology.agetypeid
+  required: false
+  rowwise: true
+  type: string
+
+- column: GeochronErrorOlder
+  neotoma: ndb.geochronology.errorolder
+  required: false
+  rowwise: true
+  type: float
+
+- column: GeochronErrorYounger
+  neotoma: ndb.geochronology.erroryounger
+  required: false
+  rowwise: true
+  type: float
+
+- column: LabNumber
+  neotoma: ndb.geochronology.labnumber
+  required: false
+  rowwise: true
+  type: string
+
+- column: MaterialDated
+  neotoma: ndb.geochronology.materialdated
+  required: false
+  rowwise: true
+  type: string
+
+# ── Sample Ages ────────────────────────────────────────────────────────────────
+- column: SampleAge
+  neotoma: ndb.sampleages.age
+  required: false
+  rowwise: true
+  type: float
+  chronologyname: DefaultChronology
+
+- column: SampleAgeOlder
+  neotoma: ndb.sampleages.ageolder
+  required: false
+  rowwise: true
+  type: float
+  chronologyname: DefaultChronology
+
+- column: SampleAgeYounger
+  neotoma: ndb.sampleages.ageyounger
+  required: false
+  rowwise: true
+  type: float
+  chronologyname: DefaultChronology
+
+- column: SampleAgeModel
+  neotoma: ndb.sampleages.agemodel
+  required: false
+  rowwise: false
+  type: string
+  chronologyname: DefaultChronology
+
+# ── Data values ────────────────────────────────────────────────────────────────
+- column: TaxonName
+  neotoma: ndb.variables.taxonid
+  required: false
+  rowwise: true
+  type: string
+
+- column: VariableElement
+  neotoma: ndb.variables.variableelementid
+  required: false
+  rowwise: true
+  type: string
+
+- column: VariableContext
+  neotoma: ndb.variables.variablecontextid
+  required: false
+  rowwise: true
+  type: string
+
+- column: Value
+  neotoma: ndb.data.value
+  required: false
+  rowwise: true
+  type: float
+
+- column: Units
+  neotoma: ndb.variables.variableunitsid
+  required: false
+  rowwise: true
+  type: string
+
+# ── Contacts ──────────────────────────────────────────────────────────────────
+- column: PrincipalInvestigator
+  neotoma: ndb.datasetpis.contactname
+  required: false
+  rowwise: false
+  type: string
+
+- column: Collector
+  neotoma: ndb.collectors.contactname
+  required: false
+  rowwise: false
+  type: string
+
+- column: DatasetProcessor
+  neotoma: ndb.datasetprocessor.contactname
+  required: false
+  rowwise: false
+  type: string
+
+- column: SampleAnalyst
+  neotoma: ndb.sampleanalysts.contactname
+  required: false
+  rowwise: false
+  type: string
+
+# ── Publications ──────────────────────────────────────────────────────────────
+- column: DOI
+  neotoma: ndb.publications.doi
+  formatorrange: '^10\.\d{4,9}/[-._;()/:A-Z0-9]+$'
+  required: false
+  rowwise: false
+  type: string
+
+- column: Citation
+  neotoma: ndb.publications.citation
+  required: false
+  rowwise: false
+  type: string
+
+- column: PublicationYear
+  neotoma: ndb.publications.year
+  required: false
+  rowwise: false
+  type: string
