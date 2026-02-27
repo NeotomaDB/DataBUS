@@ -50,6 +50,7 @@ def valid_site(cur, yml_dict, csv_file):
         close_sites = site.find_close_sites(cur, limit=3)
         columns = [desc[0] for desc in cur.description]
         if close_sites:
+            nearby = []
             for site_data in close_sites:
                 raw = dict(zip(columns, site_data))
                 new_site = Site(
@@ -63,23 +64,22 @@ def valid_site(cur, yml_dict, csv_file):
                                raw.get("latitudesouth"), raw.get("longitudewest")))
                 )
                 new_site.distance = round(raw.get("dist"), 3)
-                response.nearby.append(new_site)
+                nearby.append(new_site)
                 response.valid.append(True)
                 if (new_site.distance == 0 and
                         new_site.sitename.lower().strip() == site.sitename.lower().strip()):
                     site.siteid = new_site.siteid
                     response.id = new_site.siteid
-                    response.elements.append(site)
                     response.valid.append(True)
                     response.message.append(
-                        f"✔  Existing site {site.sitename}, ID {response.siteid}.")
+                        f"✔  Existing site {site.sitename}, ID {response.id}.")
                     return response
             response.message.append("?  One or more sites exist close to the requested site.")
-            sitenames_list = [st.sitename for st in response.nearby]
+            sitenames_list = [st.sitename for st in nearby]
             response.matched["namematch"] = any(
                 name == site.sitename for name in sitenames_list)
             response.matched["distmatch"] = any(
-                s.distance == 0 for s in response.nearby)
+                s.distance == 0 for s in nearby)
             response.doublematched = (
                 response.matched["namematch"] and response.matched["distmatch"])
             response.message.append(
