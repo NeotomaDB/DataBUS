@@ -2,6 +2,7 @@ CONTACT_PARAMS = ["contactid", "contactname"]
 CONTACT_TABLES = ["ndb.datasetpis", "ndb.collectors",
                   "ndb.sampleanalysts", "ndb.datasetprocessor",
                   "ndb.chronologies"]
+from .neotomaHelpers.utils import validate_int_values
 class Contact:
     """A person who participated in data collection or processing in Neotoma.
 
@@ -23,15 +24,9 @@ class Contact:
     """
 
     def __init__(self, contactid, contactname=None, order=None):
-        if isinstance(contactid, int) or contactid is None:
-            self.contactid = contactid
-        else:
-            raise ValueError("ContactID must be an integer.")
+        self.contactid = validate_int_values(contactid, "contactid")
         self.contactname = contactname
-        if isinstance(order, int) or order is None:
-            self.order = order
-        else:
-            raise ValueError("Order must be an integer or None.")
+        self.order = validate_int_values(order, "order")
 
     def insert_pi(self, cur, datasetid):
         """Insert contact as principal investigator for a dataset.

@@ -1,6 +1,5 @@
-# with open('./DataBUS/sqlHelpers/insert_pb_model.sql', 'r') as sql_file:
-#    insert_pb_model = sql_file.read()
-
+from .neotomaHelpers.utils import validate_int_values
+LEAD_MODEL_PARAMS = ["pbbasisid", "cumulativeinventory", "datinghorizon"]
 import importlib.resources
 with importlib.resources.open_text(
     "DataBUS.sqlHelpers", "insert_pb_model.sql"
@@ -17,6 +16,7 @@ class LeadModel:
         pbbasisid (int | None): Lead isotope basis ID.
         analysisunitid (int | None): Analysis unit ID.
         cumulativeinventory (float | None): Cumulative inventory (Bq/cm²).
+        datinghorizon (float | None): Depth of the dating horizon (cm).
 
     Examples:
         >>> lead_model = LeadModel(pbbasisid=1, analysisunitid=2, cumulativeinventory=145.3)
@@ -24,10 +24,11 @@ class LeadModel:
         145.3
     """
 
-    def __init__(self, pbbasisid=None, analysisunitid=None, cumulativeinventory=None):
-        self.pbbasisid = pbbasisid
-        self.analysisunitid = analysisunitid
+    def __init__(self, pbbasisid=None, analysisunitid=None, cumulativeinventory=None, datinghorizon=None):
+        self.pbbasisid = validate_int_values(pbbasisid, "pbbasisid")
+        self.analysisunitid = validate_int_values(analysisunitid, "analysisunitid")
         self.cumulativeinventory = cumulativeinventory
+        self.datinghorizon = datinghorizon
 
     def insert_to_db(self, cur):
         """Insert the Lead model record into the Neotoma database.
@@ -57,4 +58,4 @@ class LeadModel:
         Returns:
             str: String representation.
         """
-        return f"LeadModel(pbbasisid={self.pbbasisid}, analysisunitid={self.analysisunitid}, cumulativeinventory={self.cumulativeinventory})"
+        return f"LeadModel(pbbasisid={self.pbbasisid},analysisunitid={self.analysisunitid}, cumulativeinventory={self.cumulativeinventory})"

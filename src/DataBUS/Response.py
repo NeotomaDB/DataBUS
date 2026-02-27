@@ -21,16 +21,9 @@ class Response:
         valid (list): Validation status values.
         message (list): Message strings.
         validAll (bool | None): Overall validation status.
-        datasetid (int | None): Associated dataset ID.
-        datasetpi (list): List of dataset principal investigator IDs.
-        processor (list): List of data processor IDs.
-        collector (list): List of collector IDs.
-        repoid (int | None): Repository ID.
-        databaseid (int | None): Database ID.
-        sampleid (list): List of sample IDs.
-        data_id (dict): Mapping of data identifiers.
-        uncertaintyinputs (list): Uncertainty input values.
-        id (list): General ID list.
+        id_int (int | None): Associated ID.
+        id_list (list): Associated IDs.
+        id_dict (dict): Mapping of data identifiers.
         name (dict): Name mapping dictionary.
         indices (list): List of indices.
     """
@@ -41,14 +34,14 @@ class Response:
         """
         self.valid = []
         self.message = []
-        self.id = []
-        self.data_id = {}
+        self.id_int = None
+        self.id_list = []
+        self.id_dict = {}
         self.name = {}
-        self.elements = []
         self.indices = []
         self.counter = 0
-        self.nearby = []
-        self.matched = {}
+        #self.nearby = []
+        #self.matched = {}
     
     @property
     def validAll(self):

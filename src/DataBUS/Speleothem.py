@@ -80,8 +80,8 @@ class Speleothem:
         self.monitoring = monitoring
         self.rockageid = validate_int_values(rockageid, "rockageid")
         self.entrancedistance = entrancedistance
-        self.entrancedistanceunits = validate_int_values(entrancedistanceunits)
-        self.speleothemtypeid = validate_int_values(speleothemtypeid)
+        self.entrancedistanceunits = validate_int_values(entrancedistanceunits, "entrancedistanceunits")
+        self.speleothemtypeid = validate_int_values(speleothemtypeid, "speleothemtypeid")
 
     def __str__(self):
         """Return string representation of the Speleothem object.
@@ -338,10 +338,10 @@ class ExternalSpeleothem:
         externalid=None,
         extdatabaseid=None,
         externaldescription=None):
-        self.entityid = entityid
+        self.entityid = validate_int_values(entityid, "entityid")
         self.externalid = externalid
-        self.extdatabaseid = extdatabaseid
-        self.externaldescription=externaldescription
+        self.extdatabaseid = validate_int_values(extdatabaseid, "extdatabaseid")
+        self.externaldescription = externaldescription
 
     def __str__(self):
         """Return string representation of ExternalSpeleothem.
@@ -366,7 +366,7 @@ class ExternalSpeleothem:
         query = """
                 SELECT insert_externalspeleothem(_entityid := %(entityid)s,
                                                     _externalid := %(externalid)s,
-                                                    _extdatabaseid := %(extdatabaseid)s,
+                                                    _externaldatabaseid := %(extdatabaseid)s,
                                                     _externaldescription := %(externaldescription)s)
                 """
         inputs = {"entityid": self.entityid,
