@@ -2,7 +2,7 @@ import DataBUS.neotomaHelpers as nh
 from DataBUS import Contact, Response
 from DataBUS.Contact import CONTACT_PARAMS, CONTACT_TABLES
 
-def valid_contact(cur, yml_dict, csv_file):
+def valid_contact(cur, yml_dict, csv_file, tables=CONTACT_TABLES):
     """Validates contact information against the Neotoma Paleoecology Database.
 
     Validates contact data (contact IDs or names) against the Neotoma database
@@ -22,74 +22,60 @@ def valid_contact(cur, yml_dict, csv_file):
         Response(valid=[True, True], message=[...], validAll=True)
     """
     response = Response()
-    inputs = nh.pull_params(CONTACT_PARAMS, yml_dict, csv_file, CONTACT_TABLES)
-
-    for i, entry in enumerate(inputs):
-        if not entry['contactid']:
-            if isinstance(entry.get('contactname'), list):
-                entry['contactname'] = list(set(entry["contactname"]))
-                entry['contactname'] = [value for item in entry['contactname']
-                                        for value in item.split("|")]
-                entry['contactname'] = list(set(entry["contactname"]))
-            elif isinstance(entry.get('contactname'), str):
-                entry['contactname'] = entry['contactname'].split("|")
-        else:
-            entry["contactid"] = list(set(entry["contactid"]))
-        entry["table"] = table[i]
-
-    for element in inputs:
-        if element.get('contactid') or element.get('contactname'):
-            response.message.append(
-                f"  === Checking Against Database - Table: {element['table']}.contactid ==="
-            )
-        agentname = element.get("contactname") or element.get("contactid")
-        if agentname:
-            namematch = []
-            for name in agentname:
-                familyname = name.split(",")[0].strip()
-                firstname = name.split(",")[1].strip() if len(name.split(",")) > 1 else ""
-                if '.' in firstname:
-                    parts = firstname.strip().split()
-                    if len(parts) >= 2 and len(parts[1].replace(".", "")) == 1:
-                        firstname = parts[0][0].upper() + "." + parts[1][0].upper() + "."
-                    name_query = """SELECT contactid, familyname || ', ' || leadinginitials AS fullname
-                                    FROM ndb.contacts
-                                    WHERE LOWER(familyname) = %(familyname)s AND
-                                          LOWER(leadinginitials) ILIKE %(leadinginitials)s;"""
-                    cur.execute(name_query, {"familyname": familyname.lower(),
-                                             "leadinginitials": str(firstname.lower() + '%')})
-                else:
-                    name_query = """SELECT contactid, familyname || ', ' || givennames AS fullname
-                                    FROM ndb.contacts
-                                    WHERE LOWER(familyname) = %(familyname)s AND
-                                          LOWER(givennames) ILIKE %(givennames)s;"""
-                    cur.execute(name_query, {"familyname": familyname.lower(),
-                                             "givennames": str(firstname.lower() + '%')})
-                result = {"name": name.strip(), "match": cur.fetchall()}
-                namematch.append(result)
-
-            for person in namematch:
-                if len(person["match"]) == 0:
-                    response.message.append(f"  ✗ No approximate matches found for "
-                                            f"{person['name']}. Have they been added to Neotoma?")
-                    response.valid.append(False)
-                elif any(person["name"] == match[1] for match in person["match"]):
-                    contact_id = next(
-                        (number for number, name in person["match"]
-                         if name == person["name"]), None)
-                    response.message.append(f"  ✔ Exact match found for {person['name']}")
-                    response.valid.append(True)
-                    try:
-                        Contact(contactid=contact_id, contactname=person["name"], order=None)
-                        response.valid.append(True)
-                    except Exception as e:
+    inputs = {}
+    for table in tables:
+        try:
+            data = nh.pull_params(CONTACT_PARAMS, yml_dict, csv_file, table)
+            if all(data.get(param) is None for param in CONTACT_PARAMS):
+                response.message.append(f"?  No contact information provided for {table}.")
+                response.valid.append(True)
+                continue
+            inputs[table] = data
+        except Exception as e:
+            response.message.append(f"✗ Error pulling parameters for {table}: {e}")
+            response.valid.append(False)
+            continue
+    
+    for key in inputs:
+        response.message.append(f"=== Validating Contacts for Table: {key} ===")
+        if not (isinstance(inputs[key].get("contactid"), list) and
+                all(isinstance(i, int) for i in inputs[key]["contactid"])):
+            if not (isinstance(inputs[key].get("contactname"), str) or
+                    (isinstance(inputs[key]["contactname"], list) and
+                    all(isinstance(i, str) for i in inputs[key]["contactname"]))):
+                response.message.append(f"✗ Invalid contact information for {key}: {inputs[key]['contactname']}.")
+                response.valid.append(False)
+                continue
+            else:
+                counter = 0
+                if isinstance(inputs[key]["contactname"], str):
+                    inputs[key]["contactname"] = [inputs[key]["contactname"]]
+                for name in inputs[key]["contactname"]:
+                    counter += 1
+                    get_name = nh.get_contacts(cur, name)
+                    get_name["order"] = counter
+                    if get_name["id"] is None:
+                        response.message.append(f"✗ Contact not found in database: {name}.")
                         response.valid.append(False)
-                        response.message.append(f"  ✗ Cannot create Contact object: {e}")
-                else:
-                    response.message.append(
-                        f"  ? No exact match found for {person['name']}, "
-                        f"but several potential matches follow:"
-                    )
-                    for match in person["match"]:
-                        response.message.append(f"   * {match[1]}")
+                    else:
+                        try:
+                            Contact(contactid = get_name["id"],
+                                    contactname = get_name["name"],
+                                    order = get_name["order"])
+                            response.valid.append(True)
+                            response.message.append(f"✓ Valid contact: {get_name['name']} (ID: {get_name['id']}) for {key}.")
+                        except Exception as e:
+                            response.message.append(f"✗ Cannot create Contact object for: {name}. {e}")
+                            response.valid.append(False)
+        else:
+            counter = 0
+            for contact_id in inputs[key]["contactid"]:
+                counter += 1
+                try:
+                    Contact(contactid = contact_id, order = counter)
+                    response.message.append(f"✓ Valid contact ID: {contact_id} for {key}.")
+                    response.valid.append(True)
+                except Exception as e:
+                    response.message.append(f"✗ Invalid contact ID: {contact_id}. {e}")
+                    response.valid.append(False)
     return response

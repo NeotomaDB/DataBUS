@@ -30,13 +30,18 @@ def valid_geochron(cur, yml_dict, csv_file):
     except Exception as e:
         response.valid.append(False)
         response.message.append(f"✗ Geochronology parameters cannot be properly extracted. "
-                                "Verify the CSV file.: {e}")
+                                f"Verify the CSV file.: {e}")
         return response
     indices = [i for i, value in enumerate(inputs.get('age')) if value is not None]
+    if not indices:
+        response.valid.append(True)
+        response.message.append("✔  No age values provided.")
+        return response
     inputs = {k: [v for i, v in enumerate(inputs[k]) if i in indices]
               if isinstance(inputs[k], list) else inputs[k] for k in inputs}
-    inputs["geochrontypeid"] = inputs["geochrontypeid"] if isinstance(inputs["geochrontypeid"], list) else [inputs["geochrontypeid"]] * len(indices)
-    inputs["agetypeid"] = inputs["agetypeid"] if isinstance(inputs["agetypeid"], list) else [inputs["agetypeid"]] * len(indices)
+    for key in ("geochrontypeid", "agetypeid"):
+        val = inputs.get(key)
+        inputs[key] = val if isinstance(val, list) else [val] * len(indices)
     inputs["sampleid"] = [i+1 for i in range(len(indices))] # placeholder for sampleid
     inputs = {k: v for k, v in inputs.items() if v is not None}
 

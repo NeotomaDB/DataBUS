@@ -23,7 +23,7 @@ def valid_chronologies(cur, yml_dict, csv_file):
     """
     response = Response()
     try:
-        inputs = nh.pull_params(CHRONOLOGY_PARAMS, yml_dict, csv_file, "ndb.chronologies", values=False)
+        inputs = nh.pull_params(CHRONOLOGY_PARAMS, yml_dict, csv_file, "ndb.chronologies")
         if "chronologies" in inputs:
             inputs=inputs.get("chronologies")
         else:

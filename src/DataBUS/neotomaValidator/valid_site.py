@@ -2,7 +2,7 @@ import DataBUS.neotomaHelpers as nh
 from DataBUS import Geog, WrongCoordinates, Site, Response
 from DataBUS.Site import SITE_PARAMS
 
-def valid_site(cur, yml_dict, csv_file, insert=False):
+def valid_site(cur, yml_dict, csv_file):
     """Validates and inserts site information for the Neotoma database.
 
     Validates site details including coordinates, name, altitude, and area.
@@ -68,28 +68,35 @@ def valid_site(cur, yml_dict, csv_file, insert=False):
                 if (new_site.distance == 0 and
                         new_site.sitename.lower().strip() == site.sitename.lower().strip()):
                     site.siteid = new_site.siteid
-                    response.siteid = new_site.siteid
+                    response.id = new_site.siteid
                     response.elements.append(site)
                     response.valid.append(True)
                     response.message.append(
                         f"✔  Existing site {site.sitename}, ID {response.siteid}.")
-                    break
-            if response.siteid is None:
-                response.message.append("?  One or more sites exist close to the requested site.")
-                sitenames_list = [st.sitename for st in response.nearby]
-                response.matched["namematch"] = any(
-                    name == site.sitename for name in sitenames_list)
-                response.matched["distmatch"] = any(
-                    s.distance == 0 for s in response.nearby)
-                response.doublematched = (
-                    response.matched["namematch"] and response.matched["distmatch"])
-                response.message.append(
-                    f"? Site name {response.matched['namematch']}."
-                    f" Locations {response.matched['distmatch']}.")
+                    return response
+            response.message.append("?  One or more sites exist close to the requested site.")
+            sitenames_list = [st.sitename for st in response.nearby]
+            response.matched["namematch"] = any(
+                name == site.sitename for name in sitenames_list)
+            response.matched["distmatch"] = any(
+                s.distance == 0 for s in response.nearby)
+            response.doublematched = (
+                response.matched["namematch"] and response.matched["distmatch"])
+            response.message.append(
+                f"? Site name {response.matched['namematch']}."
+                f" Locations {response.matched['distmatch']}.")
         else:
             response.valid.append(True)
-            response.nearby = []
             response.message.append("✔  There are no sites close to the proposed site.")
+        try:
+            site.insert_to_db(cur)
+            response.id = site.siteid
+            response.message.append(f"✔  New site {site.sitename} inserted with ID {response.id}.")
+            response.valid.append(True)
+        except Exception as e:
+            response.valid.append(False)
+            response.message.append(f"✗ Failed to insert new site: {e}")
+        return response
     else:
         site_query = """SELECT * FROM ndb.sites WHERE siteid = %(siteid)s"""
         cur.execute(site_query, {"siteid": site.siteid})
@@ -101,29 +108,10 @@ def valid_site(cur, yml_dict, csv_file, insert=False):
         else:
             columns = [desc[0] for desc in cur.description]
             raw = dict(zip(columns, site_info))
-            new_site = Site(
-                    siteid = raw.get("siteid"),
-                    sitename = raw.get("sitename"),
-                    altitude = raw.get("altitude"),
-                    area = raw.get("area"),
-                    sitedescription = raw.get("sitedescription"),
-                    notes = raw.get("notes"),
-                    geog=Geog((raw.get("latitudenorth"), raw.get("longitudeeast"),
-                               raw.get("latitudesouth"), raw.get("longitudewest")))
-                )
+            siteid = raw.get("siteid")
+            sitename = raw.get("sitename")
             response.message.append(
-                f"✔  Site ID {new_site.siteid}, {new_site.sitename} found in Neotoma.")
-            response.elements.append(new_site)
-            response.siteid = new_site.siteid
+                f"✔  Site ID {siteid}, ({sitename}) found in Neotoma.")
+            response.id = siteid
             response.valid.append(True)
-    if insert and site.siteid is None:
-        try:
-            response.siteid = site.insert_to_db(cur)
-            response.elements.append(site)
-            response.valid.append(True)
-            response.message.append(f"✔  Added Site {site.sitename}, ID: {response.siteid}.")
-        except Exception as e:
-            response.message.append(f"✗  Cannot insert Site {site.sitename}: {e}")
-            response.valid.append(False)
-            return response
-    return response
+        return response

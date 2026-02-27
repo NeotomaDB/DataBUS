@@ -73,6 +73,8 @@ def valid_data(cur, yml_dict, csv_file):
     for datum in zip(*data.values()):
         datum = dict(zip(list(data.keys()), datum))
         for param, (query, key) in par.items():
+            if isinstance(datum.get(param), str) and datum[param].strip().lower() == 'none':
+                datum[param] = None
             if isinstance(datum.get(param), str):
                 if datum[param].lower().strip() in vals:
                     datum[param] = vals[datum[param].lower().strip()]
@@ -82,15 +84,22 @@ def valid_data(cur, yml_dict, csv_file):
                     if result:
                         vals[datum[param].lower().strip()] = result[0]
                         datum[param] = result[0]
-                        if f"✔ The provided {param} is correct: {result[0]}" not in response.message:
-                            response.message.append(f"✔ The provided {param} is correct: {result[0]}")
+                        if f"✔ The provided {param} is correct: {datum[param]} - ID: ({result[0]})" not in response.message:
+                            response.message.append(f"✔ The provided {param} is correct: {datum[param]} - ID: ({result[0]})")
                         response.valid.append(True)
                     else:
                         if f"✗ The provided {param} with value {datum[param]} does not exist in Neotoma DB." not in response.message:
                             response.message.append(f"✗ The provided {param} with value {datum[param]} does not exist in Neotoma DB.")
                         response.valid.append(False)
-        var = Variable(**{k: v for k, v in datum.items() if k != 'value'})
-        response.valid.append(True)
+        try:
+            var = Variable(**{k: v for k, v in datum.items() if k != 'value'})
+            response.valid.append(True)
+        except Exception as e:
+            response.valid.append(False)
+            if f"✗  Variable cannot be created with provided parameters: {e}" not in response.message:
+                response.message.append(f"✗  Variable cannot be created with provided parameters: {e}")
+            if f"✗  Variable ID needed to create datum for taxon." not in response.message:
+                response.message.append(f"✗  Variable ID needed to create datum for taxon.")
         try:
             varid = var.get_id_from_db(cur)
             varid = varid[0]
@@ -101,8 +110,7 @@ def valid_data(cur, yml_dict, csv_file):
             response.valid.append(False)
             if f"✗  Var ID cannot be retrieved from db: {e}" not in response.message:
                 response.message.append(f"✗  Var ID cannot be retrieved from db: {e}")
-            if f"✗  Variable ID needed to create datum for taxon." not in response.message:
-                response.message.append(f"✗  Variable ID needed to create datum for taxon.")
+            continue
         try:
             d = Datum(sampleid = 3, # Placeholder
                       variableid = varid,

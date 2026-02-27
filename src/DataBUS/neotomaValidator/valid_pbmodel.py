@@ -1,5 +1,6 @@
 import DataBUS.neotomaHelpers as nh
 from DataBUS import LeadModel, Response
+from DataBUS.LeadModel import LEAD_MODEL_PARAMS
 
 def valid_pbmodel(cur, yml_dict, csv_file, validator):
     """Validates lead-210 dating model parameters.
@@ -22,27 +23,36 @@ def valid_pbmodel(cur, yml_dict, csv_file, validator):
         Response(valid=[True], message=[...], validAll=True)
     """
     response = Response()
-    params = ["basis", "cumulativeinventory"]
-    inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.leadmodels")
+    try:
+        inputs = nh.pull_params(LEAD_MODEL_PARAMS, yml_dict, csv_file, "ndb.leadmodels")
+        if all(value is None for value in inputs.values()):
+            response.valid.append(True)
+            response.message.append("?  No lead model parameters provided.\n")
+            return response
+    except Exception as e:
+        response.valid.append(False)
+        response.message.append(f"✗  Lead model parameters cannot be properly extracted. {e}\n")
+        return response
 
-    pbbasisid_q = """SELECT pbbasisid FROM ndb.leadmodelbasis
-                     WHERE pbbasis = %(pbbasis)s"""
-    cur.execute(pbbasisid_q, {"pbbasis": inputs["basis"][0]})
+    query = """SELECT pbbasisid FROM ndb.leadmodelbasis
+                     WHERE pbbasis = %(pbbasisid)s"""
+    cur.execute(query, {"pbbasisid": inputs.get("pbbasisid")})
+
     inputs["pbbasisid"] = cur.fetchone()
-    if inputs["pbbasisid"]:
+    if inputs.get("pbbasisid") is not None:
         inputs["pbbasisid"] = inputs["pbbasisid"][0]
 
-    for j in range(1, validator["analysisunit"].counter + 1):
+    for j in range(1, 10): #validator["analysisunit"].counter + 1):
         try:
-            LeadModel(
-                pbbasisid=inputs["pbbasisid"],
-                analysisunitid=j,
-                cumulativeinventory=inputs["cumulativeinventory"][0],
-            )
+            LeadModel(pbbasisid = inputs.get("pbbasisid"),
+                      analysisunitid = j,
+                      cumulativeinventory = inputs.get("cumulativeinventory"),
+                      datinghorizon = inputs.get("datinghorizon"))
             response.valid.append(True)
         except Exception as e:
             response.valid.append(False)
-            response.message.append(f"✗  Lead model cannot be created: {e}")
+            if f"✗  Lead model cannot be created: {e}" not in response.message:
+                response.message.append(f"✗  Lead model cannot be created: {e}")
     if response.validAll:
         response.message.append("✔  Lead Model can be created.")
     return response

@@ -42,12 +42,12 @@ def _convert_date(value, is_rowwise):
 
 def _convert_int(value, is_rowwise):
     """Convert strings to integers."""
-    return list(map(int, value)) if is_rowwise else int(value)
+    return [int(v) if v is not None else None for v in value] if is_rowwise else int(value)
 
 def _convert_float(value, is_rowwise):
     """Convert strings to floats, treating 'NA' and empty strings as None."""
     if is_rowwise:
-        return [float(v) if v not in ["NA", ""] else None for v in value]
+        return [float(v) if v is not None and v not in ["NA", ""] else None for v in value]
     else:
         return float(value)
 
@@ -279,9 +279,13 @@ def clean_column(column, template, clean=True):
     an error, unless one value is empty/None.
     """
     if clean:
-        return _extract_unique_column_value(template, column)
+        value = _extract_unique_column_value(template, column)
+        if isinstance(value, str) and value.strip() in ("NA", ""):
+            return None
+        return value
     else:
-        values = [row[column] for row in template]
+        values = [None if isinstance(v, str) and v.strip() in ("NA", "")
+                  else v for v in (row[column] for row in template)]
         return values if values else None
 
 def _extract_unique_column_value(template, column):

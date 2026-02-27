@@ -24,17 +24,20 @@ def valid_external_speleothem(cur, yml_dict, csv_file):
     response = Response()
     query = """SELECT extdatabaseid
                FROM ndb.externaldatabases
-               WHERE LOWER(extdatabasename) = %(element)s OR
-               LOWER(url) ILIKE %(element)s;"""
+               WHERE LOWER(extdatabasename) = %(extdatabaseid)s;"""
     try:
         inputs = nh.pull_params(EX_SP_PARAMS, yml_dict, csv_file, "ndb.externalspeleothemdata")
+        if all(value is None for value in inputs.values()):
+            response.valid.append(True)
+            response.message.append("✔  No external speleothem parameters provided, skipping validation.")
+            return response
     except Exception as e:
         response.message.append(f"✗  Cannot pull external speleothem parameters from CSV file. {e}")
         response.valid.append(False)
         return response
 
     if isinstance(inputs.get('extdatabaseid'), str):
-        cur.execute(query, {'element': inputs['extdatabaseid'].lower()})
+        cur.execute(query, {'extdatabaseid': inputs.get('extdatabaseid').lower().strip()})
         result = cur.fetchone()
         if not result:
             response.message.append(f"✗  extdatabaseid for {inputs.get('extdatabaseid')} not found. "
@@ -46,9 +49,8 @@ def valid_external_speleothem(cur, yml_dict, csv_file):
             response.message.append(f"✔  extdatabaseid for {inputs.get('extdatabaseid')} found.")
 
     if isinstance(inputs.get('externaldescription'), str):
-        inputs['externaldescription'] = inputs['externaldescription'].strip(', ')
+        inputs['externaldescription'] = inputs['externaldescription'].strip(', ').strip()
         response.valid.append(True)
-
     try:
         ExternalSpeleothem(entityid=2,  # placeholder
                            externalid=inputs.get('externalid'),

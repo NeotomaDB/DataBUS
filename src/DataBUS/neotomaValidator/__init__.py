@@ -25,7 +25,6 @@ from .valid_chronologies import valid_chronologies
 from .valid_chroncontrols import valid_chroncontrols
 from .valid_dataset import valid_dataset
 from .valid_geochron_dataset import valid_geochron_dataset
-from .valid_horizon import valid_horizon
 from .valid_dataset_database import valid_dataset_database
 from .valid_sample import valid_sample
 from .valid_data import valid_data

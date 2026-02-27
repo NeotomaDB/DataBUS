@@ -43,11 +43,6 @@ def _process_parameter(param_name, table, yml_dict, csv_template, add_unit_input
     for val in valor:
         _process_value_entry(param_name, val, csv_template, table, add_unit_inputs)
 
-def _get_value_subfields(param_name, yml_dict):
-    """Get subfields for a value column parameter."""
-    return [entry for entry in yml_dict['metadata']
-        if entry.get('column', '') == param_name]
-
 def _process_value_entry(param_name, val_entry, csv_template, table, add_unit_inputs):
     """Process a single value entry with type conversion and special case handling.
     """
@@ -74,6 +69,9 @@ def _process_value_entry(param_name, val_entry, csv_template, table, add_unit_in
     elif 'taxonname' in val_entry:
         ut.add_taxon_entry(add_unit_inputs, val_entry, clean_valor)
     elif param_name == 'contactname':
-        add_unit_inputs[param_name] = [value.strip() for item in clean_valor for value in item.split("|")]
+        if isinstance(clean_valor, str):
+            add_unit_inputs[param_name] = [v.strip() for v in clean_valor.split("|") if v.strip()]
+        else:
+            add_unit_inputs[param_name] = [value.strip() for item in clean_valor for value in item.split("|") if value.strip()]
     else:
         add_unit_inputs[param_name] = clean_valor

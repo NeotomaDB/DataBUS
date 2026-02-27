@@ -36,7 +36,7 @@ def valid_chroncontrols(yml_dict, csv_file, cur):
     except Exception as e:
         response.valid.append(False)
         response.message.append(f"✗ Chronology parameters cannot be properly extracted. "
-                                "Verify the CSV file.: {e}")
+                                f"Verify the CSV file.: {e}")
         return response
     agetype_query = """SELECT agetypeid FROM ndb.agetypes
                    WHERE LOWER(agetype) = LOWER(%(agetype)s)"""

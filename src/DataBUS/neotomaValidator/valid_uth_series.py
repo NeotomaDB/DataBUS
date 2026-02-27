@@ -42,6 +42,8 @@ def valid_uth_series(cur, yml_dict, csv_file):
                      WHERE LOWER(decayconstant) = %(decayconstant)s;"""
     for row in zip(*inputs.values()):
         uth = dict(zip(inputs.keys(), row))
+        if isinstance(uth.get('decayconstantid'), str) and uth['decayconstantid'].strip().lower() == 'none':
+            uth['decayconstantid'] = None
         if isinstance(uth.get('decayconstantid'), str):
             n = uth.get('decayconstantid')
             cur.execute(decay_query, {'decayconstant': uth.get('decayconstantid').lower().strip()})
