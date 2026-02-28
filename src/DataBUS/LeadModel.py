@@ -1,10 +1,7 @@
 from .neotomaHelpers.utils import validate_int_values
 LEAD_MODEL_PARAMS = ["pbbasisid", "cumulativeinventory", "datinghorizon"]
 import importlib.resources
-with importlib.resources.open_text(
-    "DataBUS.sqlHelpers", "insert_pb_model.sql"
-) as sql_file:
-    insert_pb_model = sql_file.read()
+insert_pb_model = importlib.resources.files("DataBUS.sqlHelpers").joinpath("insert_pb_model.sql").read_text(encoding="UTF-8")
 
 class LeadModel:
     """A Lead-210 geochronological model in Neotoma.

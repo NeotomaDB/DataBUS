@@ -1,11 +1,7 @@
 import importlib.resources 
 from .neotomaHelpers.utils import validate_int_values
-with importlib.resources.open_text("DataBUS.sqlHelpers",
-                                   "insert_uthseries.sql") as sql_file:
-    insert_uthseries = sql_file.read()
-with importlib.resources.open_text("DataBUS.sqlHelpers",
-                                   "insert_uraniumseriesdata.sql") as sql_file:
-    insert_uraniumseriesquery = sql_file.read()
+insert_uthseries = importlib.resources.files("DataBUS.sqlHelpers").joinpath("insert_uthseries.sql").read_text(encoding="UTF-8")
+insert_uraniumseriesquery = importlib.resources.files("DataBUS.sqlHelpers").joinpath("insert_uraniumseriesdata.sql").read_text(encoding="UTF-8")
 UTH_PARAMS = ['geochronid', 'decayconstantid',
               'ratio230th232th', 'ratiouncertainty230th232th',
               'activity230th238u', 'activityuncertainty230th238u',

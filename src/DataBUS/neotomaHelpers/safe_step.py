@@ -16,25 +16,27 @@ def safe_step(name, fn, logfile, conn):
         Response | None
     """
     sp = f"sp_{name.replace(' ', '_').lower()}"
+    sp_cur = conn.cursor()
     try:
-        conn.execute(f"SAVEPOINT {sp}")
+        sp_cur.execute(f"SAVEPOINT {sp}")
     except Exception:
         # If we can't set the savepoint the connection may already be aborted;
         # try a full rollback and re-open a savepoint.
         try:
             conn.rollback()
-            conn.execute(f"SAVEPOINT {sp}")
+            sp_cur = conn.cursor()
+            sp_cur.execute(f"SAVEPOINT {sp}")
         except Exception:
             logfile.append(f"✗ [{name}] Could not establish savepoint – skipping step.")
             return None
     try:
         result = fn()
-        conn.execute(f"RELEASE SAVEPOINT {sp}")
+        sp_cur.execute(f"RELEASE SAVEPOINT {sp}")
         return result
     except Exception as e:
         try:
-            conn.execute(f"ROLLBACK TO SAVEPOINT {sp}")
-            conn.execute(f"RELEASE SAVEPOINT {sp}")
+            sp_cur.execute(f"ROLLBACK TO SAVEPOINT {sp}")
+            sp_cur.execute(f"RELEASE SAVEPOINT {sp}")
         except Exception:
             conn.rollback()
         logfile.append(f"✗ [{name}] Unexpected error (rolled back): {e}")

@@ -1,10 +1,8 @@
 import importlib.resources
 from .neotomaHelpers.utils import validate_int_values
-with importlib.resources.open_text("DataBUS.sqlHelpers", "insert_hiatus.sql") as sql_file:
-    insert_hiatus = sql_file.read()
+insert_hiatus = importlib.resources.files("DataBUS.sqlHelpers").joinpath("insert_hiatus.sql").read_text(encoding="UTF-8")
 
-with importlib.resources.open_text("DataBUS.sqlHelpers", "insert_hiatuschronology.sql") as sql_file:
-    insert_hiatuschronology = sql_file.read()
+insert_hiatuschronology = importlib.resources.files("DataBUS.sqlHelpers").joinpath("insert_hiatuschronology.sql").read_text(encoding="UTF-8")
 HIATUS_PARAMS = ['hiatus', 'notes']
 class Hiatus:
     """A hiatus or stratigraphic gap in a sediment sequence.

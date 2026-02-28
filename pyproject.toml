@@ -33,6 +33,7 @@ dependencies = [
     "tzdata==2023.3",
     "openpyxl",
     "requests",
+    "tqdm>=4.65.0",
     "mkdocs>=1.6.1",
     "mkdocs-material>=9.6.16",
     "mkdocstrings[python-legacy]>=0.18",
@@ -68,7 +69,7 @@ include-package-data = true
 
 [project.optional-dependencies]
 build = ["build", "twine"]
-dev = ["ruff", "bumpver", "mypy", "pytest"]
+dev = ["ruff", "bumpver", "mypy", "pytest", "pytest-cov"]
 
 [tool.ruff]
 # Target Python 3.11
@@ -110,7 +111,8 @@ quote-style = "double"
 indent-style = "space"
 
 [tool.pytest.ini_options]
-testpaths = ["src/DataBUS/tests", "src/DataBUS/neotomaHelpers/tests", "src/DataBUS/neotomaValidator/tests", "src/DataBUS/neotomaUploader/tests"]
+testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_functions = ["test_*"]
 addopts = "-v --tb=short"
+pythonpath = ["src"]

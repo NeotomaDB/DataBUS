@@ -1,33 +1,16 @@
 import importlib.resources
 from .neotomaHelpers.utils import validate_int_values
 
-with importlib.resources.open_text("DataBUS.sqlHelpers",
-                                   "insert_speleothem.sql") as sql_file:
-    insert_speleothem = sql_file.read()
-with importlib.resources.open_text("DataBUS.sqlHelpers", 
-                                "insert_entitygeology.sql") as sql_file:
-    insert_entitygeology = sql_file.read()
-with importlib.resources.open_text("DataBUS.sqlHelpers", 
-                                   "insert_entityrelationship.sql") as sql_file:
-    insert_entityrelationship = sql_file.read()
-with importlib.resources.open_text("DataBUS.sqlHelpers", 
-                                   "insert_entitydripheight.sql") as sql_file:
-    insert_entitydripheight = sql_file.read()
-with importlib.resources.open_text("DataBUS.sqlHelpers", 
-                                   "insert_entitycovers.sql") as sql_file:
-    insert_entitycovers = sql_file.read()
-with importlib.resources.open_text("DataBUS.sqlHelpers", 
-                                   "insert_entitylandusecover.sql") as sql_file:
-    insert_entitylandusecover = sql_file.read()
-with importlib.resources.open_text("DataBUS.sqlHelpers", 
-                                   "insert_entityvegetationcover.sql") as sql_file:
-    insert_entityvegetationcover = sql_file.read()
-with importlib.resources.open_text("DataBUS.sqlHelpers", 
-                                   "insert_externalspeleothem.sql") as sql_file:
-    insert_externalspeleothem = sql_file.read()
-with importlib.resources.open_text("DataBUS.sqlHelpers", 
-                                   "insert_entitysamples.sql") as sql_file:
-    insert_entitysamples = sql_file.read()
+_sql = importlib.resources.files("DataBUS.sqlHelpers")
+insert_speleothem         = _sql.joinpath("insert_speleothem.sql").read_text(encoding="UTF-8")
+insert_entitygeology      = _sql.joinpath("insert_entitygeology.sql").read_text(encoding="UTF-8")
+insert_entityrelationship = _sql.joinpath("insert_entityrelationship.sql").read_text(encoding="UTF-8")
+insert_entitydripheight   = _sql.joinpath("insert_entitydripheight.sql").read_text(encoding="UTF-8")
+insert_entitycovers       = _sql.joinpath("insert_entitycovers.sql").read_text(encoding="UTF-8")
+insert_entitylandusecover = _sql.joinpath("insert_entitylandusecover.sql").read_text(encoding="UTF-8")
+insert_entityvegetationcover = _sql.joinpath("insert_entityvegetationcover.sql").read_text(encoding="UTF-8")
+insert_externalspeleothem = _sql.joinpath("insert_externalspeleothem.sql").read_text(encoding="UTF-8")
+insert_entitysamples      = _sql.joinpath("insert_entitysamples.sql").read_text(encoding="UTF-8")
 
 EX_SP_PARAMS = ['externalid', 'externaldescription', 'extdatabaseid']
 SPELEOTHEM_PARAMS = ['entityid', 'entityname', 'monitoring', 'rockageid', 'entrancedistance', 

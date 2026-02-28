@@ -17,3 +17,6 @@ from .get_contacts import get_contacts
 from .utils import retrieve_dict
 from .utils import convert_to_bp
 from .safe_step import safe_step
+from .parse_arguments import parse_arguments
+from .hash_file import hash_file
+from .check_file import check_file

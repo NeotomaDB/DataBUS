@@ -12,11 +12,19 @@ kind: Development
 # to pass validation. Everything else is optional and may be left blank (or
 # the row omitted from the CSV entirely).
 #
+# If there are `id` elements, they can be set to string, however there will
+# be a search for their corresponding integer ID in the database. If a match is not found, the dataset
+# will fail validation. This allows users to specify values using familiar names
+# instead of opaque integer IDs. For example, a user can specify "John Doe" for
+# the collector, and the system will look up the corresponding contact ID.
+#
+# DataBUS does not insert new publications, contacts, or variables. If a value is not found in the database, the
+# steward must indicate which new values need to be inserted to the DB or insert them via Tilia.
+#
 # "rowwise: true"  → the column has one value per sample row.
 # "rowwise: false" → the column has a single value shared by all rows.
 # ─────────────────────────────────────────────────────────────────────────────
 metadata:
-
 # ── Dataset metadata (constants) ─────────────────────────────────────────────
 - column: datasettypeid
   neotoma: ndb.datasettypes.datasettypeid
@@ -104,7 +112,7 @@ metadata:
   overwrite: true
   rowwise: false
   type: string
-  notes: Short unique identifier for the collection unit (≤10 chars recommended).
+  notes: Short unique identifier for the collection unit (≤10 chars).
 
 - column: CollectionUnitName
   neotoma: ndb.collectionunits.collunitname
@@ -404,6 +412,7 @@ metadata:
   chronologyname: DefaultChronology
 
 # ── Data values ────────────────────────────────────────────────────────────────
+# Variable ID Portion
 - column: TaxonName
   neotoma: ndb.variables.taxonid
   required: false
@@ -422,17 +431,18 @@ metadata:
   rowwise: true
   type: string
 
-- column: Value
-  neotoma: ndb.data.value
-  required: false
-  rowwise: true
-  type: float
-
 - column: Units
   neotoma: ndb.variables.variableunitsid
   required: false
   rowwise: true
   type: string
+
+# Value Portion
+- column: Value
+  neotoma: ndb.data.value
+  required: false
+  rowwise: true
+  type: float
 
 # ── Contacts ──────────────────────────────────────────────────────────────────
 - column: PrincipalInvestigator
@@ -469,12 +479,6 @@ metadata:
 
 - column: Citation
   neotoma: ndb.publications.citation
-  required: false
-  rowwise: false
-  type: string
-
-- column: PublicationYear
-  neotoma: ndb.publications.year
   required: false
   rowwise: false
   type: string

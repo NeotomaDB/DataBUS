@@ -1,10 +1,7 @@
 import importlib.resources
 from .neotomaHelpers.utils import validate_int_values
 DATAUNCERTAINTY_PARAMS = ["uncertaintyvalue", "uncertaintyunitid", "notes"]
-with importlib.resources.open_text(
-    "DataBUS.sqlHelpers", "insert_data_uncertainty.sql"
-) as sql_file:
-    insert_data_uncertainty = sql_file.read()
+insert_data_uncertainty = importlib.resources.files("DataBUS.sqlHelpers").joinpath("insert_data_uncertainty.sql").read_text(encoding="UTF-8")
 
 class DataUncertainty:
     """Measurement uncertainty for a data value in Neotoma.
