@@ -4,14 +4,15 @@ import psycopg2
 import datetime
 import glob
 from dotenv import load_dotenv
+from tqdm import tqdm
 import DataBUS.neotomaValidator as nv
 import DataBUS.neotomaHelpers as nh
 from DataBUS.neotomaHelpers.logging_dict import logging_response
 
 """Example script demonstrating the use of DataBUS functions.
-This script serves as an example of how to use the DataBUS library to validate and upload data to a Neotoma database. 
+This script serves as an example of how to use the DataBUS library to validate and upload data to a Neotoma database.
 It includes steps for hashing files, checking validation logs, and validating various data types such as sites, geopolitical units, collection units, etc.
-The script reads data from specified CSV files, validates the data against the Neotoma database, and logs the validation process. 
+The script reads data from specified CSV files, validates the data against the Neotoma database, and logs the validation process.
 It also includes error handling to ensure that any issues during validation are properly logged and that database transactions
 are rolled back if necessary.
 
@@ -25,8 +26,8 @@ Example usage:
 
 args = nh.parse_arguments()
 # Load environment variables from .env file.
-# Look at .env_example for expected format. 
-# This should be renamed to .env and updated with the appropriate database connection 
+# Look at .env_example for expected format.
+# This should be renamed to .env and updated with the appropriate database connection
 # information for your environment.
 load_dotenv()
 connection = json.loads(os.getenv('PGDB_TANK'))
@@ -42,15 +43,15 @@ cur = conn.cursor()
 start_time = datetime.now()
 print(f"Start uploading at {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
 
-for filename in filenames:
+for filename in tqdm(filenames, desc="Files", unit="file"):
     conn.rollback()
     logfile = []
     databus = dict()
-    
+
     csv_file = nh.read_csv(filename)
     hashcheck = nh.hash_file(filename)
-    filecheck = nh.check_file(filename, validation_files = "data/")
-    
+    filecheck = nh.check_file(filename, validation_files="data/")
+
     logfile = logfile + hashcheck['message'] + filecheck['message']
     logfile.append(f"\nNew Upload started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
@@ -58,15 +59,21 @@ for filename in filenames:
         logfile.append("File must be properly validated before it can be uploaded.")
         hashcheck = False
     else:
-        hashcheck = True  
+        hashcheck = True
 
     try:
+        step_bar = tqdm(total=16, desc=os.path.basename(filename), leave=False, unit="step")
+
+        # Not all steps are required for every upload.
+        # This is only an example of how to run DataBUS. 
+        # Modify the steps as needed for your specific use case.
         logfile.append(f"=== Sites ===")
         result = nh.safe_step("sites", lambda: nv.valid_site(
             cur=cur, yml_dict=yml_dict, csv_file=csv_file), logfile, conn)
         if result is not None:
             databus['sites'] = result
             logfile = logging_response(databus['sites'], logfile)
+        step_bar.update(1)
 
         logfile.append(f"=== GPUs ===")
         result = nh.safe_step("gpus", lambda: nv.valid_geopolitical_units(
@@ -74,6 +81,7 @@ for filename in filenames:
         if result is not None:
             databus['gpuid'] = result
             logfile = logging_response(databus['gpuid'], logfile)
+        step_bar.update(1)
 
         logfile.append(f"=== CUs ===")
         result = nh.safe_step("collunits", lambda: nv.valid_collunit(
@@ -81,34 +89,15 @@ for filename in filenames:
         if result is not None:
             databus['collunits'] = result
             logfile = logging_response(databus['collunits'], logfile)
+        step_bar.update(1)
 
-        logfile.append(f"=== Speleothems ===")
-        result = nh.safe_step("speleothems", lambda: nv.valid_speleothem(
-            cur=cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus), logfile, conn)
-        if result is not None:
-            databus['speleothems'] = result
-            logfile = logging_response(databus['speleothems'], logfile)
-
-        logfile.append(f"=== External Speleothems ===")
-        result = nh.safe_step("external_speleo", lambda: nv.valid_external_speleothem(
-            cur=cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus), logfile, conn)
-        if result is not None:
-            databus['external_speleo'] = result
-            logfile = logging_response(databus['external_speleo'], logfile)
-
-        logfile.append(f"=== AUs ===")
+        logfile.append(f"=== Analysis Units ===")
         result = nh.safe_step("analysisunits", lambda: nv.valid_analysisunit(
             cur=cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus), logfile, conn)
         if result is not None:
             databus['analysisunits'] = result
             logfile = logging_response(databus['analysisunits'], logfile)
-
-        logfile.append(f"=== Pb Models ===")
-        result = nh.safe_step("pbmodel", lambda: nv.valid_pbmodel(
-            cur=cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus), logfile, conn)
-        if result is not None:
-            databus['pbmodel'] = result
-            logfile = logging_response(databus['pbmodel'], logfile)
+        step_bar.update(1)
 
         logfile.append(f"=== Datasets ===")
         result = nh.safe_step("datasets", lambda: nv.valid_dataset(
@@ -116,13 +105,15 @@ for filename in filenames:
         if result is not None:
             databus['datasets'] = result
             logfile = logging_response(databus['datasets'], logfile)
+        step_bar.update(1)
 
-        logfile.append(f"=== GeoDS ===")
+        logfile.append(f"=== Geochron Datasets ===")
         result = nh.safe_step("geodataset", lambda: nv.valid_geochron_dataset(
             cur=cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus), logfile, conn)
         if result is not None:
             databus['geodataset'] = result
             logfile = logging_response(databus['geodataset'], logfile)
+        step_bar.update(1)
 
         logfile.append(f"=== Chronologies ===")
         result = nh.safe_step("chronologies", lambda: nv.valid_chronologies(
@@ -130,6 +121,7 @@ for filename in filenames:
         if result is not None:
             databus['chronologies'] = result
             logfile = logging_response(databus['chronologies'], logfile)
+        step_bar.update(1)
 
         logfile.append(f"=== Chron Controls ===")
         result = nh.safe_step("chron_controls", lambda: nv.valid_chroncontrols(
@@ -137,13 +129,7 @@ for filename in filenames:
         if result is not None:
             databus['chron_controls'] = result
             logfile = logging_response(databus['chron_controls'], logfile)
-
-        logfile.append(f"=== Hiatus ===")
-        result = nh.safe_step("hiatus", lambda: nv.valid_hiatus(
-            cur=cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus), logfile, conn)
-        if result is not None:
-            databus['hiatus'] = result
-            logfile = logging_response(databus['hiatus'], logfile)
+        step_bar.update(1)
 
         logfile.append(f"=== Geochron ===")
         result = nh.safe_step("geochron", lambda: nv.valid_geochron(
@@ -151,19 +137,14 @@ for filename in filenames:
         if result is not None:
             databus['geochron'] = result
             logfile = logging_response(databus['geochron'], logfile)
+        step_bar.update(1)
 
         logfile.append(f"=== Geochron Control ===")
         result = nh.safe_step("geochroncontrol", lambda: nv.valid_geochroncontrol(
             cur=cur, databus=databus), logfile, conn)
         if result is not None:
             databus['geochroncontrol'] = result
-
-        logfile.append(f"=== UTh Series ===")
-        result = nh.safe_step("uthseries", lambda: nv.valid_uth_series(
-            cur=cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus), logfile, conn)
-        if result is not None:
-            databus['uthseries'] = result
-            logfile = logging_response(databus['uthseries'], logfile)
+        step_bar.update(1)
 
         logfile.append(f"=== Contacts ===")
         result = nh.safe_step("contacts", lambda: nv.valid_contact(
@@ -171,6 +152,7 @@ for filename in filenames:
         if result is not None:
             databus['contacts'] = result
             logfile = logging_response(databus['contacts'], logfile)
+        step_bar.update(1)
 
         logfile.append(f"=== Database ===")
         result = nh.safe_step("database", lambda: nv.valid_dataset_database(
@@ -178,6 +160,7 @@ for filename in filenames:
         if result is not None:
             databus['database'] = result
             logfile = logging_response(databus['database'], logfile)
+        step_bar.update(1)
 
         logfile.append(f"=== Samples ===")
         result = nh.safe_step("samples", lambda: nv.valid_sample(
@@ -185,6 +168,7 @@ for filename in filenames:
         if result is not None:
             databus['samples'] = result
             logfile = logging_response(databus['samples'], logfile)
+        step_bar.update(1)
 
         logfile.append(f"=== Sample Ages ===")
         result = nh.safe_step("sample_age", lambda: nv.valid_sample_age(
@@ -192,6 +176,7 @@ for filename in filenames:
         if result is not None:
             databus['sample_age'] = result
             logfile = logging_response(databus['sample_age'], logfile)
+        step_bar.update(1)
 
         logfile.append(f"=== Data ===")
         result = nh.safe_step("data", lambda: nv.valid_data(
@@ -199,13 +184,7 @@ for filename in filenames:
         if result is not None:
             databus['data'] = result
             logfile = logging_response(databus['data'], logfile)
-
-        logfile.append(f"=== Data Uncertainty ===")
-        result = nh.safe_step("uncertainty", lambda: nv.valid_datauncertainty(
-            cur=cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus), logfile, conn)
-        if result is not None:
-            databus['uncertainty'] = result
-            logfile = logging_response(databus['uncertainty'], logfile)
+        step_bar.update(1)
 
         logfile.append(f"=== Publications ===")
         result = nh.safe_step("publications", lambda: nv.valid_publication(
@@ -213,9 +192,12 @@ for filename in filenames:
         if result is not None:
             databus['publications'] = result
             logfile = logging_response(databus['publications'], logfile)
+        step_bar.update(1)
+
+        step_bar.close()
 
         # Inserting Finalize
-        # databus['finalize'] = nv.insert_final(cur, 
+        # databus['finalize'] = nv.insert_final(cur,
         #                                       databus = databus)
         all_true = all([databus[key].validAll for key in databus])
         all_true = all_true and hashcheck
