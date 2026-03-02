@@ -89,7 +89,8 @@ class ChronControl:
         }
         if (self.agelimityounger is not None and self.agelimitolder is not None):
             if self.agelimityounger > self.agelimitolder:
-                raise ValueError("Younger age limit cannot be greater than older age limit.")
+                if self.agetypeid != 1:
+                    raise ValueError("Younger age limit cannot be greater than older age limit.")
 
         cur.execute(chroncon_query, inputs)
         self.chroncontrolid = cur.fetchone()[0]

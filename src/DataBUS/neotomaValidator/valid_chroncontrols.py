@@ -101,10 +101,6 @@ def valid_chroncontrols(cur, yml_dict, csv_file, databus=None):
                                 f"✗ The provided {param} with value "
                                 f"{control[param]} does not exist in Neotoma DB.")
                         response.valid.append(False)
-            if control.get('agetypeid') == 1:
-                control['age'] = nh.convert_to_bp(control.get('age'))
-                control['agelimitolder'] = nh.convert_to_bp(control.get('agelimitolder'))
-                control['agelimityounger'] = nh.convert_to_bp(control.get('agelimityounger'))
             try:
                 cc = ChronControl(**control)
                 response.valid.append(True)
