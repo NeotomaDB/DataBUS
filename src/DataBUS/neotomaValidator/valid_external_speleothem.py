@@ -2,7 +2,7 @@ import DataBUS.neotomaHelpers as nh
 from DataBUS import Response, ExternalSpeleothem
 from DataBUS.Speleothem import EX_SP_PARAMS
 
-def valid_external_speleothem(cur, yml_dict, csv_file):
+def valid_external_speleothem(cur, yml_dict, csv_file, databus=None):
     """Validates external speleothem data against the Neotoma database.
 
     Validates external speleothem parameters including external database ID,
@@ -51,12 +51,25 @@ def valid_external_speleothem(cur, yml_dict, csv_file):
     if isinstance(inputs.get('externaldescription'), str):
         inputs['externaldescription'] = inputs['externaldescription'].strip(', ').strip()
         response.valid.append(True)
+    if databus is not None:
+        entityid = databus['speleothems'].id_int
+    else:
+        entityid = 2  # placeholder
+        response.valid.append(False)
+        response.message.append("✗ Speleothem entity ID not available; using placeholder.")
     try:
-        ExternalSpeleothem(entityid=2,  # placeholder
-                           externalid=inputs.get('externalid'),
-                           extdatabaseid=inputs.get('extdatabaseid'),
-                           externaldescription=inputs.get('externaldescription'))
+        es = ExternalSpeleothem(entityid=entityid,
+                                externalid=inputs.get('externalid'),
+                                extdatabaseid=inputs.get('extdatabaseid'),
+                                externaldescription=inputs.get('externaldescription'))
         response.valid.append(True)
+        if databus is not None:
+            try:
+                es.insert_externalspeleothem_to_db(cur)
+                response.message.append("✔  ExternalSpeleothem inserted.")
+            except Exception as e:
+                response.message.append(f"✗  Cannot insert ExternalSpeleothem: {e}")
+                response.valid.append(False)
     except Exception as e:
         response.message.append(f"✗  Cannot create ExternalSpeleothem object. {e}")
         response.valid.append(False)

@@ -2,7 +2,7 @@ import DataBUS.neotomaHelpers as nh
 from DataBUS import Response, Speleothem
 from DataBUS.Speleothem import SPELEOTHEM_PARAMS
 
-def valid_speleothem(cur, yml_dict, csv_file):
+def valid_speleothem(cur, yml_dict, csv_file, databus=None):
     """Validates speleothem data against the Neotoma database.
 
     Validates speleothem parameters including entity properties, drip type, geology,
@@ -92,14 +92,27 @@ def valid_speleothem(cur, yml_dict, csv_file):
                 inputs[inp] = inputs[inp][0]
                 response.valid.append(True)
                 response.message.append(f"✔  {inp} for {inputs[inp]} found.")
+    if databus is not None:
+        siteid = databus['sites'].id_int
+    else:
+        siteid = 1  # placeholder
+        response.valid.append(False)
+        response.message.append("✗ Site ID not available; using placeholder.")
     try:
-        Speleothem(siteid=1,  # Temporary siteid
-                   entityname=inputs.get('entityname'),
-                   monitoring=inputs.get('monitoring'),
-                   rockageid=inputs.get('rockageid'),
-                   entrancedistance=inputs.get('entrancedistance'),
-                   entrancedistanceunits=inputs.get('entrancedistanceunits'),
-                   speleothemtypeid=inputs.get('speleothemtypeid'))
+        sp = Speleothem(siteid=siteid,
+                        entityname=inputs.get('entityname'),
+                        monitoring=inputs.get('monitoring'),
+                        rockageid=inputs.get('rockageid'),
+                        entrancedistance=inputs.get('entrancedistance'),
+                        entrancedistanceunits=inputs.get('entrancedistanceunits'),
+                        speleothemtypeid=inputs.get('speleothemtypeid'))
+        if databus is not None:
+            try:
+                response.id_int = sp.insert_to_db(cur)
+                response.message.append(f"✔ Speleothem inserted with ID {response.id_int}.")
+            except Exception as e:
+                response.valid.append(False)
+                response.message.append(f"✗ Could not insert speleothem: {e}")
     except Exception as e:
         response.valid.append(False)
         response.message.append(f"✗ Speleothem Entity cannot be created: {e}")

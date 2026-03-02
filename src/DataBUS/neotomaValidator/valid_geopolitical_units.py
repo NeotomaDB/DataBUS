@@ -1,7 +1,7 @@
 import DataBUS.neotomaHelpers as nh
 from DataBUS import Response
 
-def valid_geopolitical_units(cur, yml_dict, csv_file, uploader=None, insert=False):
+def valid_geopolitical_units(cur, yml_dict, csv_file, databus=None):
     """Validates geopolitical unit assignments against Neotoma database.
 
     Validates provided geopolitical units (national_unit, state, county, etc.) by
@@ -53,6 +53,13 @@ def valid_geopolitical_units(cur, yml_dict, csv_file, uploader=None, insert=Fals
     current_id = gpid1
     response.message.append(f"✔ National Unit {country} found.")
     response.valid.append(True)
+    response.id_list.append(gpid1)
+    if databus is not None:
+        try:
+            cur.execute(insert_q, {'siteid': databus['sites'].id_int, 'geopolid': gpid1})
+        except Exception as e:
+            response.message.append(f"✗ Could not link national unit to site: {e}")
+            response.valid.append(False)
 
     for unit in inputs:
         cur.execute(query_with_parent, {'geopoliticalname': inputs[unit].lower(),
@@ -63,7 +70,12 @@ def valid_geopolitical_units(cur, yml_dict, csv_file, uploader=None, insert=Fals
             break
         gpid2 = gpid2[0]
         current_id = gpid2
-        cur.execute(insert_q, {'siteid': uploader["sites"].siteid,
-                                'geopolid': gpid2})
         response.message.append(f"✔ Subregional Unit {inputs[unit]} found.")
+        response.id_list.append(gpid2)
+        if databus is not None:
+            try:
+                cur.execute(insert_q, {'siteid': databus['sites'].id_int, 'geopolid': gpid2})
+            except Exception as e:
+                response.message.append(f"✗ Could not link subregional unit to site: {e}")
+                response.valid.append(False)
     return response

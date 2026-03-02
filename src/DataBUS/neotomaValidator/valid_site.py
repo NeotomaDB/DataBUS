@@ -69,10 +69,10 @@ def valid_site(cur, yml_dict, csv_file):
                 if (new_site.distance == 0 and
                         new_site.sitename.lower().strip() == site.sitename.lower().strip()):
                     site.siteid = new_site.siteid
-                    response.id = new_site.siteid
+                    response.id_int = new_site.siteid
                     response.valid.append(True)
                     response.message.append(
-                        f"✔  Existing site {site.sitename}, ID {response.id}.")
+                        f"✔  Existing site {site.sitename}, ID {response.id_int}.")
                     return response
             response.message.append("?  One or more sites exist close to the requested site.")
             sitenames_list = [st.sitename for st in nearby]
@@ -90,8 +90,8 @@ def valid_site(cur, yml_dict, csv_file):
             response.message.append("✔  There are no sites close to the proposed site.")
         try:
             site.insert_to_db(cur)
-            response.id = site.siteid
-            response.message.append(f"✔  New site {site.sitename} inserted with ID {response.id}.")
+            response.id_int = site.siteid
+            response.message.append(f"✔  New site {site.sitename} inserted with ID {response.id_int}.")
             response.valid.append(True)
         except Exception as e:
             response.valid.append(False)
@@ -112,6 +112,6 @@ def valid_site(cur, yml_dict, csv_file):
             sitename = raw.get("sitename")
             response.message.append(
                 f"✔  Site ID {siteid}, ({sitename}) found in Neotoma.")
-            response.id = siteid
+            response.id_int = siteid
             response.valid.append(True)
         return response

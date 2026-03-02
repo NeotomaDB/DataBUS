@@ -3,7 +3,7 @@ from DataBUS import Geog, WrongCoordinates, CollectionUnit, Response
 from DataBUS.CollectionUnit import CU_PARAMS
 import re
 
-def valid_collunit(cur, yml_dict, csv_file):
+def valid_collunit(cur, yml_dict, csv_file, databus=None):
     """Validates collection unit data for sample collection sites.
 
     Validates collection unit parameters including coordinates, collection date,
@@ -83,6 +83,14 @@ def valid_collunit(cur, yml_dict, csv_file):
         response.message.append("✔  No handle found. Creating a new collection unit.")
         response.valid.append(True)
         _check_close_handles(cu, found_cu=None, cur=cur, response=response, limit=1)
+        if databus is not None:
+            try:
+                cu.siteid = databus['sites'].id_int
+                response.id_int = cu.insert_to_db(cur)
+                response.message.append(f"✔  Collection unit inserted with ID {response.id_int}.")
+            except Exception as e:
+                response.valid.append(False)
+                response.message.append(f"✗ Failed to insert collection unit: {e}")
         return response
     # Handle exists
     response.message.append("? There is a handle with this handlename.")
@@ -117,6 +125,7 @@ def valid_collunit(cur, yml_dict, csv_file):
     if not diff:
         response.message.append(f"✔  A correct handle with this name was found; CUID: {found_cu.collectionunitid}.")
         response.valid.append(True)
+        response.id_int = found_cu.collectionunitid
         return response
     # Assess differences
     response.message.append(f"? Are CollUnits equal: {cu == found_cu}.")
@@ -137,9 +146,14 @@ def valid_collunit(cur, yml_dict, csv_file):
     else:
         response.message.append(f"?  Some fields differ, but they are not required fields; CUID: {found_cu.collectionunitid}.")
         response.valid.append(True)
+        response.id_int = found_cu.collectionunitid
         _check_close_handles(cu, found_cu=found_cu, cur=cur, response=response)
+    if response.id_int is None and databus is not None:
+        response.id_int = 1
+        response.valid.append(False)
+        response.message.append("✗ No Collection Unit ID was obtained; a placeholder ID (1) will be used for downstream validation.")
     return response
-        
+
 def _check_close_handles(cu, found_cu, cur, response, limit=1):
     """Check for nearby collection units and append messages to response."""
     close_handles = cu.find_close_collunits(cur, limit=limit)
