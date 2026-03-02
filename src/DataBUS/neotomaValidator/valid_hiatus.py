@@ -3,7 +3,7 @@ from DataBUS import Hiatus, Response
 from DataBUS.Hiatus import HIATUS_PARAMS
 from itertools import groupby
  
-def valid_hiatus(cur, yml_dict, csv_file):
+def valid_hiatus(cur, yml_dict, csv_file, databus=None):
     """Validates hiatus data for chronological models.
 
     Identifies hiatus intervals (stratigraphic gaps) in sample analysis units.
@@ -38,18 +38,32 @@ def valid_hiatus(cur, yml_dict, csv_file):
               for k in inputs}
     inputs['indices'] = indices  # Only as placeholder for analysis unit IDs
 
-    for values in clusters:
+    if databus is not None:
+        au_ids = databus['analysisunits'].id_list
+        resolved = [[au_ids[c[0]], au_ids[c[-1]]] if len(c) > 1 else [au_ids[c[0]]]
+                    for c in clusters]
+    else:
+        resolved = clusters
+
+    for values in resolved:
         try:
-            Hiatus(analysisunitstart=values[0],
-                   analysisunitend=values[-1],
-                   notes=inputs.get('notes'))
+            h = Hiatus(analysisunitstart=values[0],
+                       analysisunitend=values[-1],
+                       notes=inputs.get('notes'))
             response.valid.append(True)
             if f"✔ Hiatus can be created." not in response.message:
                 response.message.append("✔ Hiatus can be created.")
+            if databus is not None:
+                try:
+                    h.insert_to_db(cur)
+                    response.message.append("✔ Hiatus inserted.")
+                except Exception as e:
+                    response.valid.append(False)
+                    response.message.append(f"✗ Could not insert hiatus: {e}")
         except Exception as e:
             response.valid.append(False)
             if f"✗ Hiatus cannot be created: {e}" not in response.message:
-             response.message.append(f"✗ Hiatus cannot be created: {e}")
+                response.message.append(f"✗ Hiatus cannot be created: {e}")
     return response
 
 def _find_clusters(indices):

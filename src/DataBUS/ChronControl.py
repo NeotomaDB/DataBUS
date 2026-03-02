@@ -1,5 +1,5 @@
 CCONTROL_PARAMS = ['chronologyid', 'chroncontroltypeid', 'analysisunitid',
-                   'depth', 'thickness', 'agetypeid','notes',
+                   'depth', 'thickness', 'agetypeid', 'notes',
                    'age', 'agelimityounger', 'agelimitolder']
 from .neotomaHelpers.utils import validate_int_values
 
@@ -65,7 +65,7 @@ class ChronControl:
         """
         chroncon_query = """
         SELECT ts.insertchroncontrol(_chronologyid := %(chronologyid)s,
-                                     _chroncontroltypeid := %(_chroncontroltypeid)s,
+                                     _chroncontroltypeid := %(chroncontroltypeid)s,
                                      _analysisunitid := %(analysisunitid)s,
                                      _depth := %(depth)s,
                                      _thickness := %(thickness)s,

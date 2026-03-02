@@ -315,9 +315,16 @@ def validate_date_values(value, name: str) -> datetime.date | None:
 def convert_to_bp(value):
     """Convert a CE/BCE date (or list of them) to radiocarbon years BP."""
     if isinstance(value, (float, int)):
+        # Check if all values are already numeric and less than 100,
+        # which would suggest they are already in BP or are small year values. 
+        # If so, return as is. Otherwise, convert each value.
+        if value < 100:  # likely a year like 35 or 85
+            return value
         return round(1950 - value, 6)
     elif isinstance(value, (datetime.date, datetime.datetime)):
         return round(1950 - value.year, 6)
     elif isinstance(value, list):
+        if all(isinstance(v, (int, float)) and v < 100 for v in value):
+            return value
         return [round(1950 - v.year, 6) if isinstance(v, (datetime.date, datetime.datetime)) else round(1950 - v, 6) for v in value]
     return value
