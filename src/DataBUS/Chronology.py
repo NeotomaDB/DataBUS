@@ -99,8 +99,11 @@ class Chronology:
                                _dateprepared := %(dateprepared)s,
                                _agemodel := %(agemodel)s,
                                _ageboundyounger := %(ageboundyounger)s,
-                               _ageboundolder := %(ageboundolder)s)
+                               _ageboundolder := %(ageboundolder)s,
+                               _isdefault := %(isdefault)s,
+                               _notes := %(notes)s)
                                """
+        
         inputs = {
             "collunitid": self.collectionunitid,
             "contactid": self.contactid,
@@ -110,8 +113,9 @@ class Chronology:
             "agemodel": self.agemodel,
             "ageboundyounger": self.ageboundyounger,
             "ageboundolder": self.ageboundolder,
+            "isdefault": self.isdefault,
+            "notes": self.notes
         }
-        
         cur.execute(chron_query, inputs)
         self.chronologyid = cur.fetchone()[0]
         return self.chronologyid

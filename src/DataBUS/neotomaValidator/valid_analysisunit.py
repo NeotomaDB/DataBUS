@@ -2,7 +2,7 @@ import DataBUS.neotomaHelpers as nh
 from DataBUS import AnalysisUnit, Response
 from DataBUS.AnalysisUnit import ANALYSIS_UNIT_PARAMS
 
-def valid_analysisunit(cur, yml_dict, csv_file):
+def valid_analysisunit(cur, yml_dict, csv_file, databus=None):
     """Validates analysis unit data.
 
     Validates analysis unit parameters including depth, thickness, facies ID,
@@ -37,8 +37,21 @@ def valid_analysisunit(cur, yml_dict, csv_file):
                 kwargs.update(static_params)
                 if isinstance(kwargs.get('faciesid'), str):
                     kwargs['faciesid'] = _resolve_faciesid(cur, kwargs['faciesid'], response)
-                AnalysisUnit(**kwargs)
+                if databus is not None and databus.get('collunits') is not None:
+                    kwargs['collectionunitid'] = databus['collunits'].id_int
+                else:
+                    kwargs['collectionunitid'] = 1 #placeholder
+                    response.valid.append(False)
+                    response.message.append("✗ Collection Unit ID is required for Analysis Unit validation.")
+                au = AnalysisUnit(**kwargs)
                 response.valid.append(True)
+                if databus is not None:
+                    try:
+                        auid = au.insert_to_db(cur)
+                        response.id_list.append(auid)
+                    except Exception as e:
+                        response.valid.append(False)
+                        response.message.append(f"✗ Could not insert AnalysisUnit: {e}")
             except Exception as e:
                 response.valid.append(False)
                 response.message.append(f"✗ AnalysisUnit cannot be created: {e}")
@@ -46,10 +59,23 @@ def valid_analysisunit(cur, yml_dict, csv_file):
     else:
         if isinstance(inputs.get('faciesid'), str):
             inputs['faciesid'] = _resolve_faciesid(cur, inputs['faciesid'], response)
+        if databus is not None and databus.get('collunits') is not None:
+            inputs['collectionunitid'] = databus['collunits'].id_int
+        else:
+            inputs['collectionunitid'] = 1 #placeholder
+            response.valid.append(False)
+            response.message.append("✗ Collection Unit ID is required for Analysis Unit validation.")
         try:
-            AnalysisUnit(**inputs)
+            au = AnalysisUnit(**inputs)
             response.valid.append(True)
             response.counter = 1
+            if databus is not None:
+                try:
+                    auid = au.insert_to_db(cur)
+                    response.id_list.append(auid)
+                except Exception as e:
+                    response.valid.append(False)
+                    response.message.append(f"✗ Could not insert AnalysisUnit: {e}")
         except Exception as e:
             response.valid.append(False)
             response.message.append(f"✗ AnalysisUnit cannot be created: {e}")

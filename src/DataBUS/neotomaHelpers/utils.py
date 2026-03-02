@@ -137,6 +137,9 @@ def add_chronology_entry(add_unit_inputs, value_meta, clean_value, table, i):
         add_unit_inputs[key][chron_name][i] = clean_value
         if i == 'age' and key == 'chronologies':
             add_unit_inputs['chronologies'][chron_name]['isdefault'] = value_meta.get('default', False)
+        elif i in ('ageboundolder', 'ageboundyounger') and key == 'chronologies':
+            if 'isdefault' not in add_unit_inputs['chronologies'][chron_name]:
+                add_unit_inputs['chronologies'][chron_name]['isdefault'] = value_meta.get('isdefault', False)
     else:
         k = value_meta['neotoma'].split('.')[-1]
         add_unit_inputs[k] = clean_value

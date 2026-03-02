@@ -2,20 +2,27 @@ import DataBUS.neotomaHelpers as nh
 from DataBUS import Chronology, Response
 from DataBUS.Chronology import CHRONOLOGY_PARAMS
 
-def valid_chronologies(cur, yml_dict, csv_file):
-    """Validates chronologies for geochronological data.
+def valid_chronologies(cur, yml_dict, csv_file, databus=None):
+    """Validates and inserts chronologies for geochronological data.
 
     Validates chronology parameters including age type, contact ID, date prepared,
     and age bounds. Handles age model conversions (e.g., collection date to years BP)
-    and creates Chronology objects with validated parameters.
+    and creates Chronology objects with validated parameters.  When databus is provided
+    and all parameters are valid, inserts each chronology into the database using
+    the real collection unit ID from databus['collunits'].id_int and stores the
+    resulting chronology ID in response.id_int (single chronology) or
+    response.id_list (multiple chronologies).
 
     Args:
         cur (cursor): Database cursor for executing SQL queries.
         yml_dict (dict): Dictionary containing YAML configuration data.
         csv_file (list): List of dictionaries representing CSV file data.
+        databus (dict | None): Prior validation results supplying collectionunitid
+            and (optionally) contactid overrides.
 
     Returns:
-        Response: Response object containing validation messages, validity list, and overall status.
+        Response: Response object containing validation messages, validity list,
+            chronology IDs, and overall status.
 
     Examples:
         >>> valid_chronologies(cursor, config_dict, csv_data)
@@ -24,25 +31,43 @@ def valid_chronologies(cur, yml_dict, csv_file):
     response = Response()
     try:
         inputs = nh.pull_params(CHRONOLOGY_PARAMS, yml_dict, csv_file, "ndb.chronologies")
+        agetype = inputs.get('agetypeid')
         if "chronologies" in inputs:
-            inputs=inputs.get("chronologies")
+            inputs = inputs.get("chronologies")
         else:
             response.valid.append(True)
             response.message.append("? No chronology parameters provided.")
             return response
     except Exception as e:
-            response.valid.append(False)
-            response.message.append(f"✗  Chronology parameters cannot be properly extracted: {e}.")
-            return response
+        response.valid.append(False)
+        response.message.append(
+            f"✗  Chronology parameters cannot be properly extracted: {e}.")
+        return response
+
     if len(inputs) > 1:
         response.message.append("✔ File with multiple chronologies.")
         response.message.append(f"{list(inputs.keys())}")
+
     agetype_query = """SELECT agetypeid FROM ndb.agetypes
                        WHERE LOWER(agetype) = %(agetype)s"""
     contact_query = """SELECT contactid FROM ndb.contacts
                        WHERE LOWER(contactname) = %(contactname)s"""
-    for chron in inputs:
-        ch = inputs[chron]
+
+    # Resolve collectionunitid from databus (or use placeholder 1)
+    collunitid = 1
+    if databus is not None:
+        cu_id = databus.get('collunits') and databus['collunits'].id_int
+        if isinstance(cu_id, int):
+            collunitid = cu_id
+
+    for chron_key in inputs:
+        ch = inputs[chron_key]
+        ch['agetypeid'] = agetype
+        # Use the YAML chronologyname grouping key as the DB chronologyname if not
+        # explicitly mapped (no template entry for ndb.chronologies.chronologyname).
+        if ch.get("chronologyname") is None:
+            ch["chronologyname"] = chron_key
+        
         if ch.get("agetypeid") is not None:
             if isinstance(ch["agetypeid"], str):
                 cur.execute(agetype_query,
@@ -50,12 +75,14 @@ def valid_chronologies(cur, yml_dict, csv_file):
                 result = cur.fetchone()
                 if result:
                     ch['agetypeid'] = result[0]
-                    response.message.append(f"✔ The provided age type is correct: {result[0]}")
+                    response.message.append(
+                        f"✔ The provided age type is correct: {result[0]}")
                     response.valid.append(True)
                 else:
-                    response.message.append("✗ The provided age type does not exist in Neotoma DB.")
+                    response.message.append(
+                        "✗ The provided age type does not exist in Neotoma DB.")
                     response.valid.append(False)
-                    return response
+                    continue
         if ch.get("contactid") is not None:
             if isinstance(ch["contactid"], str):
                 cur.execute(contact_query,
@@ -63,26 +90,45 @@ def valid_chronologies(cur, yml_dict, csv_file):
                 result = cur.fetchone()
                 if result:
                     ch['contactid'] = result[0]
-                    response.message.append(f"✔ The provided contact name is correct: {result[0]}")
+                    response.message.append(
+                        f"✔ The provided contact name is correct: {result[0]}")
                     response.valid.append(True)
                 else:
-                    response.message.append("✗ The provided contact name does not exist in Neotoma DB.")
+                    response.message.append(
+                        "✗ The provided contact name does not exist in Neotoma DB.")
                     response.valid.append(False)
-                    return response
+                    continue
         try:
             if ch.get('agemodel') == "collection date":
                 ch['ageboundolder'] = nh.convert_to_bp(ch.get('ageboundolder'))
                 ch['ageboundyounger'] = nh.convert_to_bp(ch.get('ageboundyounger'))
         except Exception as e:
             response.valid.append(False)
-            response.message.append(f"✗ Age bounds for could not be converted from collection date to years BP: {e}")
-            return response
+            response.message.append(
+                f"✗ Age bounds could not be converted from collection date to "
+                f"years BP: {e}")
+            continue
         try:
-            ch["collectionunitid"] = 1 # Placeholder
-            Chronology(**ch)
+            ch["collectionunitid"] = collunitid
+            chron = Chronology(**ch)
             response.valid.append(True)
             response.message.append("✔  Chronology can be created.")
         except Exception as e:
             response.valid.append(False)
             response.message.append(f"✗  Chronology cannot be created: {e}")
+            continue
+        if databus is not None and collunitid != 1:
+            try:
+                chron_id = chron.insert_to_db(cur)
+                response.message.append(
+                    f"✔  Chronology inserted with ID {chron_id} "
+                    f"('{chron_key}').")
+                response.valid.append(True)
+                response.id_list.append(chron_id)
+                if response.id_int is None:
+                    response.id_int = chron_id
+            except Exception as e:
+                response.valid.append(False)
+                response.message.append(
+                    f"✗  Chronology could not be inserted: {e}")
     return response
