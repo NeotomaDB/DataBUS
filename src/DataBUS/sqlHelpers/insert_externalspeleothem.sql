@@ -1,6 +1,6 @@
-CREATE OR REPLACE FUNCTION insert_externalspeleothem(_entityid numeric,
-                                                     _externalid character varying,
-                                                     _extdatabaseid numeric,
+CREATE OR REPLACE FUNCTION insert_externalspeleothem(_entityid integer,
+                                                     _externalid text,
+                                                     _extdatabaseid integer,
                                                      _externaldescription character varying DEFAULT NULL::character varying)
 RETURNS void
 LANGUAGE sql

@@ -349,7 +349,7 @@ class ExternalSpeleothem:
         query = """
                 SELECT insert_externalspeleothem(_entityid := %(entityid)s,
                                                     _externalid := %(externalid)s,
-                                                    _externaldatabaseid := %(extdatabaseid)s,
+                                                    _extdatabaseid := %(extdatabaseid)s,
                                                     _externaldescription := %(externaldescription)s)
                 """
         inputs = {"entityid": self.entityid,
