@@ -11,7 +11,7 @@ def valid_chroncontrols(cur, yml_dict, csv_file, databus=None):
 
     When databus is provided and all parameters are valid, inserts each control
     point into the database using:
-      - chronologyid from databus['chronologies'].id_int
+      - chronologyid from databus['chronologies'].id_list
       - analysisunitid values from databus['analysisunits'].id_list
     The resulting chroncontrol IDs are appended to response.id_list.
 
@@ -58,23 +58,27 @@ def valid_chroncontrols(cur, yml_dict, csv_file, databus=None):
 
     # Pull chronologyid – prefer real ID from databus
     chronos_raw = inputs.pop('chronologyid', None)
-    if databus is not None:
-        chron_id = databus.get('chronologies') and databus['chronologies'].id_int
-        chronos = [chron_id] if isinstance(chron_id, int) else [1]
+    if databus.get('chronologies') is not None:
+        chronos = databus.get('chronologies').id_list
+        response.valid.append(True)
     else:
         if chronos_raw and isinstance(chronos_raw, list) and chronos_raw[0] is not None:
-            chronos = list(dict.fromkeys(chronos_raw))  # unique, preserve order
+            chronos = list(dict.fromkeys(chronos_raw))  # assuming given chronologyid(s) are valid if provided
+            response.valid.append(True)
         else:
-            chronos = [1]  # placeholder
+            chronos = [1]
+            response.valid.append(False)
+            response.message.append(f"✗ No chronology found in databus. Using placeholder value for chronologyid.")
 
     # Resolve analysisunitids – prefer real IDs from databus
-    if databus is not None:
-        au_ids = databus.get('analysisunits') and databus['analysisunits'].id_list
-        if au_ids and len(au_ids) == len(inputs['age']):
-            inputs['analysisunitid'] = au_ids
-        else:
-            inputs['analysisunitid'] = [i + 1 for i in range(len(inputs['age']))]
+    if databus.get('analysisunits'):
+        au_ids = databus['analysisunits'].id_list
+        # take only the AUs for the indices we have
+        au_ids = [au_ids[i] for i in indices if i < len(au_ids)]
+        inputs['analysisunitid'] = au_ids
     else:
+        response.valid.append(False)
+        response.message.append(f"✗ No analysis units found in databus. Using placeholder values for analysisunitid.")
         inputs['analysisunitid'] = [i + 1 for i in range(len(inputs['age']))]
 
     for chron in chronos:
@@ -103,16 +107,9 @@ def valid_chroncontrols(cur, yml_dict, csv_file, databus=None):
                         response.valid.append(False)
             try:
                 cc = ChronControl(**control)
+                if "✔  Chron controls can be created." not in response.message:
+                   response.message.append("✔  Chron controls can be created.")
                 response.valid.append(True)
-            except Exception as e:
-                response.message.append(
-                    f"✗  Could not create chron control with provided "
-                    f"parameters: {e}")
-                response.valid.append(False)
-                continue
-
-            # Insert when databus is provided
-            if databus is not None and isinstance(chron, int) and chron != 1:
                 try:
                     cc_id = cc.insert_to_db(cur)
                     response.id_list.append(cc_id)
@@ -125,6 +122,11 @@ def valid_chroncontrols(cur, yml_dict, csv_file, databus=None):
                         response.message.append(
                             f"✗  ChronControl could not be inserted: {e}")
                     response.valid.append(False)
-    if response.validAll:
-        response.message.append("✔  Chron controls can be created.")
+                    continue
+            except Exception as e:
+                response.message.append(
+                    f"✗  Could not create chron control with provided "
+                    f"parameters: {e}")
+                response.valid.append(False)
+                continue        
     return response

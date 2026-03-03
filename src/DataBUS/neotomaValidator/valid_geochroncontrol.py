@@ -1,86 +1,89 @@
-from DataBUS import Response
+from DataBUS import Response, GeochronControl
 
-def valid_geochroncontrol(validator):
-    """Validates geochronological control data consistency.
+def valid_geochroncontrol(cur, databus):
+    """Validates and inserts geochronological control linkage records.
 
-    Verifies that both chroncontrols and geochron validation results are present
-    and successful. Acts as a prerequisite check before geochronological data insertion.
-    Note: Elements are obtained from uploader; no inserts occur during validation.
+    Links each geochron record (ndb.geochronology) to its corresponding
+    chroncontrol record (ndb.chroncontrols) by inserting rows into
+    ndb.geochroncontrols.  IDs for both are taken from databus:
+      - databus['chron_controls'].id_list  → chroncontrol IDs
+      - databus['geochron'].id_list        → geochron IDs
+
+    If either list is empty or None the step is skipped gracefully.  When the
+    two lists differ in length the function tries to broadcast the shorter list;
+    if neither is a multiple of the other it pairs them up to the shorter length.
 
     Args:
-        validator (dict): Dictionary containing 'chron_controls' and 'geochron' Response objects.
+        cur: Database cursor for executing SQL queries.
+        databus (dict): Dictionary containing 'chron_controls' and 'geochron'
+            Response objects (populated by prior validation steps).
 
     Returns:
         Response: Response object containing validation messages and overall status.
 
     Examples:
-        >>> valid_geochroncontrol({'chron_controls': response1, 'geochron': response2})
+        >>> valid_geochroncontrol(cursor, databus)
         Response(valid=[True], message=[...], validAll=True)
     """
-    entries = {'chroncontrolid': validator.get("chroncontrols"),  # add id
-               'geochronid': validator.get("geochron")} # add id
     response = Response()
-    if len(entries['chroncontrolid']) == 0 or len(entries['geochronid']) == 0:
+
+    chron_controls_resp = databus.get("chron_controls")
+    geochron_resp = databus.get("geochron")
+    print(geochron_resp, chron_controls_resp)
+
+    # Guard: if either upstream result is missing, skip gracefully
+    if chron_controls_resp is None or geochron_resp is None:
+        response.message.append(
+            "✔ No chron_controls or geochron results available, "
+            "skipping geochroncontrol linking.")
+        response.valid.append(True) 
+        return response
+
+    cc_ids = [i for i in chron_controls_resp.id_list if i is not None]
+    geo_ids = [i for i in geochron_resp.id_list if i is not None]
+
+    if not cc_ids or not geo_ids:
         response.message.append("✔ No chroncontrol IDs or geochron IDs to insert.")
         response.valid.append(True)
-        response.validAll = all(response.valid)
         return response
-    geo_indices = validator['geochron'].indices
-    cc_indices = validator['chroncontrols'].indices
-    # Flatten ids2
-    cc_indices = [item for sublist in cc_indices for item in sublist]
-    common_indices = set(geo_indices) & set(cc_indices)
-    mask = [idx in common_indices for idx in geo_indices]
-    # Filter entries to keep only positions where mask is True
-    positions_to_keep = [i for i, idx in enumerate(cc_indices) if idx in common_indices]
-    # Now filter entries using only those positions
-    entries['geochronid'] = [entries['geochronid'][i] for i in positions_to_keep if i < len(entries['geochronid'])]
-    entries['chroncontrolid'] = [entries['chroncontrolid'][i] for i in positions_to_keep if i < len(entries['chroncontrolid'])]
+
+    # Align list lengths
     try:
-        assert len(entries['chroncontrolid']) % len(entries['geochronid']) == 0 
-        times = len(entries['chroncontrolid']) // len(entries['geochronid'])
-        # duplicate geochronid the appropriate number of times
-        entries['geochronid'] = entries['geochronid'] * times
-    except AssertionError:
-        try:
-            entries['geochronid'] = [gid for gid in entries['geochronid'] if gid is not None]
-            assert len(entries['chroncontrolid']) % len(entries['geochronid']) == 0 
-            times = len(entries['chroncontrolid']) // len(entries['geochronid'])
-            entries['geochronid'] = entries['geochronid'] * times
-        except AssertionError:
-            response.message.append(f"✗  Number of chroncontrol IDs {entries['chroncontrolid']}"
-                                    f"does not match number of geochron IDs {entries['geochronid']}")
-            response.valid.append(False)
-            response.validAll = all(response.valid)
-            return response
-        except ZeroDivisionError as e:
-            response.valid.append(True)
-            response.validAll = all(response.valid)
-            return response
-    except ZeroDivisionError as e:
+        if len(cc_ids) % len(geo_ids) == 0:
+            times = len(cc_ids) // len(geo_ids)
+            geo_ids_paired = geo_ids * times
+            cc_ids_paired = cc_ids
+        elif len(geo_ids) % len(cc_ids) == 0:
+            times = len(geo_ids) // len(cc_ids)
+            cc_ids_paired = cc_ids * times
+            geo_ids_paired = geo_ids
+        else:
+            min_len = min(len(cc_ids), len(geo_ids))
+            cc_ids_paired = cc_ids[:min_len]
+            geo_ids_paired = geo_ids[:min_len]
+            response.message.append(
+                f"?  Mismatch: {len(cc_ids)} chroncontrol IDs vs "
+                f"{len(geo_ids)} geochron IDs. Linking first {min_len} pairs.")
+    except ZeroDivisionError:
         response.valid.append(True)
-        response.validAll = all(response.valid)
         return response
-    counter = 0
-    for i in range(len(entries['chroncontrolid'])):
-        counter += 1
-        entry = {}
-        entry['chroncontrolid'] = entries['chroncontrolid'][i]
-        entry['geochronid'] = entries['geochronid'][i]
-        # SUGGESTION: Consider using a context manager or batch insert for database operations
-        # SUGGESTION: The counter variable is incremented but never used; consider removing if not needed for logging
+
+    for cc_id, geo_id in zip(cc_ids_paired, geo_ids_paired):
         try:
-            if entry.get('geochronid') is None:
+            if geo_id is None:
                 response.valid.append(True)
                 response.message.append("✔ Geochron ID is None, skipping insert.")
                 continue
-            else:
-                gcc = GeochronControl(**entry)
-                gcc.insert_to_db(cur)
-                response.valid.append(True)
-                response.message.append("✔ GeochronControl inserted.")
+            gcc = GeochronControl(chroncontrolid=cc_id, geochronid=geo_id)
+            gcc.insert_to_db(cur)
+            response.valid.append(True)
+            response.message.append(
+                f"✔ GeochronControl inserted "
+                f"(chroncontrolid={cc_id}, geochronid={geo_id}).")
         except Exception as e:
             response.valid.append(False)
-            response.message.append(f"✗  GeochronControl not inserted. {e}")
-    
-    return response 
+            response.message.append(
+                f"✗  GeochronControl not inserted "
+                f"(chroncontrolid={cc_id}, geochronid={geo_id}): {e}")
+
+    return response

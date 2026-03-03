@@ -10,8 +10,7 @@ def valid_chronologies(cur, yml_dict, csv_file, databus=None):
     and creates Chronology objects with validated parameters.  When databus is provided
     and all parameters are valid, inserts each chronology into the database using
     the real collection unit ID from databus['collunits'].id_int and stores the
-    resulting chronology ID in response.id_int (single chronology) or
-    response.id_list (multiple chronologies).
+    resulting chronology ID in response.id_list
 
     Args:
         cur (cursor): Database cursor for executing SQL queries.
@@ -52,13 +51,16 @@ def valid_chronologies(cur, yml_dict, csv_file, databus=None):
                        WHERE LOWER(agetype) = %(agetype)s"""
     contact_query = """SELECT contactid FROM ndb.contacts
                        WHERE LOWER(contactname) = %(contactname)s"""
-
-    # Resolve collectionunitid from databus (or use placeholder 1)
-    collunitid = 1
-    if databus is not None:
-        cu_id = databus.get('collunits') and databus['collunits'].id_int
+    
+    if databus.get('collunits') is not None:
+        cu_id = databus['collunits'].id_int
         if isinstance(cu_id, int):
             collunitid = cu_id
+            response.valid.append(True)
+    else:
+        collunitid = 1 # placeholder
+        response.valid.append(False)
+        response.message.append(f"✗ No collection unit found in databus. Using placeholder value for collectionunitid.")
 
     for chron_key in inputs:
         ch = inputs[chron_key]
@@ -113,11 +115,6 @@ def valid_chronologies(cur, yml_dict, csv_file, databus=None):
             chron = Chronology(**ch)
             response.valid.append(True)
             response.message.append("✔  Chronology can be created.")
-        except Exception as e:
-            response.valid.append(False)
-            response.message.append(f"✗  Chronology cannot be created: {e}")
-            continue
-        if databus is not None and collunitid != 1:
             try:
                 chron_id = chron.insert_to_db(cur)
                 response.message.append(
@@ -125,10 +122,12 @@ def valid_chronologies(cur, yml_dict, csv_file, databus=None):
                     f"('{chron_key}').")
                 response.valid.append(True)
                 response.id_list.append(chron_id)
-                if response.id_int is None:
-                    response.id_int = chron_id
             except Exception as e:
                 response.valid.append(False)
                 response.message.append(
                     f"✗  Chronology could not be inserted: {e}")
+        except Exception as e:
+            response.valid.append(False)
+            response.message.append(f"✗  Chronology cannot be created: {e}")
+            continue
     return response

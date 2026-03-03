@@ -1,3 +1,4 @@
+from .neotomaHelpers.utils import validate_int_values
 class GeochronControl:
     """A link between a chronological control and geochronological date.
 
@@ -13,14 +14,14 @@ class GeochronControl:
         geochroncontrolid (int | None): Geochron control ID (assigned after insertion).
 
     Examples:
-        >>> gc = GeochronControl(chroncontrolid=1, geochronid=2)
+        >>> gc = GeochronControl(chroncontrolid=1, geochronid=2) 
         >>> gc.chroncontrolid
         1
     """
 
     def __init__(self, chroncontrolid, geochronid):
-        self.chroncontrolid = chroncontrolid
-        self.geochronid = geochronid
+        self.chroncontrolid = validate_int_values(chroncontrolid, "chroncontrolid")
+        self.geochronid = validate_int_values(geochronid, "geochronid")
         self.geochroncontrolid = None
 
     def insert_to_db(self, cur):
