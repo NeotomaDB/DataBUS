@@ -57,11 +57,11 @@ def _convert_coordinates(value):
 
 def _convert_string(value, is_rowwise):
     """Convert value(s) to strings, handling NA and empty values."""
-    converted = list(map(str, value)) if is_rowwise else str(value)
+    converted = [str(v) if v is not None else None for v in value] if is_rowwise else str(value)
 
     if isinstance(converted, list):
         converted = [
-            None if isinstance(v, str) and v.strip() in ("", "NA")
+            None if v is None or (isinstance(v, str) and v.strip() in ("", "NA", "None"))
             else str(v) if not isinstance(v, list) else v
             for v in converted
         ]
@@ -252,11 +252,11 @@ def clean_column(column, template, clean=True):
     """
     if clean:
         value = _extract_unique_column_value(template, column)
-        if isinstance(value, str) and value.strip() in ("NA", ""):
+        if isinstance(value, str) and value.strip() in ("NA", "", "None"):
             return None
         return value
     else:
-        values = [None if isinstance(v, str) and v.strip() in ("NA", "")
+        values = [None if isinstance(v, str) and v.strip() in ("NA", "", "None")
                   else v for v in (row[column] for row in template)]
         return values if values else None
 

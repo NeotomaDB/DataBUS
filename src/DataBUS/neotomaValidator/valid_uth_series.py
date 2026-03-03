@@ -1,18 +1,23 @@
 import DataBUS.neotomaHelpers as nh
 from DataBUS import Response, UThSeries
 from DataBUS.UThSeries import UTH_PARAMS
-
-def valid_uth_series(cur, yml_dict, csv_file):
-    """Validates uranium-thorium series data for geochronological samples.
+ 
+def valid_uth_series(cur, yml_dict, csv_file, databus=None):
+    """Validates and inserts uranium-thorium series data for geochronological samples.
 
     Validates U-Th series isotope data including isotope ratios, activities, and
     associated decay constants. Verifies decay constants exist in the database and
     creates UThSeries objects with validated parameters.
 
+    When databus is provided and geochron IDs are available
+    (databus['geochron'].id_list), replaces the placeholder geochronid values with
+    the real inserted IDs and calls UThSeries.insert_to_db(cur) for each row.
+
     Args:
         cur (psycopg2.cursor): Database cursor for executing SQL queries.
         yml_dict (dict): Dictionary containing YAML configuration data with U-Th parameters.
         csv_file (str): Path to CSV file containing U-Th series data.
+        databus (dict | None): Prior validation results supplying geochron IDs.
 
     Returns:
         Response: Response object containing validation messages, validity list, and overall status.
@@ -33,7 +38,17 @@ def valid_uth_series(cur, yml_dict, csv_file):
         inputs = {k: [v for i, v in enumerate(inputs[k]) if i in indices]
                   if isinstance(inputs[k], list) else inputs[k]
                   for k in inputs}
-        inputs['geochronid'] = [i+1 for i in range(len(inputs['decayconstantid']))] # placeholder for geochronologyid
+        if databus.get('geochron'):
+            geochron_ids = databus['geochron'].id_list
+            geochron_idx = databus['geochron'].indices
+            common = set(indices) & set(geochron_idx)
+            common_positions = [i for i, val in enumerate(geochron_idx) if val in common]
+            inputs['geochronid'] = [geochron_ids[i] for i in common_positions]
+            response.valid.append(True)
+        else:
+            response.valid.append(False)
+            inputs['geochronid'] = [i + 1 for i in range(len(inputs['decayconstantid']))]
+            response.message.append("✗ Geochron IDs not found in databus, using placeholder IDs for validation.")
     except Exception as e:
         response.valid.append(False)
         response.message.append(f"✗ U-Th series parameters cannot be properly extracted: {e}.")
@@ -58,21 +73,22 @@ def valid_uth_series(cur, yml_dict, csv_file):
                 if f"✗ Decay constant {n} not found in database." not in response.message:
                     response.message.append(f"✗ Decay constant {n} not found in database.")
         try:
-            UThSeries(geochronid=uth['geochronid'],
-                      decayconstantid=uth['decayconstantid'],
-                      ratio230th232th=uth['ratio230th232th'],
-                      ratiouncertainty230th232th=uth['ratiouncertainty230th232th'],
-                      activity230th238u=uth['activity230th238u'],
-                      activityuncertainty230th238u=uth['activityuncertainty230th238u'],
-                      activity234u238u=uth['activity234u238u'],
-                      activityuncertainty234u238u=uth['activityuncertainty234u238u'],
-                      iniratio230th232th=uth['iniratio230th232th'],
-                      iniratiouncertainty230th232th=uth['iniratiouncertainty230th232th'])
+            uth_obj = UThSeries(**uth)
             response.valid.append(True)
             if "✔ UThSeries can be created." not in response.message:
                 response.message.append("✔ UThSeries can be created.")
+            try:
+                uth_obj.insert_to_db(cur)
+                if "✔ UThSeries inserted." not in response.message:
+                    response.message.append("✔ UThSeries inserted.")
+                response.valid.append(True)
+            except Exception as e:
+                response.valid.append(False)
+                if f"✗ UThSeries could not be inserted: {e}" not in response.message:
+                    response.message.append(f"✗ UThSeries could not be inserted: {e}")
         except Exception as e:
             response.valid.append(False)
             if f"✗ UThSeries cannot be created: {e}" not in response.message:
                 response.message.append(f"✗ UThSeries cannot be created: {e}")
+            continue
     return response

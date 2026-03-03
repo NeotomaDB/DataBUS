@@ -42,6 +42,7 @@ def valid_geochron(cur, yml_dict, csv_file, databus=None):
         response.valid.append(True)
         response.message.append("✔  No age values provided.")
         return response
+    response.indices = indices
     inputs = {k: [v for i, v in enumerate(inputs[k]) if i in indices]
               if isinstance(inputs[k], list) else inputs[k] for k in inputs}
     for key in ("geochrontypeid", "agetypeid"):
