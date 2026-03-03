@@ -122,6 +122,7 @@ def valid_chronologies(cur, yml_dict, csv_file, databus=None):
                     f"('{chron_key}').")
                 response.valid.append(True)
                 response.id_list.append(chron_id)
+                response.name[chron_key] = chron_id
             except Exception as e:
                 response.valid.append(False)
                 response.message.append(
