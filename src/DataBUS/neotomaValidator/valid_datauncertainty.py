@@ -1,8 +1,9 @@
 import DataBUS.neotomaHelpers as nh
-from DataBUS import Response, DataUncertainty
+from DataBUS import DataUncertainty, Response
 from DataBUS.DataUncertainty import DATAUNCERTAINTY_PARAMS
 
-def valid_datauncertainty(cur, yml_dict, csv_file):
+
+def valid_datauncertainty(cur, yml_dict, csv_file, databus=None):
     """Validates data uncertainty values against the Neotoma database.
 
     Validates uncertainty values, units, and basis information. Queries database
@@ -23,7 +24,6 @@ def valid_datauncertainty(cur, yml_dict, csv_file):
         Response(valid=[True], message=[...], validAll=True)
     """
     response = Response()
-
     try:
         inputs = nh.pull_params(DATAUNCERTAINTY_PARAMS, yml_dict, csv_file, "ndb.datauncertainties")
         if all(v is None for v in inputs.values()):
@@ -39,17 +39,38 @@ def valid_datauncertainty(cur, yml_dict, csv_file):
                      WHERE LOWER(uncertaintybasis) = %(uncertaintybasisid)s;"""
     units_query = """SELECT variableunitsid FROM ndb.variableunits
                      WHERE LOWER(variableunits) = %(uncertaintyunitid)s;"""
-    par = {'uncertaintybasisid': [basis_query, 'uncertaintybasisid'],
-           'uncertaintyunitid': [units_query, 'uncertaintyunitid']}
-    
+    par = {
+        "uncertaintybasisid": [basis_query, "uncertaintybasisid"],
+        "uncertaintyunitid": [units_query, "uncertaintyunitid"],
+    }
+
+    try:
+        data_ids = databus["data"].id_dict
+    except Exception as e:
+        response.valid.append(False)
+        response.message.append(f"✗ Data IDs not available; using placeholders: {e}")
+        data_ids = {}
     vals = {}
+
     for taxon in inputs:
-        if inputs[taxon].get('uncertaintyvalue') is None:
+        if not data_ids.get(taxon):
+            response.message.append(
+                f"? No associated data IDs found for taxon '{taxon}'; skipping uncertainty validation for this taxon."
+            )
             continue
-        inputs[taxon]['uncertaintybasisid'] = [inputs[taxon].get('uncertaintybasisid')] * len(inputs[taxon].get('uncertaintyvalue'))
-        for datum in zip(*inputs.get(taxon).values()):
-            datum = dict(zip(list(inputs[taxon].keys()), datum))
-            if datum.get('uncertaintyvalue') is None:
+        else:
+            inputs[taxon]["dataid"] = data_ids[taxon]
+        if inputs[taxon].get("uncertaintyvalue") is None:
+            response.message.append(
+                f"? No uncertainty values provided for taxon '{taxon}'; skipping uncertainty validation for this taxon."
+            )
+            continue
+        inputs[taxon]["uncertaintybasisid"] = [inputs[taxon].get("uncertaintybasisid")] * len(
+            inputs[taxon].get("uncertaintyvalue")
+        )
+        for datum in zip(*inputs.get(taxon).values(), strict=False):
+            datum = dict(zip(list(inputs[taxon].keys()), datum, strict=False))
+            if datum.get("uncertaintyvalue") is None:
                 continue
             for param, (query, key) in par.items():
                 if isinstance(datum.get(param), str):
@@ -62,24 +83,50 @@ def valid_datauncertainty(cur, yml_dict, csv_file):
                             name = datum[param]
                             vals[datum[param].lower().strip()] = result[0]
                             datum[param] = result[0]
-                            if f"✔ The provided {param} is correct: {result[0]}" not in response.message:
-                                response.message.append(f"✔ The provided {param} ({name}) is correct: {result[0]}")
+                            if (
+                                f"✔ The provided {param} is correct: {result[0]}"
+                                not in response.message
+                            ):
+                                response.message.append(
+                                    f"✔ The provided {param} ({name}) is correct: {result[0]}"
+                                )
                             response.valid.append(True)
                         else:
-                            if f"✗ The provided {param} with value {datum[param]} does not exist in Neotoma DB." not in response.message:
-                                response.message.append(f"✗ The provided {param} with value {datum[param]} does not exist in Neotoma DB.")
+                            if (
+                                f"✗ The provided {param} with value {datum[param]} does not exist in Neotoma DB."
+                                not in response.message
+                            ):
+                                response.message.append(
+                                    f"✗ The provided {param} with value {datum[param]} does not exist in Neotoma DB."
+                                )
                             response.valid.append(False)
             try:
-                DataUncertainty(dataid = 3,  # Placeholder required for validation
-                                uncertaintyvalue = datum.get('uncertaintyvalue'),
-                                uncertaintyunitid = datum.get('variableunitsid'),
-                                uncertaintybasisid = datum.get('uncertaintybasisid'),
-                                notes = datum.get('notes'))
+                du = DataUncertainty(
+                    dataid=datum.get("dataid"),
+                    uncertaintyvalue=datum.get("uncertaintyvalue"),
+                    uncertaintyunitid=datum.get("variableunitsid"),
+                    uncertaintybasisid=datum.get("uncertaintybasisid"),
+                    notes=datum.get("notes"),
+                )
                 response.valid.append(True)
+                if "✔  Datum Uncertainty can be created." not in response.message:
+                    response.message.append("✔  Datum Uncertainty can be created.")
+                try:
+                    du.insert_to_db(cur)
+                    response.valid.append(True)
+                    if (
+                        f"✔  Datum Uncertainty inserted into db for taxon '{taxon}'."
+                        not in response.message
+                    ):
+                        response.message.append(
+                            f"✔  Datum Uncertainty inserted into db for taxon '{taxon}'."
+                        )
+                except Exception as e:
+                    response.valid.append(False)
+                    if f"✗  Datum Uncertainty cannot be inserted: {e}" not in response.message:
+                        response.message.append(f"✗  Datum Uncertainty cannot be inserted: {e}")
             except Exception as e:
                 response.valid.append(False)
                 if f"✗  Datum Uncertainty cannot be created: {e}" not in response.message:
                     response.message.append(f"✗  Datum Uncertainty cannot be created: {e}")
-    if response.validAll:
-        response.message.append("✔  Datum Uncertainty can be created.")
     return response
