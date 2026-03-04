@@ -3,6 +3,8 @@
 [![NSF-1948926](https://img.shields.io/badge/NSF-1948926-blue.svg)](https://www.nsf.gov/awardsearch/showAward?AWD_ID=1948926)
 [![NSF-2410961](https://img.shields.io/badge/NSF-2410961-blue.svg)](https://www.nsf.gov/awardsearch/showAward?AWD_ID=2410961)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/11101/badge)](https://www.bestpractices.dev/projects/11101)
+[![CI](https://github.com/NeotomaDB/DataBUS/actions/workflows/ci.yml/badge.svg)](https://github.com/NeotomaDB/DataBUS/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/NeotomaDB/DataBUS/branch/main/graph/badge.svg)](https://codecov.io/gh/NeotomaDB/DataBUS)
 <!-- badges: end -->
 
 # Working with the Python Data Upload Template
@@ -18,6 +20,8 @@ Once these three steps are completed the uploader will push the template files t
 ![The process of uploading records using the bulk uploader. Individuals follow the steps outlined above and described further in this README file.](img/BulkUploaderSchema.svg)
 
 ## Template Development
+
+An example YAML template ([`data/template_example.yml`](data/template_example.yml)) and a sample CSV ([`data/data_example.csv`](data/data_example.csv)) are provided to help you get started.
 
 The template uses a `yaml` format file, with the following general structure for each data element:
 
@@ -46,9 +50,8 @@ Each entry in the `metadata` tab can have the following entries:
 * `column`:  The column of the spreadsheet that is being described.
 * `neotoma`: A database table and column combination from the database schema.
 * `vocab`: If there is a fixed vocabulary for the column, include the possible terms here.
-* `repeat`: [`true`, `false`] Is each entry unique and tied to the row (`false`, this isn't a set of repeated values), or is this a set of entries associated with the site (`true`, there is only a single value that repeats throughout)?
+* `rowwise`: [`true`, `false`] Is each entry unique and tied to the row (`false`, this isn't a set of repeated values), or is this a set of entries associated with the site (`true`, there is only a single value that repeats throughout)?
 * `type`: [`integer`, `numeric`, `date`] The variable type for the field.
-* `ordered`: [`true`, `false`] Does the order of the column matter?
 
 ```yaml
 metadata:
@@ -70,10 +73,10 @@ On completion of the YAML file, each column of the CSV will have an entry that f
 
 ## Validation
 
-We execute the validation process by running:
+We execute the validation process by running (see [`databus_example.py`](databus_example.py) for the full example script):
 
 ```bash
-> python3 template_validate.py FILEFOLDER
+uv run databus_example.py --data FILEFOLDER/ --template template.yml --logs FILEFOLDER/logs/ --upload False
 ```
 
 This will then search the folder provided in `FILEFOLDER` for csv files and parse them for validity.
@@ -113,7 +116,7 @@ The validation step identifies each element of the template being validated, pro
 The upload process is initiated using the command:
 
 ```bash
-> python3 data_upload.py
+uv run databus_example.py --data FILEFOLDER/ --template template.yml --logs FILEFOLDER/logs/ --upload True
 ```
 
-The upload process will return the distince siteids, and related data identifiers for the uploads.
+The upload process will return the distinct siteids, and related data identifiers for the uploads.

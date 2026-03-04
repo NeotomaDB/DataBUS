@@ -28,8 +28,8 @@ Core classes representing the fundamental data models used throughout the DataBU
 ::: DataBUS.Speleothem
 ::: DataBUS.UThSeries
 ::: DataBUS.Variable
-<!-- 
-## Validators
+
+## DataBUS Validator/Uploader
 
 Validation modules for ensuring data integrity and correctness before uploading to the Neotoma database.
 
@@ -62,57 +62,6 @@ Validation modules for ensuring data integrity and correctness before uploading 
 ::: DataBUS.neotomaValidator.valid_units
 ::: DataBUS.neotomaValidator.valid_uth_series
 ::: DataBUS.neotomaValidator.validGeoPol
-
-## Uploaders
-
-Modules for inserting validated data into the Neotoma database.
-
-::: DataBUS.neotomaUploader.insert_analysisunit
-::: DataBUS.neotomaUploader.insert_chroncontrols
-::: DataBUS.neotomaUploader.insert_chronology
-::: DataBUS.neotomaUploader.insert_collector
-::: DataBUS.neotomaUploader.insert_collunit
-::: DataBUS.neotomaUploader.insert_data
-::: DataBUS.neotomaUploader.insert_data_processor
-::: DataBUS.neotomaUploader.insert_dataset
-::: DataBUS.neotomaUploader.insert_dataset_database
-::: DataBUS.neotomaUploader.insert_dataset_pi
-::: DataBUS.neotomaUploader.insert_dataset_repository
-::: DataBUS.neotomaUploader.insert_datauncertainty
-::: DataBUS.neotomaUploader.insert_external_speleothem
-::: DataBUS.neotomaUploader.insert_final
-::: DataBUS.neotomaUploader.insert_geochron
-::: DataBUS.neotomaUploader.insert_geochron_dataset
-::: DataBUS.neotomaUploader.insert_geochroncontrols
-::: DataBUS.neotomaUploader.insert_geopolitical_units
-::: DataBUS.neotomaUploader.insert_hiatus
-::: DataBUS.neotomaUploader.insert_pbmodel
-::: DataBUS.neotomaUploader.insert_publication
-::: DataBUS.neotomaUploader.insert_sample
-::: DataBUS.neotomaUploader.insert_sample_age
-::: DataBUS.neotomaUploader.insert_sample_analyst
-::: DataBUS.neotomaUploader.insert_sample_geochron
-::: DataBUS.neotomaUploader.insert_site
-::: DataBUS.neotomaUploader.insert_speleo_cu
-::: DataBUS.neotomaUploader.insert_speleothem
-::: DataBUS.neotomaUploader.insert_uth_series
-
-## Helper Functions
-
-Utility modules for common operations such as data processing, file handling, and argument parsing.
-
-::: DataBUS.neotomaHelpers.clean_column
-::: DataBUS.neotomaHelpers.excel_to_yaml
-::: DataBUS.neotomaHelpers.get_contacts
-::: DataBUS.neotomaHelpers.hash_file
-::: DataBUS.neotomaHelpers.parse_arguments
-::: DataBUS.neotomaHelpers.pull_overwrite
-::: DataBUS.neotomaHelpers.pull_params
-::: DataBUS.neotomaHelpers.pull_required
-::: DataBUS.neotomaHelpers.read_csv
-::: DataBUS.neotomaHelpers.retrieve_dict
-::: DataBUS.neotomaHelpers.speleothem_reference_inserts
-::: DataBUS.neotomaHelpers.template_to_dict
 
 ## Additional Modules
 
