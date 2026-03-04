@@ -1,7 +1,7 @@
 import DataBUS.neotomaHelpers as nh
 from DataBUS import Response, DatasetDatabase
 
-def valid_dataset_database(cur, yml_dict):
+def valid_dataset_database(cur, yml_dict, databus=None):
     """Validates dataset-database associations.
 
     Validates the database name provided in YAML configuration against the
@@ -24,7 +24,8 @@ def valid_dataset_database(cur, yml_dict):
     inputs = {"databasename": db_name[0]["value"]}
 
     db_query = """SELECT databaseid FROM ndb.constituentdatabases
-               WHERE LOWER(databasename) LIKE %(databasename)s"""
+                  WHERE LOWER(databasename) LIKE %(databasename)s"""
+    
     if isinstance(inputs["databasename"], str):
         cur.execute(db_query, {"databasename": inputs["databasename"].lower().strip()})
         inputs["databaseid"] = cur.fetchone()
@@ -35,9 +36,24 @@ def valid_dataset_database(cur, yml_dict):
             response.message.append(f"✗ Database '{inputs['databasename']}' not found in Neotoma.")
             return response
     try:
-        DatasetDatabase(databaseid = inputs["databaseid"], datasetid = 1) # placeholder for datasetid
+        datasetid = databus['datasets'].id_int
+        response.valid.append(True)
+    except Exception as e:
+        response.message.append(f"✗ Cannot retrieve Dataset ID from databus: {e}")
+        response.valid.append(False)
+        datasetid = 1  # placeholder
+
+    try:
+        db = DatasetDatabase(databaseid=inputs["databaseid"], datasetid=datasetid)
         response.valid.append(True)
         response.message.append(f"✔ Dataset linked to Database ID {inputs['databaseid']} created.")
+        response.id_int = inputs["databaseid"]
+        try:
+            db.insert_to_db(cur)
+            response.message.append(f"✔ Dataset-database link inserted.")
+        except Exception as e:
+            response.message.append(f"✗ Cannot insert DatasetDatabase: {e}")
+            response.valid.append(False)
     except Exception as e:
         response.message.append(f"✗ Cannot create Database object: {e}")
         response.valid.append(False)
