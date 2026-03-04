@@ -9,11 +9,13 @@ def insert_final(cur, databus):
                                                   submissiontypeid, submissiondate)
                 VALUES(%(datasetid)s, %(databaseid)s, %(contactid)s, %(submissiontypeid)s, %(submissiondate)s)
                                                   """
-    inputs = {'datasetid': databus['datasets'].id_int,
-              'databaseid': databus['database'].id_int,
-              'contactid': databus['contacts'].id_int,
-              'submissiontypeid': 6,
-              'submissiondate': datetime.now().date()}
+    inputs = {
+        "datasetid": databus["datasets"].id_int,
+        "databaseid": databus["database"].id_int,
+        "contactid": databus["contacts"].id_int,
+        "submissiontypeid": 6,
+        "submissiondate": datetime.now().date(),
+    }
     try:
         cur.execute(query, inputs)
         response.valid.append(True)
