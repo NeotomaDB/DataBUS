@@ -1,7 +1,7 @@
 import DataBUS.neotomaHelpers as nh
 from DataBUS import Response, Variable, Datum
 
-def valid_data(cur, yml_dict, csv_file):
+def valid_data(cur, yml_dict, csv_file, databus=None):
     """Validates paleontological data values against the Neotoma database.
 
     Validates data values and associated variables (taxon, units, element, context).
@@ -70,12 +70,20 @@ def valid_data(cur, yml_dict, csv_file):
                     combined_data[k].extend(v if isinstance(v, list) else [v] * length)
         data = combined_data
     vals = {}
-    for datum in zip(*data.values()):
+    try:
+        sample_ids = databus['samples'].id_list
+    except Exception as e:
+        sample_ids = list(range(1, 10))  # placeholder
+        response.valid.append(False)
+        response.message.append(f"✗ Sample IDs not available; using placeholder: {e}")
+
+    for row_idx, datum in enumerate(zip(*data.values())):
         datum = dict(zip(list(data.keys()), datum))
         for param, (query, key) in par.items():
             if isinstance(datum.get(param), str) and datum[param].strip().lower() == 'none':
                 datum[param] = None
             if isinstance(datum.get(param), str):
+                name = datum[param]
                 if datum[param].lower().strip() in vals:
                     datum[param] = vals[datum[param].lower().strip()]
                 else:
@@ -84,8 +92,8 @@ def valid_data(cur, yml_dict, csv_file):
                     if result:
                         vals[datum[param].lower().strip()] = result[0]
                         datum[param] = result[0]
-                        if f"✔ The provided {param} is correct: {datum[param]} - ID: ({result[0]})" not in response.message:
-                            response.message.append(f"✔ The provided {param} is correct: {datum[param]} - ID: ({result[0]})")
+                        if f"✔ The provided {param} is correct: {name} - ID: ({result[0]})" not in response.message:
+                            response.message.append(f"✔ The provided {param} is correct: {name} - ID: ({result[0]})")
                         response.valid.append(True)
                     else:
                         if f"✗ The provided {param} with value {datum[param]} does not exist in Neotoma DB." not in response.message:
@@ -111,13 +119,22 @@ def valid_data(cur, yml_dict, csv_file):
             if f"✗  Var ID cannot be retrieved from db: {e}" not in response.message:
                 response.message.append(f"✗  Var ID cannot be retrieved from db: {e}")
             continue
+        sampleid = sample_ids[row_idx] if row_idx < len(sample_ids) else sample_ids[-1]
+        value = datum.get('value')
         try:
-            d = Datum(sampleid = 3, # Placeholder
-                      variableid = varid,
-                      value=datum.get('value'))
+            d = Datum(sampleid=sampleid,
+                      variableid=varid,
+                      value=value)
             response.valid.append(True)
+            try:
+                d_id = d.insert_to_db(cur)
+                response.id_list.append(d_id)
+            except Exception as e:
+                response.valid.append(False)
+                if f"✗  Datum cannot be inserted: {e}" not in response.message:
+                    response.message.append(f"✗  Datum cannot be inserted: {e}")
         except Exception as e:
             response.valid.append(False)
-            if "✗  Datum cannot be created: {e}" not in response.message:
+            if f"✗  Datum cannot be created: {e}" not in response.message:
                 response.message.append(f"✗  Datum cannot be created: {e}")
     return response

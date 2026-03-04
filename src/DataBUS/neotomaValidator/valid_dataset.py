@@ -2,7 +2,7 @@ import DataBUS.neotomaHelpers as nh
 from DataBUS import Dataset, Response
 from DataBUS.Dataset import DATASET_PARAMS
 
-def valid_dataset(cur, yml_dict, csv_file):
+def valid_dataset(cur, yml_dict, csv_file, databus=None):
     """Validates a dataset based on YAML configuration and CSV data.
 
     Validates dataset name and dataset type against the Neotoma database.
@@ -62,11 +62,23 @@ def valid_dataset(cur, yml_dict, csv_file):
             response.message.append("✗ Dataset type is not known to Neotoma and needs to be created first.")
             response.valid.append(False)
     inputs["notes"] = nh.pull_params(["notes"], yml_dict, csv_file, "ndb.datasets").get('notes')
-    inputs["collectionunitid"] = 1 #placeholder for validation
+    if databus is not None:
+        inputs["collectionunitid"] = databus['collunits'].id_int
+    else:
+        inputs["collectionunitid"] = 1  # placeholder
+        response.valid.append(False)
+        response.message.append("✗ Collection unit ID not available; using placeholder.")
     try:
-        Dataset(**inputs)
+        ds = Dataset(**inputs)
         response.message.append("✔ Dataset can be created.")
         response.valid.append(True)
+        if databus is not None:
+            try:
+                response.id_int = ds.insert_to_db(cur)
+                response.message.append(f"✔ Dataset inserted with ID {response.id_int}.")
+            except Exception as e:
+                response.valid.append(False)
+                response.message.append(f"✗ Failed to insert dataset: {e}")
     except Exception as e:
         response.message.append(f"✗ Dataset cannot be created: {e}")
         response.valid.append(False)
