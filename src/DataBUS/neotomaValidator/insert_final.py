@@ -5,7 +5,7 @@ from DataBUS import Response
 
 def insert_final(cur, databus):
     response = Response()
-    query = """INSERT INTO ndb.datasetsubmissions(datasetid, databaseid, contactid, 
+    query = """INSERT INTO ndb.datasetsubmissions(datasetid, databaseid, contactid,
                                                   submissiontypeid, submissiondate)
                 VALUES(%(datasetid)s, %(databaseid)s, %(contactid)s, %(submissiontypeid)s, %(submissiondate)s)
                                                   """
