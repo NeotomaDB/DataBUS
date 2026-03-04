@@ -1,6 +1,8 @@
 """Tests for neotomaHelpers utilities."""
 import os
+
 import pytest
+
 import DataBUS.neotomaHelpers as nh
 from tests.conftest import real_csv, real_yml
 

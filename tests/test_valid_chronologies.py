@@ -1,6 +1,8 @@
 """Tests for valid_chronologies validator."""
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
+
 import DataBUS.neotomaValidator as nv
 from DataBUS import Response
 
@@ -15,15 +17,15 @@ class TestValidChronologiesMock:
 
     def test_returns_response_sisal(self, mock_cur, sisal_pair):
         csv_file, yml_dict = sisal_pair
-        # SISAL template has chronologies section
+        # SISAL template has chronologies section; databus={} means no upstream IDs
         result = nv.valid_chronologies(cur=mock_cur, yml_dict=yml_dict,
-                                       csv_file=csv_file, databus=None)
+                                       csv_file=csv_file, databus={})
         assert isinstance(result, Response)
 
     def test_returns_response_pb210(self, mock_cur, pb210_pair):
         csv_file, yml_dict = pb210_pair
         result = nv.valid_chronologies(cur=mock_cur, yml_dict=yml_dict,
-                                       csv_file=csv_file, databus=None)
+                                       csv_file=csv_file, databus={})
         assert isinstance(result, Response)
 
     def test_with_databus_no_insert_when_mock(self, mock_cur, sisal_pair):

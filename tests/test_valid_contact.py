@@ -1,8 +1,10 @@
 """Tests for valid_contact validator."""
-import pytest
 from unittest.mock import MagicMock
-import DataBUS.neotomaValidator as nv
+
+import pytest
+
 import DataBUS.neotomaHelpers as nh
+import DataBUS.neotomaValidator as nv
 from DataBUS import Response
 from DataBUS.Contact import CONTACT_TABLES
 
@@ -58,9 +60,9 @@ class TestValidContactInsertDispatch:
 
     def _run_with_found_contact(self, mock_cur, table, databus):
         """Configure mock to return a found contact and run the validator."""
-        from DataBUS.neotomaHelpers.get_contacts import get_contacts as _gc
         # Patch get_contacts to return a found result
         import DataBUS.neotomaHelpers as nh_mod
+        from DataBUS.neotomaHelpers.get_contacts import get_contacts as _gc
         original = getattr(nh_mod, 'get_contacts', None)
         nh_mod.get_contacts = lambda cur, name: {"id": 99, "name": name, "order": 1}
         try:

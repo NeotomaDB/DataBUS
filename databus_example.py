@@ -1,12 +1,14 @@
-import os
-import json
-import psycopg2
 import datetime
 import glob
+import json
+import os
+
+import psycopg2
 from dotenv import load_dotenv
 from tqdm import tqdm
-import DataBUS.neotomaValidator as nv
+
 import DataBUS.neotomaHelpers as nh
+import DataBUS.neotomaValidator as nv
 from DataBUS.neotomaHelpers.logging_dict import logging_response
 
 """Example script demonstrating the use of DataBUS functions.
@@ -46,7 +48,7 @@ print(f"Start uploading at {start_time.strftime('%Y-%m-%d %H:%M:%S')}")
 for filename in tqdm(filenames, desc="Files", unit="file"):
     conn.rollback()
     logfile = []
-    databus = dict()
+    databus = {}
 
     csv_file = nh.read_csv(filename)
     hashcheck = nh.hash_file(filename)
@@ -65,129 +67,129 @@ for filename in tqdm(filenames, desc="Files", unit="file"):
         step_bar = tqdm(total=16, desc=os.path.basename(filename), leave=False, unit="step")
 
         # Not all steps are required for every upload.
-        # This is only an example of how to run DataBUS. 
+        # This is only an example of how to run DataBUS.
         # Modify the steps as needed for your specific use case.
-        logfile.append(f"=== Sites ===")
-        result = nh.safe_step("sites", lambda: nv.valid_site(
+        logfile.append("=== Sites ===")
+        result = nh.safe_step("sites", lambda csv_file=csv_file: nv.valid_site(
             cur=cur, yml_dict=yml_dict, csv_file=csv_file), logfile, conn)
         if result is not None:
             databus['sites'] = result
             logfile = logging_response(databus['sites'], logfile)
         step_bar.update(1)
 
-        logfile.append(f"=== GPUs ===")
-        result = nh.safe_step("gpus", lambda: nv.valid_geopolitical_units(
+        logfile.append("=== GPUs ===")
+        result = nh.safe_step("gpus", lambda csv_file=csv_file, databus=databus: nv.valid_geopolitical_units(
             cur=cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus), logfile, conn)
         if result is not None:
             databus['gpuid'] = result
             logfile = logging_response(databus['gpuid'], logfile)
         step_bar.update(1)
 
-        logfile.append(f"=== CUs ===")
-        result = nh.safe_step("collunits", lambda: nv.valid_collunit(
+        logfile.append("=== CUs ===")
+        result = nh.safe_step("collunits", lambda csv_file=csv_file, databus=databus: nv.valid_collunit(
             cur=cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus), logfile, conn)
         if result is not None:
             databus['collunits'] = result
             logfile = logging_response(databus['collunits'], logfile)
         step_bar.update(1)
 
-        logfile.append(f"=== Analysis Units ===")
-        result = nh.safe_step("analysisunits", lambda: nv.valid_analysisunit(
+        logfile.append("=== Analysis Units ===")
+        result = nh.safe_step("analysisunits", lambda csv_file=csv_file, databus=databus: nv.valid_analysisunit(
             cur=cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus), logfile, conn)
         if result is not None:
             databus['analysisunits'] = result
             logfile = logging_response(databus['analysisunits'], logfile)
         step_bar.update(1)
 
-        logfile.append(f"=== Datasets ===")
-        result = nh.safe_step("datasets", lambda: nv.valid_dataset(
+        logfile.append("=== Datasets ===")
+        result = nh.safe_step("datasets", lambda csv_file=csv_file, databus=databus: nv.valid_dataset(
             cur=cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus), logfile, conn)
         if result is not None:
             databus['datasets'] = result
             logfile = logging_response(databus['datasets'], logfile)
         step_bar.update(1)
 
-        logfile.append(f"=== Geochron Datasets ===")
-        result = nh.safe_step("geodataset", lambda: nv.valid_geochron_dataset(
+        logfile.append("=== Geochron Datasets ===")
+        result = nh.safe_step("geodataset", lambda csv_file=csv_file, databus=databus: nv.valid_geochron_dataset(
             cur=cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus), logfile, conn)
         if result is not None:
             databus['geodataset'] = result
             logfile = logging_response(databus['geodataset'], logfile)
         step_bar.update(1)
 
-        logfile.append(f"=== Chronologies ===")
-        result = nh.safe_step("chronologies", lambda: nv.valid_chronologies(
+        logfile.append("=== Chronologies ===")
+        result = nh.safe_step("chronologies", lambda csv_file=csv_file, databus=databus: nv.valid_chronologies(
             cur=cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus), logfile, conn)
         if result is not None:
             databus['chronologies'] = result
             logfile = logging_response(databus['chronologies'], logfile)
         step_bar.update(1)
 
-        logfile.append(f"=== Chron Controls ===")
-        result = nh.safe_step("chron_controls", lambda: nv.valid_chroncontrols(
+        logfile.append("=== Chron Controls ===")
+        result = nh.safe_step("chron_controls", lambda csv_file=csv_file, databus=databus: nv.valid_chroncontrols(
             cur=cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus), logfile, conn)
         if result is not None:
             databus['chron_controls'] = result
             logfile = logging_response(databus['chron_controls'], logfile)
         step_bar.update(1)
 
-        logfile.append(f"=== Geochron ===")
-        result = nh.safe_step("geochron", lambda: nv.valid_geochron(
+        logfile.append("=== Geochron ===")
+        result = nh.safe_step("geochron", lambda csv_file=csv_file, databus=databus: nv.valid_geochron(
             cur=cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus), logfile, conn)
         if result is not None:
             databus['geochron'] = result
             logfile = logging_response(databus['geochron'], logfile)
         step_bar.update(1)
 
-        logfile.append(f"=== Geochron Control ===")
-        result = nh.safe_step("geochroncontrol", lambda: nv.valid_geochroncontrol(
+        logfile.append("=== Geochron Control ===")
+        result = nh.safe_step("geochroncontrol", lambda databus=databus: nv.valid_geochroncontrol(
             cur=cur, databus=databus), logfile, conn)
         if result is not None:
             databus['geochroncontrol'] = result
         step_bar.update(1)
 
-        logfile.append(f"=== Contacts ===")
-        result = nh.safe_step("contacts", lambda: nv.valid_contact(
+        logfile.append("=== Contacts ===")
+        result = nh.safe_step("contacts", lambda csv_file=csv_file, databus=databus: nv.valid_contact(
             cur=cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus), logfile, conn)
         if result is not None:
             databus['contacts'] = result
             logfile = logging_response(databus['contacts'], logfile)
         step_bar.update(1)
 
-        logfile.append(f"=== Database ===")
-        result = nh.safe_step("database", lambda: nv.valid_dataset_database(
+        logfile.append("=== Database ===")
+        result = nh.safe_step("database", lambda databus=databus: nv.valid_dataset_database(
             cur=cur, yml_dict=yml_dict, databus=databus), logfile, conn)
         if result is not None:
             databus['database'] = result
             logfile = logging_response(databus['database'], logfile)
         step_bar.update(1)
 
-        logfile.append(f"=== Samples ===")
-        result = nh.safe_step("samples", lambda: nv.valid_sample(
+        logfile.append("=== Samples ===")
+        result = nh.safe_step("samples", lambda csv_file=csv_file, databus=databus: nv.valid_sample(
             cur=cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus), logfile, conn)
         if result is not None:
             databus['samples'] = result
             logfile = logging_response(databus['samples'], logfile)
         step_bar.update(1)
 
-        logfile.append(f"=== Sample Ages ===")
-        result = nh.safe_step("sample_age", lambda: nv.valid_sample_age(
+        logfile.append("=== Sample Ages ===")
+        result = nh.safe_step("sample_age", lambda csv_file=csv_file, databus=databus: nv.valid_sample_age(
             cur=cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus), logfile, conn)
         if result is not None:
             databus['sample_age'] = result
             logfile = logging_response(databus['sample_age'], logfile)
         step_bar.update(1)
 
-        logfile.append(f"=== Data ===")
-        result = nh.safe_step("data", lambda: nv.valid_data(
+        logfile.append("=== Data ===")
+        result = nh.safe_step("data", lambda csv_file=csv_file, databus=databus: nv.valid_data(
             cur=cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus), logfile, conn)
         if result is not None:
             databus['data'] = result
             logfile = logging_response(databus['data'], logfile)
         step_bar.update(1)
 
-        logfile.append(f"=== Publications ===")
-        result = nh.safe_step("publications", lambda: nv.valid_publication(
+        logfile.append("=== Publications ===")
+        result = nh.safe_step("publications", lambda csv_file=csv_file, databus=databus: nv.valid_publication(
             cur=cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus), logfile, conn)
         if result is not None:
             databus['publications'] = result
@@ -196,13 +198,13 @@ for filename in tqdm(filenames, desc="Files", unit="file"):
 
         step_bar.close()
 
-        # Inserting Finalize
-        # databus['finalize'] = nv.insert_final(cur,
-        #                                       databus = databus)
-        all_true = all([databus[key].validAll for key in databus])
+        all_true = all(databus[key].validAll for key in databus)
         all_true = all_true and hashcheck
         if args.upload:
             if all_true:
+                # Special command for finalizing the upload and inserting into the datasetsubmissions table.
+                databus['finalize'] = nv.insert_final(cur,
+                                                      databus = databus)
                 conn.commit()
                 logfile.append("Data has been successfully uploaded to the database.")
             else:

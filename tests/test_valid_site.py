@@ -1,8 +1,10 @@
 """Tests for valid_site validator using real and mock data."""
-import pytest
 from unittest.mock import MagicMock
-import DataBUS.neotomaValidator as nv
+
+import pytest
+
 import DataBUS.neotomaHelpers as nh
+import DataBUS.neotomaValidator as nv
 from DataBUS import Response
 from tests.conftest import real_csv, real_yml, toy_csv
 

@@ -1,6 +1,8 @@
 """Tests for valid_uth_series validator."""
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
+
 import DataBUS.neotomaValidator as nv
 from DataBUS import Response
 

@@ -4,10 +4,12 @@ These tests verify that the playground's step sequence (site → collunit →
 dataset → chronologies → ...) can complete without crashing even when the
 database is offline and every SQL call returns None/empty.
 """
-import pytest
 from unittest.mock import MagicMock, patch
-import DataBUS.neotomaValidator as nv
+
+import pytest
+
 import DataBUS.neotomaHelpers as nh
+import DataBUS.neotomaValidator as nv
 from DataBUS import Response
 from tests.conftest import real_csv, real_yml
 
@@ -32,7 +34,7 @@ def _run_chain(cur, csv_file, yml_dict):
             result = fn()
             if isinstance(result, Response):
                 databus[step_name] = result
-        except Exception as e:
+        except Exception:
             databus[step_name] = None  # record failure but continue
 
     return databus

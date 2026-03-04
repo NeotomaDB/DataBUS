@@ -11,10 +11,11 @@ are automatically skipped when a real connection is unavailable and a mock
 is not sufficient (e.g. tests that explicitly require real DB semantics).
 """
 
-import os
 import json
-import pytest
+import os
 from unittest.mock import MagicMock
+
+import pytest
 
 # ── paths ─────────────────────────────────────────────────────────────────────
 TESTS_DIR  = os.path.dirname(__file__)

@@ -1,5 +1,6 @@
 """Tests for the Response base class."""
 import pytest
+
 from DataBUS import Response
 
 

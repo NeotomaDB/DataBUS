@@ -1,8 +1,16 @@
 """Unit tests for DataBUS domain classes (no DB required)."""
 import pytest
+
 from DataBUS import (
-    Contact, Chronology, ChronControl, Geochron,
-    UThSeries, GeochronControl, Site, Dataset, CollectionUnit
+    ChronControl,
+    Chronology,
+    CollectionUnit,
+    Contact,
+    Dataset,
+    Geochron,
+    GeochronControl,
+    Site,
+    UThSeries,
 )
 
 

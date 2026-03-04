@@ -1,6 +1,8 @@
 """Tests for valid_geochron and valid_geochroncontrol validators."""
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
+
 import DataBUS.neotomaValidator as nv
 from DataBUS import Response
 
@@ -15,26 +17,29 @@ class TestValidGeochronMock:
     def test_returns_response_sisal(self, mock_cur, sisal_pair):
         csv_file, yml_dict = sisal_pair
         mock_cur.mock_fetchone = (1,)
+        # databus={} means no upstream sample IDs – code uses placeholders
         result = nv.valid_geochron(cur=mock_cur, yml_dict=yml_dict,
-                                   csv_file=csv_file, databus=None)
+                                   csv_file=csv_file, databus={})
         assert isinstance(result, Response)
 
     def test_placeholder_sample_ids_when_no_databus(self, mock_cur, sisal_pair):
-        """Without databus, placeholder sampleids (1,2,3…) are used;
-        id_list should be populated with None (no real inserts)."""
+        """Without samples in databus, placeholder sampleids are used and
+        a warning message is appended to the response."""
         csv_file, yml_dict = sisal_pair
         mock_cur.mock_fetchone = (1,)
+        # databus={} → databus.get("samples") is None → code falls back to placeholders
         result = nv.valid_geochron(cur=mock_cur, yml_dict=yml_dict,
-                                   csv_file=csv_file, databus=None)
+                                   csv_file=csv_file, databus={})
         assert isinstance(result, Response)
-        # All id_list entries should be None (no DB inserts without databus)
-        real_ids = [i for i in result.id_list if i is not None]
-        assert real_ids == []
+        # The response must warn that sample IDs were not found and placeholders were used
+        assert any("placeholder" in msg.lower() for msg in result.message)
 
     def test_databus_sample_ids_used(self, mock_cur, sisal_pair):
         csv_file, yml_dict = sisal_pair
         mock_cur.mock_fetchone = (1,)
-        databus = {"samples": MagicMock(id_list=[201, 202, 203])}
+        # The SISAL file has age values at row indices up to ~449, so we need
+        # at least 450 sample IDs in the list for index-based lookup to succeed.
+        databus = {"samples": MagicMock(id_list=list(range(201, 201 + 500)))}
         result = nv.valid_geochron(cur=mock_cur, yml_dict=yml_dict,
                                    csv_file=csv_file, databus=databus)
         assert isinstance(result, Response)

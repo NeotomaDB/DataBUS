@@ -1,6 +1,8 @@
 """Tests for valid_geochron_dataset validator."""
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
+
 import DataBUS.neotomaValidator as nv
 from DataBUS import Response
 
