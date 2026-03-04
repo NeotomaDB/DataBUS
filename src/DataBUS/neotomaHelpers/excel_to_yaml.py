@@ -1,7 +1,6 @@
 import ast
 
-import numpy as np
-import pandas as pd
+import openpyxl
 import yaml
 
 
@@ -61,28 +60,34 @@ def excel_to_yaml(temp_file, file_name):
         None: Writes YAML file to disk with name file_name.yml
     """
     # SUGGESTION: Extract sheet reading and data cleaning into separate functions
+    wb = openpyxl.load_workbook(temp_file, data_only=True)
+
+    def read_sheet(sheet_name):
+        ws = wb[sheet_name]
+        rows = list(ws.iter_rows(values_only=True))
+        if not rows:
+            return []
+        headers = [str(h).lower() if h is not None else "" for h in rows[0]]
+        return [dict(zip(headers, row, strict=False)) for row in rows[1:]]
+
     # Template info
-    df1 = pd.read_excel(temp_file, sheet_name="Data Mapping")
-    df1 = df1[df1["Column"] != "—NA—"]
-    df1 = df1.replace({np.nan: None})
-    df1.columns = map(str.lower, df1.columns)
-    df1["vocab"] = df1["vocab"].str.replace("'", '"')
-    df1["vocab"] = df1["vocab"].str.replace("'", '"')
-    df1["vocab"] = df1["vocab"].str.replace("'", '"')
+    sheet1 = read_sheet("Data Mapping")
+    sheet1 = [r for r in sheet1 if r.get("column") != "—NA—"]
+    for r in sheet1:
+        if isinstance(r.get("vocab"), str):
+            r["vocab"] = r["vocab"].replace("'", '"').replace("\u2018", '"').replace("\u2019", '"')
 
     # Metadata
-    df2 = pd.read_excel(temp_file, sheet_name="Metadata")
-    df2 = df2[df2["Column"] != "—NA—"]
-    df2 = df2.replace({np.nan: None})
-    df2.columns = map(str.lower, df2.columns)
+    metadata = [r for r in read_sheet("Metadata") if r.get("column") != "—NA—"]
 
-    # Setting the dictionary
-    data = df1.groupby(["column", "neotoma"]).apply(lambda x: x.to_dict(orient="index")).to_dict()
-    metadata = df2.to_dict(orient="records")
-
+    # Setting the dictionary — first row per (column, neotoma) group
+    seen = set()
     data_list = []
-    for _, value in data.items():
-        data_list.append(list(value.values())[0])
+    for record in sheet1:
+        key = (record.get("column"), record.get("neotoma"))
+        if key not in seen:
+            seen.add(key)
+            data_list.append(record)
 
     units_entries = []
     uncertainty_units_entries = []

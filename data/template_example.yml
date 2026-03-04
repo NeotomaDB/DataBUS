@@ -23,6 +23,27 @@ kind: Development
 #
 # "rowwise: true"  → the column has one value per sample row.
 # "rowwise: false" → the column has a single value shared by all rows.
+#
+# ── WIDE DATA FORMAT ─────────────────────────────────────────────────────────
+# DataBUS expects data in WIDE format: each variable (taxon/proxy) is its own
+# column in the CSV file. This is in contrast to narrow/long format where a
+# single "Value" column holds all measurements.
+#
+# Wide format CSV example (210Pb-style):
+#
+#   Depth | 210Pb_alpha | Dry.Mass | 137Cs  | 210Pb_alpha.Units | ...
+#   1.0   | 15.2        | 0.52     | 0.003  | Bq/kg             | ...
+#   2.0   | 14.8        | 0.55     | 0.004  | Bq/kg             | ...
+#   3.0   | 14.1        | 0.58     | 0.005  | Bq/kg             | ...
+#
+# Wide format CSV example (SISAL-style):
+#
+#   depth | d18O   | d13C   | d18O.error | d13C.error | interp_age | ...
+#   1.0   | -5.21  | -8.41  | 0.10       | 0.05       | 1250.0     | ...
+#   2.5   | -5.18  | -8.35  | 0.11       | 0.06       | 1300.0     | ...
+#
+# Each wide-format column that holds measurement data MUST have a `taxonname`
+# key in its YAML entry (see the "Data values" section below).
 # ─────────────────────────────────────────────────────────────────────────────
 metadata:
 # ── Dataset metadata (constants) ─────────────────────────────────────────────
@@ -240,6 +261,31 @@ metadata:
   type: string
 
 # ── Chronology ────────────────────────────────────────────────────────────────
+# The `chronologyname` key groups related fields into a single age model.
+#
+# Every field that belongs to the same chronology must share the same
+# `chronologyname` value. This key is how DataBUS knows which agemodel,
+# agebounds, contact, and sampleage columns belong together.
+#
+# A dataset can define MULTIPLE chronologies by using different
+# `chronologyname` values (e.g., one for a 210Pb model and another for a
+# calibrated radiocarbon model). See the SISAL template for an example with
+# "interp_author" and "lin_interp_SISAL", and the 210Pb template for "X210Pb".
+#
+# Example (from the 210Pb template):
+#
+#   column: X210.LeadModel
+#   neotoma: ndb.chronologies.agemodel
+#   chronologyname: X210Pb        ← names this chronology "X210Pb"
+#
+#   column: X210Pb.Date
+#   neotoma: ndb.chronologies.age
+#   chronologyname: X210Pb        ← ties the age column to the same model
+#
+#   column: X210Pb.Date
+#   neotoma: ndb.sampleages.age
+#   chronologyname: X210Pb        ← sampleages also linked by chronologyname
+#
 - column: ChronologyName
   neotoma: ndb.chronologies.chronologyname
   required: false
@@ -411,38 +457,69 @@ metadata:
   type: string
   chronologyname: DefaultChronology
 
-# ── Data values ────────────────────────────────────────────────────────────────
-# Variable ID Portion
-- column: TaxonName
-  neotoma: ndb.variables.taxonid
-  required: false
-  rowwise: true
-  type: string
+# ── Data values (WIDE FORMAT) ─────────────────────────────────────────────────
+# In wide format, each proxy/variable column in the CSV has its own YAML entry
+# that maps it to ndb.data.value and carries a `taxonname` key.
+#
+# ─── taxonname (CRITICAL for data columns) ───────────────────────────────────
+# The `taxonname` key links a CSV column to a specific Neotoma taxon.
+# It MUST be present for every column mapped to ndb.data.value and for the
+# corresponding units column. Without it, the column is silently ignored.
+#
+# Rules:
+#   - The value must match the taxon name in the Neotoma database exactly.
+#   - Both the data column AND its units column must carry the same taxonname.
+#   - DataBUS does not create new taxa. If the taxon is not found in Neotoma,
+#     validation will fail and the steward must add the taxon via Tilia first.
+#
+# Example pair (data column + units column, from the 210Pb template):
+#
+#   column: Unsupported.210Pb              ← CSV column name
+#   neotoma: ndb.data.value
+#   taxonname: Excess 210Pb               ← Neotoma taxon name (MUST exist in DB)
+#   rowwise: true
+#   type: float
+#   unitcolumn: Unsupported.210Pb.Units   ← name of the matching units column
+#
+#   column: Unsupported.210Pb.Units       ← units CSV column
+#   neotoma: ndb.variables.variableunitsid
+#   taxonname: Excess 210Pb               ← MUST match the data column's taxonname
+#   rowwise: true
+#   type: string
+#
+# Replace the entries below with your actual variable columns.
+# Add one pair (value + units) for every proxy/taxon in your dataset.
+# ─────────────────────────────────────────────────────────────────────────────
 
-- column: VariableElement
-  neotoma: ndb.variables.variableelementid
-  required: false
-  rowwise: true
-  type: string
-
-- column: VariableContext
-  neotoma: ndb.variables.variablecontextid
-  required: false
-  rowwise: true
-  type: string
-
-- column: Units
-  neotoma: ndb.variables.variableunitsid
-  required: false
-  rowwise: true
-  type: string
-
-# Value Portion
-- column: Value
+- column: MyVariable1
   neotoma: ndb.data.value
+  taxonname: my variable 1 neotoma name   # REQUIRED – exact Neotoma taxon name
   required: false
   rowwise: true
   type: float
+  unitcolumn: MyVariable1.Units           # CSV column that holds the units string
+
+- column: MyVariable1.Units
+  neotoma: ndb.variables.variableunitsid
+  taxonname: my variable 1 neotoma name   # MUST match the data column above
+  required: false
+  rowwise: true
+  type: string
+
+- column: MyVariable2
+  neotoma: ndb.data.value
+  taxonname: my variable 2 neotoma name
+  required: false
+  rowwise: true
+  type: float
+  unitcolumn: MyVariable2.Units
+
+- column: MyVariable2.Units
+  neotoma: ndb.variables.variableunitsid
+  taxonname: my variable 2 neotoma name
+  required: false
+  rowwise: true
+  type: string
 
 # ── Contacts ──────────────────────────────────────────────────────────────────
 - column: PrincipalInvestigator

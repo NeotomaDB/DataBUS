@@ -1,9 +1,13 @@
+from DataBUS import Response
+
+
 def safe_step(name, fn, logfile, conn):
     """Run a single validation step inside a savepoint.
 
     Returns the Response on success; on any exception it rolls back to the
-    savepoint, appends an error message to logfile, and returns None so that
-    downstream steps can be skipped gracefully rather than crashing.
+    savepoint, appends an error message to logfile, and returns a failed
+    Response (never None) so that downstream steps can inspect messages
+    rather than receiving a bare None.
 
     Args:
         name (str): Human-readable step name (for log messages).
@@ -13,7 +17,8 @@ def safe_step(name, fn, logfile, conn):
         conn: psycopg2 connection (used for savepoint management).
 
     Returns:
-        Response | None
+        Response: the fn() result on success, or a failed Response whose
+            message contains the error detail on failure.
     """
     sp = f"sp_{name.replace(' ', '_').lower()}"
     sp_cur = conn.cursor()
@@ -27,8 +32,12 @@ def safe_step(name, fn, logfile, conn):
             sp_cur = conn.cursor()
             sp_cur.execute(f"SAVEPOINT {sp}")
         except Exception:
-            logfile.append(f"✗ [{name}] Could not establish savepoint – skipping step.")
-            return None
+            msg = f"✗ [{name}] Could not establish savepoint – skipping step."
+            logfile.append(msg)
+            response = Response()
+            response.valid.append(False)
+            response.message.append(msg)
+            return response
     try:
         result = fn()
         sp_cur.execute(f"RELEASE SAVEPOINT {sp}")
@@ -39,5 +48,9 @@ def safe_step(name, fn, logfile, conn):
             sp_cur.execute(f"RELEASE SAVEPOINT {sp}")
         except Exception:
             conn.rollback()
-        logfile.append(f"✗ [{name}] Unexpected error (rolled back): {e}")
-        return None
+        msg = f"✗ [{name}] Unexpected error (rolled back): {e}"
+        logfile.append(msg)
+        response = Response()
+        response.valid.append(False)
+        response.message.append(msg)
+        return response

@@ -150,6 +150,8 @@ def _insert_contact(cur, contact, table_key, databus, response):
                 f"✔  Inserted dataset PI (contactid={contact.contactid}) for dataset {datasetid}."
             )
             response.valid.append(True)
+            if contact.order == 1:
+                response.id_int = contact.contactid
         except Exception as e:
             response.message.append(f"✗ Could not insert dataset PI: {e}")
             response.valid.append(False)

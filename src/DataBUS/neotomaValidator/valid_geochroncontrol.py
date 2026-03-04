@@ -30,9 +30,7 @@ def valid_geochroncontrol(cur, databus):
 
     chron_controls_resp = databus.get("chron_controls")
     geochron_resp = databus.get("geochron")
-    print(geochron_resp, chron_controls_resp)
 
-    # Guard: if either upstream result is missing, skip gracefully
     if chron_controls_resp is None or geochron_resp is None:
         response.message.append(
             "✔ No chron_controls or geochron results available, skipping geochroncontrol linking."
