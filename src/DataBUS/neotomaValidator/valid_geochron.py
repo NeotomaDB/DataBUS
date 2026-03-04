@@ -82,27 +82,22 @@ def valid_geochron(cur, yml_dict, csv_file, databus=None):
         geochron = dict(zip(inputs.keys(), row, strict=False))
         for param, (query, key) in par.items():
             if geochron.get(param) and isinstance(geochron[param], str):
-                    cur.execute(query, {key: geochron[param].lower().strip()})
-                    result = cur.fetchone()
-                    if result:
-                        geochron[param] = result[0]
-                        if (
-                            f"✔ The provided {param} is correct: {result[0]}"
-                            not in response.message
-                        ):
-                            response.message.append(
-                                f"✔ The provided {param} is correct: {result[0]}"
-                            )
-                        response.valid.append(True)
-                    else:
-                        if (
+                cur.execute(query, {key: geochron[param].lower().strip()})
+                result = cur.fetchone()
+                if result:
+                    geochron[param] = result[0]
+                    if f"✔ The provided {param} is correct: {result[0]}" not in response.message:
+                        response.message.append(f"✔ The provided {param} is correct: {result[0]}")
+                    response.valid.append(True)
+                else:
+                    if (
+                        f"✗ The provided {param} with value {geochron[param]} does not exist in Neotoma DB."
+                        not in response.message
+                    ):
+                        response.message.append(
                             f"✗ The provided {param} with value {geochron[param]} does not exist in Neotoma DB."
-                            not in response.message
-                        ):
-                            response.message.append(
-                                f"✗ The provided {param} with value {geochron[param]} does not exist in Neotoma DB."
-                            )
-                        response.valid.append(False)
+                        )
+                    response.valid.append(False)
         try:
             geo = Geochron(**geochron)
             response.valid.append(True)

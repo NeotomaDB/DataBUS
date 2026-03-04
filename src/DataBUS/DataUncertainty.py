@@ -1,7 +1,14 @@
 import importlib.resources
+
 from .neotomaHelpers.utils import validate_int_values
+
 DATAUNCERTAINTY_PARAMS = ["uncertaintyvalue", "uncertaintyunitid", "notes"]
-insert_data_uncertainty = importlib.resources.files("DataBUS.sqlHelpers").joinpath("insert_data_uncertainty.sql").read_text(encoding="UTF-8")
+insert_data_uncertainty = (
+    importlib.resources.files("DataBUS.sqlHelpers")
+    .joinpath("insert_data_uncertainty.sql")
+    .read_text(encoding="UTF-8")
+)
+
 
 class DataUncertainty:
     """Measurement uncertainty for a data value in Neotoma.
@@ -23,9 +30,7 @@ class DataUncertainty:
         5.0
     """
 
-    def __init__(
-        self, dataid, uncertaintyvalue, uncertaintyunitid, uncertaintybasisid, notes
-    ):
+    def __init__(self, dataid, uncertaintyvalue, uncertaintyunitid, uncertaintybasisid, notes):
         self.dataid = validate_int_values(dataid, "dataid")
         self.uncertaintyunitid = validate_int_values(uncertaintyunitid, "uncertaintyunitid")
         self.uncertaintybasisid = validate_int_values(uncertaintybasisid, "uncertaintybasisid")

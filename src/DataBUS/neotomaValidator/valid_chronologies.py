@@ -70,16 +70,16 @@ def valid_chronologies(cur, yml_dict, csv_file, databus=None):
         if ch.get("chronologyname") is None:
             ch["chronologyname"] = chron_key
         if ch.get("agetypeid") is not None and isinstance(ch["agetypeid"], str):
-                cur.execute(agetype_query, {"agetype": ch["agetypeid"].lower().strip()})
-                result = cur.fetchone()
-                if result:
-                    ch["agetypeid"] = result[0]
-                    response.message.append(f"✔ The provided age type is correct: {result[0]}")
-                    response.valid.append(True)
-                else:
-                    response.message.append("✗ The provided age type does not exist in Neotoma DB.")
-                    response.valid.append(False)
-                    continue
+            cur.execute(agetype_query, {"agetype": ch["agetypeid"].lower().strip()})
+            result = cur.fetchone()
+            if result:
+                ch["agetypeid"] = result[0]
+                response.message.append(f"✔ The provided age type is correct: {result[0]}")
+                response.valid.append(True)
+            else:
+                response.message.append("✗ The provided age type does not exist in Neotoma DB.")
+                response.valid.append(False)
+                continue
         if isinstance(ch["contactid"], str):
             result = nh.get_contacts(cur, ch["contactid"])
             if result["id"] is None:

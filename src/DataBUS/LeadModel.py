@@ -1,7 +1,15 @@
-from .neotomaHelpers.utils import validate_int_values
-LEAD_MODEL_PARAMS = ["pbbasisid", "cumulativeinventory", "datinghorizon"]
 import importlib.resources
-insert_pb_model = importlib.resources.files("DataBUS.sqlHelpers").joinpath("insert_pb_model.sql").read_text(encoding="UTF-8")
+
+from .neotomaHelpers.utils import validate_int_values
+
+LEAD_MODEL_PARAMS = ["pbbasisid", "cumulativeinventory", "datinghorizon"]
+
+insert_pb_model = (
+    importlib.resources.files("DataBUS.sqlHelpers")
+    .joinpath("insert_pb_model.sql")
+    .read_text(encoding="UTF-8")
+)
+
 
 class LeadModel:
     """A Lead-210 geochronological model in Neotoma.
@@ -21,7 +29,9 @@ class LeadModel:
         145.3
     """
 
-    def __init__(self, pbbasisid=None, analysisunitid=None, cumulativeinventory=None, datinghorizon=None):
+    def __init__(
+        self, pbbasisid=None, analysisunitid=None, cumulativeinventory=None, datinghorizon=None
+    ):
         self.pbbasisid = validate_int_values(pbbasisid, "pbbasisid")
         self.analysisunitid = validate_int_values(analysisunitid, "analysisunitid")
         self.cumulativeinventory = cumulativeinventory

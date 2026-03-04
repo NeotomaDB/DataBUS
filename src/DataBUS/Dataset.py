@@ -1,6 +1,10 @@
 from .neotomaHelpers.utils import validate_int_values
-DATASET_PARAMS = [("datasetname", "ndb.datasets.datasetname"),
-                  ("datasettypeid", "ndb.datasettypes.datasettypeid")]
+
+DATASET_PARAMS = [
+    ("datasetname", "ndb.datasets.datasetname"),
+    ("datasettypeid", "ndb.datasettypes.datasettypeid"),
+]
+
 
 class Dataset:
     """A dataset in Neotoma.
@@ -28,13 +32,9 @@ class Dataset:
     """
 
     def __init__(
-        self,
-        datasettypeid,
-        datasetid=None,
-        collectionunitid=None,
-        datasetname=None,
-        notes=None):
-        #if collunit is none or datasettypeid is none, fail creation
+        self, datasettypeid, datasetid=None, collectionunitid=None, datasetname=None, notes=None
+    ):
+        # if collunit is none or datasettypeid is none, fail creation
         if datasettypeid is None:
             raise ValueError("Datasettype ID is required to create a Dataset.")
         if collectionunitid is None:
@@ -76,4 +76,6 @@ class Dataset:
         Returns:
             str: String representation.
         """
-        return f"Dataset(id={self.datasetid}, name='{self.datasetname}', typeid={self.datasettypeid})"
+        return (
+            f"Dataset(id={self.datasetid}, name='{self.datasetname}', typeid={self.datasettypeid})"
+        )

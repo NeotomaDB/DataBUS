@@ -1,10 +1,27 @@
-from .Geog import Geog
 from warnings import warn
-from .neotomaHelpers.utils import validate_int_values,validate_date_values
-CU_PARAMS = ["handle", "depenvtid", "collunitname",
-              "colldate", "colldevice", "gpsaltitude", "gpserror",
-              "waterdepth", "substrateid", "slopeaspect", "slopeangle",
-              "location", "notes", "geog", "colltypeid"]
+
+from .Geog import Geog
+from .neotomaHelpers.utils import validate_date_values, validate_int_values
+
+CU_PARAMS = [
+    "handle",
+    "depenvtid",
+    "collunitname",
+    "colldate",
+    "colldevice",
+    "gpsaltitude",
+    "gpserror",
+    "waterdepth",
+    "substrateid",
+    "slopeaspect",
+    "slopeangle",
+    "location",
+    "notes",
+    "geog",
+    "colltypeid",
+]
+
+
 class CollectionUnit:
     """Represents a sediment core or excavation collection in Neotoma.
 
@@ -14,7 +31,7 @@ class CollectionUnit:
 
     Collection units are explained further in the
     [Neotoma Manual](https://open.neotomadb.org/manual/database-design-concepts.html#sitedesign).
-    
+
     Attributes:
         collectionunitid (int | None): Collection unit identifier.
         handle (str): Unique handle/identifier.
@@ -34,7 +51,7 @@ class CollectionUnit:
         notes (str | None): Additional notes.
         geog (Geog | None): Geographic coordinates.
         distance (float | None): Distance from reference (computed when `cu.find_close_collunits()` is executed).
-    
+
     Examples:
         >>> cu = CollectionUnit(siteid=1, handle="MCL-01")  # Mirror Lake core collection
         >>> cu.handle
@@ -43,6 +60,7 @@ class CollectionUnit:
         >>> cu.waterdepth
         25.5
     """
+
     def __init__(
         self,
         collectionunitid=None,
@@ -61,7 +79,8 @@ class CollectionUnit:
         slopeangle=None,
         location=None,
         notes=None,
-        geog=None):
+        geog=None,
+    ):
         self.collectionunitid = validate_int_values(collectionunitid, "collectionunitid")
         self.siteid = validate_int_values(siteid, "siteid")
         self.colltypeid = validate_int_values(colltypeid, "colltypeid")
@@ -74,24 +93,24 @@ class CollectionUnit:
         self.colldevice = colldevice
         self.notes = notes
         self.distance = None
-        
+
         if handle is None:
             raise ValueError("✗ A collection unit handle must be provided.")
         if isinstance(handle, list) and len(list(set(handle))) > 1:
             raise ValueError("✗ There can only be a single collection unit handle defined.")
         elif isinstance(handle, list):
-            handle = list(set(handle))[0] 
+            handle = list(set(handle))[0]
         elif isinstance(handle, str) and len(handle) > 10:
             self.handle = handle[:10]  # Truncate to 10 characters
             warning_msg = f"\n ⚠  Handle '{handle}' exceeds 10 characters and has been truncated to '{self.handle}'."
-            warn(warning_msg)
+            warn(warning_msg, stacklevel=2)
         else:
             self.handle = handle
         if collunitname is None:
             self.collunitname = handle
         else:
             self.collunitname = collunitname
-        self.gpsaltitude = gpsaltitude 
+        self.gpsaltitude = gpsaltitude
         self.gpserror = gpserror
         self.waterdepth = waterdepth
         if isinstance(location, list) and len(list(set(location))) > 1:
@@ -105,11 +124,7 @@ class CollectionUnit:
         self.geog = geog
 
     def __str__(self):
-        statement = (
-            f"Name: {self.collunitname}, "
-            f"Handle: {self.handle}, "
-            f"Geog: {self.geog}"
-        )
+        statement = f"Name: {self.collunitname}, Handle: {self.handle}, Geog: {self.geog}"
         if self.distance is None:
             return statement
         else:
@@ -153,7 +168,7 @@ class CollectionUnit:
         attributes = CU_PARAMS
         validate = []
         prs = [attr for attr in attributes if attr != "handle"]
-        for attr in prs: 
+        for attr in prs:
             self_val = getattr(self, attr)
             other_val = getattr(other, attr)
             if self_val is None and other_val is None:
@@ -161,17 +176,20 @@ class CollectionUnit:
             else:
                 validate.append(self_val == other_val)
         return all(validate)
-    
+
     def compare_cu(self, other):
         attributes = CU_PARAMS
         differences = []
         for attr in attributes:
             self_val = getattr(self, attr)
             other_val = getattr(other, attr)
-            if attr == "geog":
-                if self_val is None:
-                    if other_val.latitudeN is None and other_val.longitudeE is None:
-                        continue
+            if (
+                attr == "geog"
+                and self_val is None
+                and other_val.latitudeN is None
+                and other_val.longitudeE is None
+            ):
+                continue
             if self_val is None and other_val is None:
                 continue
             elif self_val != other_val:
@@ -187,7 +205,7 @@ class CollectionUnit:
         prs = [attr for attr in attributes if attr != "handle"]
         updated_attributes = []
         for attr in prs:
-            if (getattr(self, attr) != getattr(other, attr)):
+            if getattr(self, attr) != getattr(other, attr):
                 cu_response.matched[attr] = False
                 cu_response.message.append(
                     f"? {attr} does not match. Update set to {overwrite[attr]}\n"
@@ -208,11 +226,11 @@ class CollectionUnit:
                                              _siteid := %(siteid)s,
                                              _colltypeid := %(colltypeid)s,
                                              _depenvtid := %(depenvtid)s,
-                                             _collunitname := %(collunitname)s, 
+                                             _collunitname := %(collunitname)s,
                                              _colldate := %(colldate)s,
                                              _colldevice := %(colldevice)s,
                                              _gpslatitude := %(ns)s,
-                                             _gpslongitude := %(ew)s, 
+                                             _gpslongitude := %(ew)s,
                                              _gpsaltitude := %(gpsaltitude)s,
                                              _gpserror := %(gpserror)s,
                                              _waterdepth := %(waterdepth)s,
@@ -270,7 +288,7 @@ class CollectionUnit:
                                _collunitname := %(collunitname)s,
                                _colldate := %(colldate)s,
                                _colldevice := %(colldevice)s,
-                               _gpslatitude := %(gpslatitude)s,  
+                               _gpslatitude := %(gpslatitude)s,
                                _gpslongitude := %(gpslongitude)s,
                                _gpserror := %(gpserror)s,
                                _waterdepth := %(waterdepth)s,

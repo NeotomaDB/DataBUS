@@ -1,12 +1,14 @@
 from .neotomaHelpers.utils import validate_int_values
+
+
 class Variable:
     """A variable (taxon or measurement) in Neotoma.
 
     Defines what is being measured in paleoenvironmental data, including
     taxon, element, units, and context. Can be taxonomic (species) or physical.
-    
+
     See the [Neotoma Manual](https://open.neotomadb.org/manual/database-design-concepts.html#taxa-and-variables)
-    
+
     Attributes:
         varid (int | None): Variable ID (assigned after DB lookup/insert).
         taxonid (int | None): Taxon ID.

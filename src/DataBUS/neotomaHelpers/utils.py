@@ -3,6 +3,7 @@ import logging
 import re
 import warnings
 
+
 def convert_value_by_type(value_meta, clean_value):
     """Convert a value to its specified type.
 
@@ -30,19 +31,19 @@ def convert_value_by_type(value_meta, clean_value):
         return _convert_string(clean_value, is_rowwise)
     return clean_value
 
+
 def _convert_date(value, is_rowwise):
     """Convert strings to date objects."""
     if is_rowwise:
-        return list(map(
-            lambda x: datetime.datetime.strptime(x.replace("/", "-"), "%Y-%m-%d").date(),
-            value
-        ))
+        return [datetime.datetime.strptime(x.replace("/", "-"), "%Y-%m-%d").date() for x in value]
     else:
         return datetime.datetime.strptime(value.replace("/", "-"), "%Y-%m-%d").date()
+
 
 def _convert_int(value, is_rowwise):
     """Convert strings to integers."""
     return [int(v) if v is not None else None for v in value] if is_rowwise else int(value)
+
 
 def _convert_float(value, is_rowwise):
     """Convert strings to floats, treating 'NA' and empty strings as None."""
@@ -51,9 +52,11 @@ def _convert_float(value, is_rowwise):
     else:
         return float(value)
 
+
 def _convert_coordinates(value):
     """Convert comma-separated coordinate string to list of floats."""
     return [float(num) for num in value[0].split(",")]
+
 
 def _convert_string(value, is_rowwise):
     """Convert value(s) to strings, handling NA and empty values."""
@@ -61,12 +64,16 @@ def _convert_string(value, is_rowwise):
 
     if isinstance(converted, list):
         converted = [
-            None if v is None or (isinstance(v, str) and v.strip() in ("", "NA", "None"))
-            else str(v) if not isinstance(v, list) else v
+            None
+            if v is None or (isinstance(v, str) and v.strip() in ("", "NA", "None"))
+            else str(v)
+            if not isinstance(v, list)
+            else v
             for v in converted
         ]
-        converted = None if all(item in [None, ''] for item in converted) else converted
+        converted = None if all(item in [None, ""] for item in converted) else converted
     return converted
+
 
 def prepare_parameters(params, yml_dict, table):
     """Expand parameters based on metadata subfields.
@@ -87,12 +94,13 @@ def prepare_parameters(params, yml_dict, table):
     expanded_params = list(params)
     for param in params:
         subfields = [
-            entry for entry in yml_dict['metadata']
-            if entry.get('neotoma', '').startswith(f'{table}{param}.')
+            entry
+            for entry in yml_dict["metadata"]
+            if entry.get("neotoma", "").startswith(f"{table}{param}.")
         ]
         if subfields:
             for entry in subfields:
-                param_name = entry['neotoma'].replace(f'{table}', "")
+                param_name = entry["neotoma"].replace(f"{table}", "")
                 expanded_params.append(param_name)
             if param in expanded_params:
                 expanded_params.remove(param)
@@ -108,8 +116,8 @@ def add_note_entry(add_unit_inputs):
         value_meta (dict): Metadata entry.
         clean_value: The cleaned value to add.
     """
-    if isinstance(add_unit_inputs.get('notes'), list):
-        add_unit_inputs['notes'] = ' '.join(add_unit_inputs['notes'])
+    if isinstance(add_unit_inputs.get("notes"), list):
+        add_unit_inputs["notes"] = " ".join(add_unit_inputs["notes"])
 
 
 def add_chronology_entry(add_unit_inputs, value_meta, clean_value, table, i):
@@ -122,26 +130,35 @@ def add_chronology_entry(add_unit_inputs, value_meta, clean_value, table, i):
         table (str): Table name to determine key.
         i (str): Parameter name.
     """
-    key = 'chronologies' if 'chronologies' in table else 'sampleages'
+    key = "chronologies" if "chronologies" in table else "sampleages"
     if key not in add_unit_inputs:
         add_unit_inputs[key] = {}
     if clean_value is None:
         return
-    if not ((isinstance(clean_value, list) and not all(x is None for x in clean_value)) or
-            (not isinstance(clean_value, list) and clean_value is not None)):
+    if not (
+        (isinstance(clean_value, list) and not all(x is None for x in clean_value))
+        or (not isinstance(clean_value, list) and clean_value is not None)
+    ):
         return
-    if 'chronologyname' in value_meta:
-        chron_name = value_meta.get('chronologyname', f'Chron_0')
+    if "chronologyname" in value_meta:
+        chron_name = value_meta.get("chronologyname", "Chron_0")
         if chron_name not in add_unit_inputs[key]:
             add_unit_inputs[key][chron_name] = {}
         add_unit_inputs[key][chron_name][i] = clean_value
-        if i == 'age' and key == 'chronologies':
-            add_unit_inputs['chronologies'][chron_name]['isdefault'] = value_meta.get('default', False)
-        elif i in ('ageboundolder', 'ageboundyounger') and key == 'chronologies':
-            if 'isdefault' not in add_unit_inputs['chronologies'][chron_name]:
-                add_unit_inputs['chronologies'][chron_name]['isdefault'] = value_meta.get('isdefault', False)
+        if i == "age" and key == "chronologies":
+            add_unit_inputs["chronologies"][chron_name]["isdefault"] = value_meta.get(
+                "default", False
+            )
+        elif (
+            i in ("ageboundolder", "ageboundyounger")
+            and key == "chronologies"
+            and "isdefault" not in add_unit_inputs["chronologies"][chron_name]
+        ):
+            add_unit_inputs["chronologies"][chron_name]["isdefault"] = value_meta.get(
+                "isdefault", False
+            )
     else:
-        k = value_meta['neotoma'].split('.')[-1]
+        k = value_meta["neotoma"].split(".")[-1]
         add_unit_inputs[k] = clean_value
 
 
@@ -155,14 +172,15 @@ def add_taxon_entry(add_unit_inputs, value_meta, clean_value):
     """
     if all(x is None for x in clean_value):
         return
-    taxon_name = value_meta['taxonname']
+    taxon_name = value_meta["taxonname"]
     # retrieve the last word after the last `.` neotoma: ndb.variables.variableunitsid -> variableunitsid
-    key = value_meta['neotoma'].split('.')[-1]
+    key = value_meta["neotoma"].split(".")[-1]
     if taxon_name not in add_unit_inputs:
         add_unit_inputs[taxon_name] = {}
     add_unit_inputs[taxon_name][key] = clean_value
-    if 'uncertaintybasisid' in value_meta:
-        add_unit_inputs[taxon_name]['uncertaintybasisid'] = value_meta['uncertaintybasisid']
+    if "uncertaintybasisid" in value_meta:
+        add_unit_inputs[taxon_name]["uncertaintybasisid"] = value_meta["uncertaintybasisid"]
+
 
 def finalize_output(add_unit_inputs):
     """Finalize output by cleaning up chronologies/sampleages and notes.
@@ -178,14 +196,24 @@ def finalize_output(add_unit_inputs):
         dict: Finalized output.
     """
     # Handle chronologies/sampleages filtering
-    if any(k in add_unit_inputs for k in ('chronologies', 'sampleages')):
-        key = 'chronologies' if 'chronologies' in add_unit_inputs else 'sampleages'
+    if any(k in add_unit_inputs for k in ("chronologies", "sampleages")):
+        key = "chronologies" if "chronologies" in add_unit_inputs else "sampleages"
         add_unit_inputs[key] = _filter_empty_chronologies(add_unit_inputs[key])
     # Remove orphaned chronology-related keys at the top level.
     # These belong inside a named chronology, not as standalone entries.
-    orphan_keys = ('ageboundolder', 'ageboundyounger', 'chronologyname',
-                   'agetypeid', 'contactid', 'dateprepared', 'isdefault',
-                   'ageyounger', 'ageolder', 'age', 'notes')
+    orphan_keys = (
+        "ageboundolder",
+        "ageboundyounger",
+        "chronologyname",
+        "agetypeid",
+        "contactid",
+        "dateprepared",
+        "isdefault",
+        "ageyounger",
+        "ageolder",
+        "age",
+        "notes",
+    )
     for k in orphan_keys:
         if k in add_unit_inputs and add_unit_inputs[k] is None:
             del add_unit_inputs[k]
@@ -201,7 +229,7 @@ def _filter_empty_chronologies(chron_dict):
     Returns:
         dict: Filtered dictionary.
     """
-    expected_keys = ('ageyounger', 'ageolder', 'age', 'ageboundolder', 'ageboundyounger')
+    expected_keys = ("ageyounger", "ageolder", "age", "ageboundolder", "ageboundyounger")
     filtered = {}
     for name, chron in chron_dict.items():
         # Check if it's a nested dict (list-like values)
@@ -213,6 +241,7 @@ def _filter_empty_chronologies(chron_dict):
                 filtered[name] = chron
     return filtered
 
+
 def retrieve_dict(yml_dict, sql_column):
     """Searches through YAML metadata for entries matching a specific SQL column using
     regex pattern matching with word boundaries.
@@ -221,7 +250,7 @@ def retrieve_dict(yml_dict, sql_column):
         >>> yml = {'metadata': [{'neotoma': 'sites.siteid', 'type': 'int'}, {'neotoma': 'sites.sitename', 'type': 'str'}]}
         >>> retrieve_dict(yml, 'sites.siteid')
         [{'neotoma': 'sites.siteid', 'type': 'int'}]
-       
+
     Args:
         yml_dict (dict): The YAML template object imported by the user containing 'metadata' key.
         sql_column (str): A character string indicating the SQL column to be matched.
@@ -238,13 +267,14 @@ def retrieve_dict(yml_dict, sql_column):
             "The yml_dict must be a dict object (not a list) containing the key 'metadata'.",
             exc_info=True,
         )
-    result = [d for d in yml_dict["metadata"] if re.search(fr'\b{sql_column}\b', d["neotoma"])]
+    result = [d for d in yml_dict["metadata"] if re.search(rf"\b{sql_column}\b", d["neotoma"])]
     if result is None:
-        warnings.warn("No matching dictionary entry found.")
+        warnings.warn("No matching dictionary entry found.", stacklevel=2)
         return None
     else:
         return result
-    
+
+
 def clean_column(column, template, clean=True):
     """Extracts a single column from template data and optionally reduces it to unique
     values. Handles special cases where there are multiple non-empty values by raising
@@ -256,23 +286,24 @@ def clean_column(column, template, clean=True):
             return None
         return value
     else:
-        values = [None if isinstance(v, str) and v.strip() in ("NA", "", "None")
-                  else v for v in (row[column] for row in template)]
+        values = [
+            None if isinstance(v, str) and v.strip() in ("NA", "", "None") else v
+            for v in (row[column] for row in template)
+        ]
         return values if values else None
+
 
 def _extract_unique_column_value(template, column):
     """When multiple values exist, checks if they differ only by case. If one value is
     empty/None and another is not, returns the non-empty value.
     """
     original_values = [
-        row[column] if isinstance(row[column], str) else row[column]
-        for row in template
+        row[column] if isinstance(row[column], str) else row[column] for row in template
     ]
     unique_original = list(set(original_values))
 
     lowercase_values = [
-        row[column].lower() if isinstance(row[column], str) else row[column]
-        for row in template
+        row[column].lower() if isinstance(row[column], str) else row[column] for row in template
     ]
     unique_lowercase = list(set(lowercase_values))
 
@@ -286,8 +317,8 @@ def _extract_unique_column_value(template, column):
 
     # Exactly two values, one empty and one non-empty
     if len(unique_original) == 2:
-        non_empty_values = [v for v in unique_original if v not in ['', None]]
-        empty_values = [v for v in unique_original if v in ['', None]]
+        non_empty_values = [v for v in unique_original if v not in ["", None]]
+        empty_values = [v for v in unique_original if v in ["", None]]
         if non_empty_values and empty_values:
             return non_empty_values[0]
 
@@ -297,11 +328,13 @@ def _extract_unique_column_value(template, column):
         "Correct the template or the data."
     )
 
+
 def validate_int_values(value, name: str) -> int | None:
     """Validates that a value is an int, float, or None, returning it as int or None."""
     if value is not None and not isinstance(value, (int, float)):
         raise ValueError(f"✗ {name} must be an integer or None.")
     return int(value) if value is not None else None
+
 
 def validate_date_values(value, name: str) -> datetime.date | None:
     """Validates that a value is an date or None, returning it as date or None."""
@@ -312,11 +345,12 @@ def validate_date_values(value, name: str) -> datetime.date | None:
         raise ValueError(f"✗ {name} must be a date or None.")
     return value
 
+
 def convert_to_bp(value):
     """Convert a CE/BCE date (or list of them) to radiocarbon years BP."""
     if isinstance(value, (float, int)):
         # Check if all values are already numeric and less than 100,
-        # which would suggest they are already in BP or are small year values. 
+        # which would suggest they are already in BP or are small year values.
         # If so, return as is. Otherwise, convert each value.
         if value < 100:  # likely a year like 35 or 85
             return value
@@ -326,5 +360,10 @@ def convert_to_bp(value):
     elif isinstance(value, list):
         if all(isinstance(v, (int, float)) and v < 100 for v in value):
             return value
-        return [round(1950 - v.year, 6) if isinstance(v, (datetime.date, datetime.datetime)) else round(1950 - v, 6) for v in value]
+        return [
+            round(1950 - v.year, 6)
+            if isinstance(v, (datetime.date, datetime.datetime))
+            else round(1950 - v, 6)
+            for v in value
+        ]
     return value

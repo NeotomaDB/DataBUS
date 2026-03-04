@@ -1,18 +1,29 @@
 from .neotomaHelpers.utils import validate_int_values
-GECHRON_PARAMS = ["sampleid", "geochrontypeid", "agetypeid",
-                  "age", "errorolder", "erroryounger",
-                  "infinite", "delta13c", "labnumber",
-                  "materialdated", "notes"]
+
+GECHRON_PARAMS = [
+    "sampleid",
+    "geochrontypeid",
+    "agetypeid",
+    "age",
+    "errorolder",
+    "erroryounger",
+    "infinite",
+    "delta13c",
+    "labnumber",
+    "materialdated",
+    "notes",
+]
+
 
 class Geochron:
     """A geochronological age determination in Neotoma.
 
     Stores age measurements from radiometric and other dating techniques,
     including determined age, uncertainty bounds, and dated material info.
-    
+
     Geochronologies are explained further in the
     [Neotoma Manual](https://open.neotomadb.org/manual/chronology-age-related-tables-1.html#Geochronology)
-    
+
     Attributes:
         sampleid (int): Sample ID.
         geochrontypeid (int): Geochron type ID.
@@ -36,23 +47,30 @@ class Geochron:
         3250
     """
 
-    def __init__(self, 
-                 sampleid = None,
-                 geochrontypeid = None,
-                 agetypeid = None,
-                 age = None,
-                 errorolder = None, 
-                 erroryounger = None,
-                 infinite = None,
-                 delta13c = None,
-                 labnumber = None,
-                 materialdated = None,
-                 notes = None):
-        missing = [name for name, val in [
-            ("sampleid", sampleid),
-            ("geochrontypeid", geochrontypeid),
-            ("agetypeid", agetypeid),
-            ("age", age)] if val is None]
+    def __init__(
+        self,
+        sampleid=None,
+        geochrontypeid=None,
+        agetypeid=None,
+        age=None,
+        errorolder=None,
+        erroryounger=None,
+        infinite=None,
+        delta13c=None,
+        labnumber=None,
+        materialdated=None,
+        notes=None,
+    ):
+        missing = [
+            name
+            for name, val in [
+                ("sampleid", sampleid),
+                ("geochrontypeid", geochrontypeid),
+                ("agetypeid", agetypeid),
+                ("age", age),
+            ]
+            if val is None
+        ]
         if missing:
             raise ValueError(f"Missing required fields: {', '.join(missing)}")
         self.sampleid = validate_int_values(sampleid, "sampleid")
@@ -68,7 +86,7 @@ class Geochron:
                 try:
                     self.infinite = bool(int(infinite))
                 except ValueError:
-                    raise TypeError("Infinite must be a boolean value.")
+                    raise TypeError("Infinite must be a boolean value.") from None
         self.delta13c = delta13c
         self.labnumber = labnumber
         self.materialdated = materialdated
@@ -107,7 +125,8 @@ class Geochron:
             "delta13c": self.delta13c,
             "labnumber": self.labnumber,
             "materialdated": self.materialdated,
-            "notes": self.notes}
+            "notes": self.notes,
+        }
         cur.execute(geochron_query, inputs)
         self.geochronid = cur.fetchone()[0]
         return self.geochronid

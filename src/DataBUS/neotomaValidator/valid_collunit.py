@@ -48,7 +48,7 @@ def valid_collunit(cur, yml_dict, csv_file, databus=None):
         response.message.append(f"✗  CU parameters cannot be properly extracted. {e}\n")
         return response
     ids = {
-        "colltypeid": """SELECT colltypeid FROM ndb.collectiontypes 
+        "colltypeid": """SELECT colltypeid FROM ndb.collectiontypes
                             WHERE LOWER(colltype) = %(colltype)s""",
         "depenvtid": """SELECT depenvtid FROM ndb.depenvttypes
                             WHERE LOWER(depenvt) = %(depenvt)s""",

@@ -1,5 +1,6 @@
 import math
 
+
 def _eq(a, b):
     if a is None and b is None:
         return True

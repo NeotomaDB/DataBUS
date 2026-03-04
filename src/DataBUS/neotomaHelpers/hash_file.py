@@ -1,6 +1,7 @@
 import hashlib
 import os
 
+
 def hash_file(filename, validation_files="data/validation_logs/"):
     """Calculate MD5 hash of a file and compare against validation logs.
 
@@ -26,10 +27,10 @@ def hash_file(filename, validation_files="data/validation_logs/"):
     """
     response = {"pass": False, "hash": None, "message": []}
     modified_filename = os.path.basename(filename)
-    logfile = f"{validation_files}{modified_filename}"+ ".valid.log"
-    not_val_logfile = f"{validation_files}not_validated/{modified_filename}"+ ".valid.log"
-    # Use a context manager (with statement) to ensure file handle is properly closed
-    response["hash"] = hashlib.md5(open(filename, "rb").read()).hexdigest()
+    logfile = f"{validation_files}{modified_filename}" + ".valid.log"
+    not_val_logfile = f"{validation_files}not_validated/{modified_filename}" + ".valid.log"
+    with open(filename, "rb") as fh:
+        response["hash"] = hashlib.md5(fh.read()).hexdigest()
     response["message"].append(response["hash"])
     if os.path.exists(logfile):
         with open(logfile) as f:

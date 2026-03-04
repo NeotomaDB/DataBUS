@@ -1,12 +1,21 @@
-ANALYSIS_UNIT_PARAMS = ["analysisunitname", "depth", "thickness",
-                        "faciesid", "mixed", "igsn", "notes"]
+ANALYSIS_UNIT_PARAMS = [
+    "analysisunitname",
+    "depth",
+    "thickness",
+    "faciesid",
+    "mixed",
+    "igsn",
+    "notes",
+]
+
+
 class AnalysisUnit:
     """An analysis unit in Neotoma.
 
     Physical subsets of a collection unit, often with a position (depth)
     within a core or dig site. Samples are the intersection between
     analysis units and dataset types.
-    
+
     See the [Neotoma Manual](https://open.neotomadb.org/manual/sample-related-tables-1.html#AnalysisUnits).
 
     Attributes:
@@ -36,8 +45,9 @@ class AnalysisUnit:
         faciesid=None,
         mixed=None,
         igsn=None,
-        notes=None):
-        
+        notes=None,
+    ):
+
         self.analysisunitid = analysisunitid
         self.collectionunitid = collectionunitid
         self.analysisunitname = analysisunitname
@@ -45,7 +55,7 @@ class AnalysisUnit:
         self.thickness = thickness
         if not isinstance(faciesid, int) and faciesid is not None:
             raise ValueError("faciesid must be an integer or None")
-        self.faciesid = faciesid 
+        self.faciesid = faciesid
         if not isinstance(mixed, bool) and mixed is not None:
             raise ValueError("mixed must be a boolean or None")
         if mixed is None:
@@ -59,8 +69,8 @@ class AnalysisUnit:
         """_Print AnalysisUnit_
         Returns:
             _str_: _A printed output summarizing the analysis unit._
-        """        
-        statement = f"Name: {self.analysisunitname}, " f"ID: {self.analysisunitid}, "
+        """
+        statement = f"Name: {self.analysisunitname}, ID: {self.analysisunitid}, "
         return statement
 
     def insert_to_db(self, cur):
@@ -69,7 +79,7 @@ class AnalysisUnit:
             cur (_psycopg2.connect_): _A valid psycopg2 connection the the Neotoma Database._
         Returns:
             _AnalysisUnit_: _The function inserts the AnalysisUnit to Neotoma and adds the new `analysisunitid` to the object._
-        """        
+        """
         au_query = """SELECT ts.insertanalysisunit(_collectionunitid := %(collunitid)s,
                                                    _depth := %(depth)s,
                                                    _thickness := %(thickness)s,

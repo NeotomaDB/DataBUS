@@ -1,7 +1,9 @@
-#import pandas as pd
-#import numpy as np
 import ast
+
+import numpy as np
+import pandas as pd
 import yaml
+
 
 class InlineList:
     """Custom class to represent inline lists in YAML output.
@@ -21,6 +23,7 @@ class InlineList:
         """
         self.data = data
 
+
 def represent_inline_list(dumper, data):
     """YAML representer for InlineList objects.
 
@@ -33,10 +36,11 @@ def represent_inline_list(dumper, data):
     Returns:
         YAML node representing the sequence in flow style.
     """
-    return dumper.represent_sequence(
-        "tag:yaml.org,2002:seq", data.data, flow_style=True
-    )
+    return dumper.represent_sequence("tag:yaml.org,2002:seq", data.data, flow_style=True)
+
+
 yaml.add_representer(InlineList, represent_inline_list)
+
 
 def excel_to_yaml(temp_file, file_name):
     """Convert Excel template file to YAML format.
@@ -73,20 +77,16 @@ def excel_to_yaml(temp_file, file_name):
     df2.columns = map(str.lower, df2.columns)
 
     # Setting the dictionary
-    data = (
-        df1.groupby(["column", "neotoma"])
-        .apply(lambda x: x.to_dict(orient="index"))
-        .to_dict()
-    )
+    data = df1.groupby(["column", "neotoma"]).apply(lambda x: x.to_dict(orient="index")).to_dict()
     metadata = df2.to_dict(orient="records")
 
     data_list = []
-    for key, value in data.items():
+    for _, value in data.items():
         data_list.append(list(value.values())[0])
 
-    units_entries = list()
-    uncertainty_units_entries = list()
-    uncertainty_entries = list()
+    units_entries = []
+    uncertainty_units_entries = []
+    uncertainty_entries = []
     for entry in data_list:
         if entry["unitcolumn"] is None:
             del entry["unitcolumn"]
@@ -162,9 +162,7 @@ def excel_to_yaml(temp_file, file_name):
             del entry["notes"]
 
     # Joining it all
-    data_list = (
-        data_list + units_entries + uncertainty_entries + uncertainty_units_entries
-    )
+    data_list = data_list + units_entries + uncertainty_entries + uncertainty_units_entries
     data_list = sorted(data_list, key=lambda x: x["column"])
     data_list = metadata + data_list
 

@@ -23,7 +23,7 @@ def get_contacts(cur, name):
     """
     name = name.strip()
     get_contact = """SELECT contactid, familyname || ', ' || givennames AS fullname
-                     FROM ndb.contacts   
+                     FROM ndb.contacts
                      WHERE LOWER(contactname) = %(contactname)s;"""
     cur.execute(get_contact, {"contactname": name.lower()})
     data = cur.fetchone()
@@ -31,23 +31,27 @@ def get_contacts(cur, name):
     if data:
         contact["name"] = data[1]
         contact["id"] = data[0]
-        return contact    
+        return contact
     familyname = name.split(",")[0].strip()
     firstname = name.split(",")[1].strip() if len(name.split(",")) > 1 else ""
-    if '.' in firstname:
+    if "." in firstname:
         get_contact = """SELECT contactid, familyname || ', ' || leadinginitials AS fullname
                          FROM ndb.contacts
                          WHERE LOWER(familyname) = %(familyname)s AND
                          LOWER(leadinginitials) ILIKE %(leadinginitials)s;"""
-        cur.execute(get_contact, {"familyname": familyname.lower(),
-                                  "leadinginitials": str(firstname.lower()+'%')})
+        cur.execute(
+            get_contact,
+            {"familyname": familyname.lower(), "leadinginitials": str(firstname.lower() + "%")},
+        )
     else:
         get_contact = """SELECT contactid, familyname || ', ' || givennames AS fullname
                          FROM ndb.contacts
                          WHERE LOWER(familyname) = %(familyname)s AND
                          LOWER(givennames) ILIKE %(givennames)s;"""
-        cur.execute(get_contact, {"familyname": familyname.lower(),
-                                  "givennames": str(firstname.lower()+'%')})
+        cur.execute(
+            get_contact,
+            {"familyname": familyname.lower(), "givennames": str(firstname.lower() + "%")},
+        )
     data = cur.fetchone()
     contact = {}
     if data:

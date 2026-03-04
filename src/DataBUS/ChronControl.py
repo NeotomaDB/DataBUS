@@ -1,7 +1,18 @@
-CCONTROL_PARAMS = ['chronologyid', 'chroncontroltypeid', 'analysisunitid',
-                   'depth', 'thickness', 'agetypeid', 'notes',
-                   'age', 'agelimityounger', 'agelimitolder']
 from .neotomaHelpers.utils import validate_int_values
+
+CCONTROL_PARAMS = [
+    "chronologyid",
+    "chroncontroltypeid",
+    "analysisunitid",
+    "depth",
+    "thickness",
+    "agetypeid",
+    "notes",
+    "age",
+    "agelimityounger",
+    "agelimitolder",
+]
+
 
 class ChronControl:
     """A chronological control point in Neotoma.
@@ -29,18 +40,20 @@ class ChronControl:
         75
     """
 
-    def __init__(self,
-                 chroncontrolid=None,
-                 chronologyid=None,
-                 chroncontroltypeid=None,
-                 depth=None,
-                 thickness=None,
-                 age=None,
-                 agelimityounger=None,
-                 agelimitolder=None,
-                 notes=None,
-                 analysisunitid=None,
-                 agetypeid=None):
+    def __init__(
+        self,
+        chroncontrolid=None,
+        chronologyid=None,
+        chroncontroltypeid=None,
+        depth=None,
+        thickness=None,
+        age=None,
+        agelimityounger=None,
+        agelimitolder=None,
+        notes=None,
+        analysisunitid=None,
+        agetypeid=None,
+    ):
         for param in [chroncontroltypeid, chronologyid, analysisunitid, agetypeid, depth, age]:
             if param is None:
                 raise ValueError(f"{param} is required and cannot be None.")
@@ -87,10 +100,13 @@ class ChronControl:
             "agelimitolder": self.agelimitolder,
             "notes": self.notes,
         }
-        if (self.agelimityounger is not None and self.agelimitolder is not None):
-            if self.agelimityounger > self.agelimitolder:
-                if self.agetypeid != 1:
-                    raise ValueError("Younger age limit cannot be greater than older age limit.")
+        if (
+            self.agelimityounger is not None
+            and self.agelimitolder is not None
+            and self.agelimityounger > self.agelimitolder
+            and self.agetypeid != 1
+        ):
+            raise ValueError("Younger age limit cannot be greater than older age limit.")
 
         cur.execute(chroncon_query, inputs)
         self.chroncontrolid = cur.fetchone()[0]

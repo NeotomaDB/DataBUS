@@ -1,12 +1,30 @@
-import importlib.resources 
+import importlib.resources
+
 from .neotomaHelpers.utils import validate_int_values
-insert_uthseries = importlib.resources.files("DataBUS.sqlHelpers").joinpath("insert_uthseries.sql").read_text(encoding="UTF-8")
-insert_uraniumseriesquery = importlib.resources.files("DataBUS.sqlHelpers").joinpath("insert_uraniumseriesdata.sql").read_text(encoding="UTF-8")
-UTH_PARAMS = ['geochronid', 'decayconstantid',
-              'ratio230th232th', 'ratiouncertainty230th232th',
-              'activity230th238u', 'activityuncertainty230th238u',
-              'activity234u238u', 'activityuncertainty234u238u',
-              'iniratio230th232th', 'iniratiouncertainty230th232th']
+
+insert_uthseries = (
+    importlib.resources.files("DataBUS.sqlHelpers")
+    .joinpath("insert_uthseries.sql")
+    .read_text(encoding="UTF-8")
+)
+insert_uraniumseriesquery = (
+    importlib.resources.files("DataBUS.sqlHelpers")
+    .joinpath("insert_uraniumseriesdata.sql")
+    .read_text(encoding="UTF-8")
+)
+UTH_PARAMS = [
+    "geochronid",
+    "decayconstantid",
+    "ratio230th232th",
+    "ratiouncertainty230th232th",
+    "activity230th238u",
+    "activityuncertainty230th238u",
+    "activity234u238u",
+    "activityuncertainty234u238u",
+    "iniratio230th232th",
+    "iniratiouncertainty230th232th",
+]
+
 
 class UThSeries:
     """Uranium-thorium radiometric dating data in Neotoma.
@@ -31,20 +49,22 @@ class UThSeries:
         >>> uth.ratio230th232th
         1.265
     """
+
     description = "UThSeries object in Neotoma"
 
     def __init__(
         self,
-        geochronid = None,
-        decayconstantid = None,
-        ratio230th232th = None,
-        ratiouncertainty230th232th = None,
-        activity230th238u = None,
-        activityuncertainty230th238u = None,
-        activity234u238u = None,
-        activityuncertainty234u238u = None,
-        iniratio230th232th = None,
-        iniratiouncertainty230th232th = None):
+        geochronid=None,
+        decayconstantid=None,
+        ratio230th232th=None,
+        ratiouncertainty230th232th=None,
+        activity230th238u=None,
+        activityuncertainty230th238u=None,
+        activity234u238u=None,
+        activityuncertainty234u238u=None,
+        iniratio230th232th=None,
+        iniratiouncertainty230th232th=None,
+    ):
         if geochronid is None or decayconstantid is None:
             raise ValueError("Geochronology ID is required to create a UThSeries object.")
         self.geochronid = validate_int_values(geochronid, "geochronid")
@@ -79,16 +99,16 @@ class UThSeries:
                                                     _iniratio230th232th := %(iniratio230th232th)s,
                                                     _iniratiouncertainty230th232th := %(iniratiouncertainty230th232th)s);"""
         inputs = {
-            'geochronid': self.geochronid,
-            'decayconstantid': self.decayconstantid,
-            'ratio230th232th': self.ratio230th232th,
-            'ratiouncertainty230th232th': self.ratiouncertainty230th232th,
-            'activity230th238u': self.activity230th238u,
-            'activityuncertainty230th238u': self.activityuncertainty230th238u,
-            'activity234u238u': self.activity234u238u,
-            'activityuncertainty234u238u': self.activityuncertainty234u238u,
-            'iniratio230th232th': self.iniratio230th232th,
-            'iniratiouncertainty230th232th': self.iniratiouncertainty230th232th
+            "geochronid": self.geochronid,
+            "decayconstantid": self.decayconstantid,
+            "ratio230th232th": self.ratio230th232th,
+            "ratiouncertainty230th232th": self.ratiouncertainty230th232th,
+            "activity230th238u": self.activity230th238u,
+            "activityuncertainty230th238u": self.activityuncertainty230th238u,
+            "activity234u238u": self.activity234u238u,
+            "activityuncertainty234u238u": self.activityuncertainty234u238u,
+            "iniratio230th232th": self.iniratio230th232th,
+            "iniratiouncertainty230th232th": self.iniratiouncertainty230th232th,
         }
         cur.execute(uths_query, inputs)
         return
@@ -116,9 +136,6 @@ def insert_uraniumseriesdata(cur, dataid, geochronid):
     cur.execute(insert_uraniumseriesquery)
     uths_query = """SELECT insert_uraniumseriesdata(_geochronid := %(geochronid)s,
                                                     _dataid := %(dataid)s)"""
-    inputs = {
-        'geochronid': geochronid,
-        'dataid': dataid
-    }
+    inputs = {"geochronid": geochronid, "dataid": dataid}
     cur.execute(uths_query, inputs)
     return

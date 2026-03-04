@@ -1,25 +1,60 @@
 import importlib.resources
+
 from .neotomaHelpers.utils import validate_int_values
 
 _sql = importlib.resources.files("DataBUS.sqlHelpers")
-insert_speleothem         = _sql.joinpath("insert_speleothem.sql").read_text(encoding="UTF-8")
-insert_entitygeology      = _sql.joinpath("insert_entitygeology.sql").read_text(encoding="UTF-8")
-insert_entityrelationship = _sql.joinpath("insert_entityrelationship.sql").read_text(encoding="UTF-8")
-insert_entitydripheight   = _sql.joinpath("insert_entitydripheight.sql").read_text(encoding="UTF-8")
-insert_entitycovers       = _sql.joinpath("insert_entitycovers.sql").read_text(encoding="UTF-8")
-insert_entitylandusecover = _sql.joinpath("insert_entitylandusecover.sql").read_text(encoding="UTF-8")
-insert_entityvegetationcover = _sql.joinpath("insert_entityvegetationcover.sql").read_text(encoding="UTF-8")
-insert_externalspeleothem = _sql.joinpath("insert_externalspeleothem.sql").read_text(encoding="UTF-8")
-insert_entitysamples      = _sql.joinpath("insert_entitysamples.sql").read_text(encoding="UTF-8")
+insert_speleothem = _sql.joinpath("insert_speleothem.sql").read_text(encoding="UTF-8")
+insert_entitygeology = _sql.joinpath("insert_entitygeology.sql").read_text(encoding="UTF-8")
+insert_entityrelationship = _sql.joinpath("insert_entityrelationship.sql").read_text(
+    encoding="UTF-8"
+)
+insert_entitydripheight = _sql.joinpath("insert_entitydripheight.sql").read_text(encoding="UTF-8")
+insert_entitycovers = _sql.joinpath("insert_entitycovers.sql").read_text(encoding="UTF-8")
+insert_entitylandusecover = _sql.joinpath("insert_entitylandusecover.sql").read_text(
+    encoding="UTF-8"
+)
+insert_entityvegetationcover = _sql.joinpath("insert_entityvegetationcover.sql").read_text(
+    encoding="UTF-8"
+)
+insert_externalspeleothem = _sql.joinpath("insert_externalspeleothem.sql").read_text(
+    encoding="UTF-8"
+)
+insert_entitysamples = _sql.joinpath("insert_entitysamples.sql").read_text(encoding="UTF-8")
 
-EX_SP_PARAMS = ['externalid', 'externaldescription', 'extdatabaseid']
-SPELEOTHEM_PARAMS = ['entityid', 'entityname', 'monitoring', 'rockageid', 'entrancedistance', 
-              'entrancedistanceunitsid', 'speleothemtypeid', 'entitystatusid', 'speleothemgeologyid',
-              'speleothemdriptypeid', 'dripheight', 'dripheightunitsid', 'covertypeid', 'coverthickness',
-              'entitycoverunitsid', 'landusecovertypeid', 'landusecoverpercent', 'landusecovernotes',
-              'vegetationcovertypeid', 'vegetationcoverpercent', 'vegetationcovernotes', 'ref_id',
-              'organics', 'mineralogypetrologyfabric', 'clumpedisotopes', 'fluidinclusions', 
-              'noblegastemperatures', 'c14', 'odl']
+EX_SP_PARAMS = ["externalid", "externaldescription", "extdatabaseid"]
+SPELEOTHEM_PARAMS = [
+    "entityid",
+    "entityname",
+    "monitoring",
+    "rockageid",
+    "entrancedistance",
+    "entrancedistanceunitsid",
+    "speleothemtypeid",
+    "entitystatusid",
+    "speleothemgeologyid",
+    "speleothemdriptypeid",
+    "dripheight",
+    "dripheightunitsid",
+    "covertypeid",
+    "coverthickness",
+    "entitycoverunitsid",
+    "landusecovertypeid",
+    "landusecoverpercent",
+    "landusecovernotes",
+    "vegetationcovertypeid",
+    "vegetationcoverpercent",
+    "vegetationcovernotes",
+    "ref_id",
+    "organics",
+    "mineralogypetrologyfabric",
+    "clumpedisotopes",
+    "fluidinclusions",
+    "noblegastemperatures",
+    "c14",
+    "odl",
+]
+
+
 class Speleothem:
     """Represents a speleothem (stalactite, stalagmite, flowstone, etc.) in a cave in Neotoma.
 
@@ -54,7 +89,8 @@ class Speleothem:
         rockageid=None,
         entrancedistance=None,
         entrancedistanceunits=None,
-        speleothemtypeid=None):
+        speleothemtypeid=None,
+    ):
         if siteid is None or speleothemtypeid is None:
             raise ValueError("Site ID and Speleothem Type ID are required to create a Speleothem.")
         self.siteid = validate_int_values(siteid, "siteid")
@@ -63,7 +99,9 @@ class Speleothem:
         self.monitoring = monitoring
         self.rockageid = validate_int_values(rockageid, "rockageid")
         self.entrancedistance = entrancedistance
-        self.entrancedistanceunits = validate_int_values(entrancedistanceunits, "entrancedistanceunits")
+        self.entrancedistanceunits = validate_int_values(
+            entrancedistanceunits, "entrancedistanceunits"
+        )
         self.speleothemtypeid = validate_int_values(speleothemtypeid, "speleothemtypeid")
 
     def __str__(self):
@@ -72,8 +110,7 @@ class Speleothem:
         Returns:
             str: String representation.
         """
-        statement = (
-            f"SiteID: {self.siteid}, Entity: {self.entityid}")
+        statement = f"SiteID: {self.siteid}, Entity: {self.entityid}"
         return statement
 
     def insert_to_db(self, cur):
@@ -102,11 +139,12 @@ class Speleothem:
             "rockageid": self.rockageid,
             "entrancedistance": self.entrancedistance,
             "entrancedistanceunits": self.entrancedistanceunits,
-            "speleothemtypeid": self.speleothemtypeid}
+            "speleothemtypeid": self.speleothemtypeid,
+        }
         cur.execute(query, inputs)
         spid = cur.fetchone()[0]
-        return spid 
-    
+        return spid
+
     def insert_entitygeology_to_db(self, cur, id, speleothemgeologyid, notes):
         """Insert speleothem geology information into the database.
 
@@ -125,16 +163,13 @@ class Speleothem:
                                             _speleothemgeologyid := %(speleothemgeologyid)s,
                                             _notes := %(notes)s)
                 """
-        inputs = {"entityid": id,
-                  "speleothemgeologyid": speleothemgeologyid,
-                  "notes": notes}
+        inputs = {"entityid": id, "speleothemgeologyid": speleothemgeologyid, "notes": notes}
         cur.execute(query, inputs)
         return
-    
-    def insert_entitydripheight_to_db(self, cur, id,
-                                      speleothemdriptypeid,
-                                      entitydripheight,
-                                      entitydripheightunit):
+
+    def insert_entitydripheight_to_db(
+        self, cur, id, speleothemdriptypeid, entitydripheight, entitydripheightunit
+    ):
         """Insert drip rate information for a speleothem.
 
         Args:
@@ -154,17 +189,18 @@ class Speleothem:
                                                _entitydripheight := %(entitydripheight)s,
                                                _entitydripheightunit := %(entitydripheightunit)s)
                 """
-        inputs = {"entityid": id,
-                  "speleothemdriptypeid": speleothemdriptypeid,
-                  "entitydripheight": entitydripheight,
-                  "entitydripheightunit": entitydripheightunit}
+        inputs = {
+            "entityid": id,
+            "speleothemdriptypeid": speleothemdriptypeid,
+            "entitydripheight": entitydripheight,
+            "entitydripheightunit": entitydripheightunit,
+        }
         cur.execute(query, inputs)
         return
-    
-    def insert_entitycovers_to_db(self, cur, id,
-                                  entitycoverid,
-                                  entitycoverthickness,
-                                  entitycoverunits):
+
+    def insert_entitycovers_to_db(
+        self, cur, id, entitycoverid, entitycoverthickness, entitycoverunits
+    ):
         """Insert cover information for a speleothem.
 
         Args:
@@ -184,17 +220,18 @@ class Speleothem:
                                            _entitycoverthickness := %(entitycoverthickness)s,
                                            _entitycoverunits := %(entitycoverunits)s)
                 """
-        inputs = {"entityid": id,
-                  "entitycoverid": entitycoverid,
-                  "entitycoverthickness": entitycoverthickness,
-                  "entitycoverunits": entitycoverunits}
+        inputs = {
+            "entityid": id,
+            "entitycoverid": entitycoverid,
+            "entitycoverthickness": entitycoverthickness,
+            "entitycoverunits": entitycoverunits,
+        }
         cur.execute(query, inputs)
         return
-    
-    def insert_entitylandusecovers_to_db(self, cur, id,
-                                        landusecovertypeid,
-                                        landusecoverpercent,
-                                        landusecovernotes):
+
+    def insert_entitylandusecovers_to_db(
+        self, cur, id, landusecovertypeid, landusecoverpercent, landusecovernotes
+    ):
         """Insert land use cover information for a speleothem.
 
         Args:
@@ -214,17 +251,18 @@ class Speleothem:
                                                  _landusecoverpercent := %(landusecoverpercent)s,
                                                  _landusecovernotes := %(landusecovernotes)s)
                 """
-        inputs = {"entityid": id,
-                  "landusecovertypeid": landusecovertypeid,
-                  "landusecoverpercent": landusecoverpercent,
-                  "landusecovernotes": landusecovernotes}
+        inputs = {
+            "entityid": id,
+            "landusecovertypeid": landusecovertypeid,
+            "landusecoverpercent": landusecoverpercent,
+            "landusecovernotes": landusecovernotes,
+        }
         cur.execute(query, inputs)
         return
-    
-    def insert_entityvegetationcovers_to_db(self, cur, id,
-                                        vegetationcovertypeid,
-                                        vegetationcoverpercent,
-                                        vegetationcovernotes):
+
+    def insert_entityvegetationcovers_to_db(
+        self, cur, id, vegetationcovertypeid, vegetationcoverpercent, vegetationcovernotes
+    ):
         """Insert vegetation cover information for a speleothem.
 
         Args:
@@ -244,15 +282,27 @@ class Speleothem:
                                                     _vegetationcoverpercent := %(vegetationcoverpercent)s,
                                                     _vegetationcovernotes := %(vegetationcovernotes)s)
                 """
-        inputs = {"entityid": id,
-                  "vegetationcovertypeid": vegetationcovertypeid,
-                  "vegetationcoverpercent": vegetationcoverpercent,
-                  "vegetationcovernotes": vegetationcovernotes}
+        inputs = {
+            "entityid": id,
+            "vegetationcovertypeid": vegetationcovertypeid,
+            "vegetationcoverpercent": vegetationcoverpercent,
+            "vegetationcovernotes": vegetationcovernotes,
+        }
         cur.execute(query, inputs)
         return
-    
-    def insert_entitysamples_to_db(self, cur, id, organics, fluid_inclusions, mineralogy_petrology_fabric,
-                              clumped_isotopes, noble_gas_temperatures, C14, ODL):
+
+    def insert_entitysamples_to_db(
+        self,
+        cur,
+        id,
+        organics,
+        fluid_inclusions,
+        mineralogy_petrology_fabric,
+        clumped_isotopes,
+        noble_gas_temperatures,
+        C14,
+        ODL,
+    ):
         """Insert sample type information for a speleothem.
 
         Args:
@@ -270,10 +320,12 @@ class Speleothem:
             None
         """
         cur.execute(insert_entitysamples)
+
         def to_bool(x):
             if isinstance(x, str):
                 return x.lower() == "yes"
             return None
+
         query = """
                 SELECT insert_entitysamples(_entityid := %(entityid)s,
                                             _organics := %(organics)s,
@@ -284,15 +336,18 @@ class Speleothem:
                                             _C14 := %(C14)s,
                                             _ODL := %(ODL)s)
                 """
-        inputs = {"entityid": int(id),
-                    "organics": to_bool(organics),
-                    "fluid_inclusions": to_bool(fluid_inclusions),
-                    "mineralogy_petrology_fabric": to_bool(mineralogy_petrology_fabric),
-                    "noble_gas_temperatures": to_bool(noble_gas_temperatures),
-                    "clumped_isotopes": to_bool(clumped_isotopes),
-                    "C14": to_bool(C14),
-                    "ODL": to_bool(ODL)}
+        inputs = {
+            "entityid": int(id),
+            "organics": to_bool(organics),
+            "fluid_inclusions": to_bool(fluid_inclusions),
+            "mineralogy_petrology_fabric": to_bool(mineralogy_petrology_fabric),
+            "noble_gas_temperatures": to_bool(noble_gas_temperatures),
+            "clumped_isotopes": to_bool(clumped_isotopes),
+            "C14": to_bool(C14),
+            "ODL": to_bool(ODL),
+        }
         cur.execute(query, inputs)
+
 
 class ExternalSpeleothem:
     """Represents an external reference to a speleothem entity.
@@ -305,7 +360,7 @@ class ExternalSpeleothem:
         externalid (int | None): External entity identifier.
         extdatabaseid (int | None): External database ID.
         externaldescription (str | None): Description of external reference.
-    
+
     Examples:
         >>> ext = ExternalSpeleothem(entityid=1, externalid="PALEODB-2847")  # Reference to external database
         >>> ext.entityid
@@ -316,11 +371,8 @@ class ExternalSpeleothem:
     """
 
     def __init__(
-        self,
-        entityid=None,
-        externalid=None,
-        extdatabaseid=None,
-        externaldescription=None):
+        self, entityid=None, externalid=None, extdatabaseid=None, externaldescription=None
+    ):
         self.entityid = validate_int_values(entityid, "entityid")
         self.externalid = externalid
         self.extdatabaseid = validate_int_values(extdatabaseid, "extdatabaseid")
@@ -332,8 +384,7 @@ class ExternalSpeleothem:
         Returns:
             str: String representation.
         """
-        statement = (
-            f"Entity: {self.entityid}, External Entity: {self.externalid}")
+        statement = f"Entity: {self.entityid}, External Entity: {self.externalid}"
         return statement
 
     def insert_externalspeleothem_to_db(self, cur):
@@ -352,9 +403,11 @@ class ExternalSpeleothem:
                                                     _extdatabaseid := %(extdatabaseid)s,
                                                     _externaldescription := %(externaldescription)s)
                 """
-        inputs = {"entityid": self.entityid,
-                    "externalid": self.externalid,
-                    "extdatabaseid": self.extdatabaseid,
-                    "externaldescription": self.externaldescription}
+        inputs = {
+            "entityid": self.entityid,
+            "externalid": self.externalid,
+            "extdatabaseid": self.extdatabaseid,
+            "externaldescription": self.externaldescription,
+        }
         cur.execute(query, inputs)
         return

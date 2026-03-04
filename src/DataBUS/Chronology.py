@@ -1,13 +1,24 @@
-CHRONOLOGY_PARAMS = ['ageboundolder', 'ageboundyounger', 'agemodel', 'chronologyname',
-                     'agetypeid', 'contactid', 'contactname', 'dateprepared', 'notes']
-from .neotomaHelpers.utils import validate_int_values,validate_date_values
+from .neotomaHelpers.utils import validate_date_values, validate_int_values
+
+CHRONOLOGY_PARAMS = [
+    "ageboundolder",
+    "ageboundyounger",
+    "agemodel",
+    "chronologyname",
+    "agetypeid",
+    "contactid",
+    "contactname",
+    "dateprepared",
+    "notes",
+]
+
 
 class Chronology:
     """A chronology (age model) for a collection unit in Neotoma.
 
     Defines the dating framework for samples within a collection unit,
     including age model type, bounds, and preparation metadata.
-    
+
     See the [Neotoma Manual](https://open.neotomadb.org/manual/chronology-age-related-tables-1.html#Chronologies).
 
     Attributes:
@@ -34,14 +45,15 @@ class Chronology:
         chronologyid=None,
         collectionunitid=None,
         agetypeid=None,
-        contactid=None, 
+        contactid=None,
         chronologyname=None,
         dateprepared=None,
         agemodel=None,
         ageboundyounger=None,
         ageboundolder=None,
-        isdefault = None,
-        notes=None):
+        isdefault=None,
+        notes=None,
+    ):
         self.chronologyid = validate_int_values(chronologyid, "chronologyid")
         if collectionunitid is None:
             raise ValueError("Collection Unit ID is required for Chronology.")
@@ -55,22 +67,24 @@ class Chronology:
             self.agemodel = agemodel[0]
         else:
             self.agemodel = agemodel
-        for attr, param in [("ageboundyounger", ageboundyounger), 
-                            ("ageboundolder", ageboundolder)]:
+        for attr, param in [("ageboundyounger", ageboundyounger), ("ageboundolder", ageboundolder)]:
             if isinstance(param, list):
                 valid = [x for x in param if x is not None]
                 if valid:
-                    value = int(min(valid)) if attr == 'ageboundyounger' else int(max(valid))
+                    value = int(min(valid)) if attr == "ageboundyounger" else int(max(valid))
                 else:
                     value = None
             else:
                 value = int(param) if param is not None else None
             setattr(self, attr, value)
-        if (self.ageboundyounger is not None and self.ageboundolder is not None):
-            assert self.ageboundyounger <= self.ageboundolder, (f"Younger age bound "
-                                                              f"cannot be greater than older age bound.")
+        if self.ageboundyounger is not None and self.ageboundolder is not None:
+            assert self.ageboundyounger <= self.ageboundolder, (
+                "Younger age bound cannot be greater than older age bound."
+            )
         if isinstance(contactid, list):
-            assert len(list(set(contactid))) == 1, "Contact ID list should only contain one unique value."
+            assert len(list(set(contactid))) == 1, (
+                "Contact ID list should only contain one unique value."
+            )
             contactid = contactid[0]
         self.contactid = validate_int_values(contactid, "contactid")
         if isinstance(isdefault, int):
@@ -103,7 +117,7 @@ class Chronology:
                                _isdefault := %(isdefault)s,
                                _notes := %(notes)s)
                                """
-        
+
         inputs = {
             "collunitid": self.collectionunitid,
             "contactid": self.contactid,
@@ -114,7 +128,7 @@ class Chronology:
             "ageboundyounger": self.ageboundyounger,
             "ageboundolder": self.ageboundolder,
             "isdefault": self.isdefault,
-            "notes": self.notes
+            "notes": self.notes,
         }
         cur.execute(chron_query, inputs)
         self.chronologyid = cur.fetchone()[0]

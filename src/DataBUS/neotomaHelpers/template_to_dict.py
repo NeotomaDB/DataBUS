@@ -1,6 +1,8 @@
+import os
+
 import yaml
 from yaml.loader import SafeLoader
-import os
+
 
 def template_to_dict(temp_file):
     """Convert YAML or XLSX template file to Python dictionary.

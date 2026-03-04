@@ -1,4 +1,5 @@
 import re
+
 from .utils import retrieve_dict
 
 
@@ -30,9 +31,9 @@ def pull_required(params, yml_dict, table=None):
     """
     results = []
     if isinstance(table, str):
-        if re.match(".*\.$", table) == None:
+        if re.match(r".*\.$", table) is None:
             table = table + "."
-        result = dict()
+        result = {}
         for i in params:
             valor = retrieve_dict(yml_dict, table + i)
             if len(valor) == 1:

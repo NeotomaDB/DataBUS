@@ -74,14 +74,14 @@ def valid_sample_age(cur, yml_dict, csv_file, databus=None):
                 sa_age.get("agemodel").lower() == "collection date"
                 or "calendar years" in sa_age.get("agemodel").lower()
             ):
-                    try:
-                        sa_age["age"] = nh.convert_to_bp(sa_age.get("age"))
-                        sa_age["ageolder"] = nh.convert_to_bp(sa_age.get("ageolder"))
-                        sa_age["ageyounger"] = nh.convert_to_bp(sa_age.get("ageyounger"))
-                    except Exception as e:
-                        response.valid.append(False)
-                        response.message.append(f"✗ Error parsing collection date: {e}")
-                        continue
+                try:
+                    sa_age["age"] = nh.convert_to_bp(sa_age.get("age"))
+                    sa_age["ageolder"] = nh.convert_to_bp(sa_age.get("ageolder"))
+                    sa_age["ageyounger"] = nh.convert_to_bp(sa_age.get("ageyounger"))
+                except Exception as e:
+                    response.valid.append(False)
+                    response.message.append(f"✗ Error parsing collection date: {e}")
+                    continue
             try:
                 sa_age.pop("agemodel")
                 sa_obj = SampleAge(**sa_age)

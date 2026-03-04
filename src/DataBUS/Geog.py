@@ -1,9 +1,13 @@
 import warnings
+
 from .neotomaHelpers.eq import _eq
+
 
 class WrongCoordinates(Exception):
     """Custom exception raised when coordinates are outside valid geographic ranges."""
+
     pass
+
 
 class Geog:
     """Geographic coordinates with validation and hemisphere determination.
@@ -32,8 +36,8 @@ class Geog:
     def __init__(self, coords):
         if not (isinstance(coords, (list, tuple)) or coords is None):
             raise TypeError("✗ Coordinates must be a list or a tuple")
-         # check if list where all values are None
-        if coords == None or all(v is None for v in coords):
+        # check if list where all values are None
+        if coords is None or all(v is None for v in coords):
             self.latitudeN = None
             self.longitudeE = None
             self.latitudeS = None
@@ -48,12 +52,13 @@ class Geog:
             lat, lon = coords
             lat2, lon2 = lat, lon
         if lat is None or lon is None:
-            warnings.warn("\n? No coordinates given.")
+            warnings.warn("\n? No coordinates given.", stacklevel=2)
         for val, name, lo, hi in [
             (lat, "LatN", -90, 90),
             (lon, "LongE", -180, 180),
             (lat2, "LatS", -90, 90),
-            (lon2, "LongW", -180, 180)]:
+            (lon2, "LongW", -180, 180),
+        ]:
             if val is not None:
                 if not isinstance(val, (int, float)):
                     raise TypeError(f"✗ {name} must be a number or None.")
@@ -65,7 +70,8 @@ class Geog:
         self.longitudeW = lon2
         if self.latitudeN is not None and self.longitudeE is not None:
             self.hemisphere = ("N" if self.latitudeN >= 0 else "S") + (
-                "E" if self.longitudeE >= 0 else "W")
+                "E" if self.longitudeE >= 0 else "W"
+            )
 
     def __eq__(self, other):
         """Compare two Geog objects for equality based on coordinates.
@@ -77,10 +83,12 @@ class Geog:
         if not isinstance(other, Geog):
             return False
         else:
-            return (_eq(self.latitudeN, other.latitudeN) and
-                    _eq(self.longitudeE, other.longitudeE) and
-                    _eq(self.latitudeS, other.latitudeS) and
-                    _eq(self.longitudeW, other.longitudeW))
+            return (
+                _eq(self.latitudeN, other.latitudeN)
+                and _eq(self.longitudeE, other.longitudeE)
+                and _eq(self.latitudeS, other.latitudeS)
+                and _eq(self.longitudeW, other.longitudeW)
+            )
 
     def __str__(self):
         """Return string representation of geographic coordinates.

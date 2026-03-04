@@ -1,7 +1,8 @@
-from .neotomaHelpers.eq import _eq
 from .Geog import Geog
-SITE_PARAMS = ["siteid", "sitename", "altitude",
-               "area", "sitedescription", "notes", "geog"]
+from .neotomaHelpers.eq import _eq
+
+SITE_PARAMS = ["siteid", "sitename", "altitude", "area", "sitedescription", "notes", "geog"]
+
 
 class Site:
     """Represents a geographic site location in Neotoma.
@@ -21,7 +22,7 @@ class Site:
         notes (str | None): Additional notes.
         geog (Geog | None): Geographic coordinates.
         distance (float | None): Distance from reference (computed).
-    
+
     Examples:
         >>> site = Site(sitename="Mirror Lake", geog=Geog([43.3734, -71.5316]))  # Mirror Lake, NH
         >>> site.sitename
@@ -30,6 +31,7 @@ class Site:
         >>> site.altitude
         1949
     """
+
     def __init__(
         self,
         siteid=None,
@@ -38,16 +40,17 @@ class Site:
         area=None,
         sitedescription=None,
         notes=None,
-        geog=None):
+        geog=None,
+    ):
         if not (isinstance(siteid, int) or siteid is None):
             raise TypeError("✗ Site ID must be an integer or None.")
         self.siteid = siteid
 
         if sitename is None:
-            raise ValueError(f"✗ Sitename must be given.")
+            raise ValueError("✗ Sitename must be given.")
         if not isinstance(sitename, str):
-            raise TypeError(f"✗ Sitename must be a string.")
-        self.sitename = sitename.strip().strip(',').lower().title()
+            raise TypeError("✗ Sitename must be a string.")
+        self.sitename = sitename.strip().strip(",").lower().title()
 
         if not (isinstance(altitude, (int, float)) or altitude is None):
             raise TypeError("Altitude must be a number or None.")
@@ -60,11 +63,11 @@ class Site:
         if not (isinstance(sitedescription, str) or sitedescription is None):
             raise TypeError("Site Description must be a string or None.")
         self.sitedescription = sitedescription
-        if isinstance(self.sitedescription, str) and self.sitedescription.strip() == '':
+        if isinstance(self.sitedescription, str) and self.sitedescription.strip() == "":
             self.sitedescription = None
         if not (isinstance(notes, str) or notes is None):
             raise TypeError("Site Description must be a string or None.")
-        if isinstance(self.sitedescription, str) and self.sitedescription.strip() == '':
+        if isinstance(self.sitedescription, str) and self.sitedescription.strip() == "":
             self.sitedescription = None
         if not (isinstance(notes, str) or notes is None):
             raise TypeError("Notes must be a str or None.")
@@ -89,13 +92,15 @@ class Site:
         Returns:
             bool: True if all attributes match.
         """
-        return (self.siteid == other.siteid
-                and self.sitename == other.sitename
-                and self.altitude == other.altitude
-                and self.area == other.area
-                and self.sitedescription == other.sitedescription
-                and self.notes == other.notes
-                and self.geog == other.geog)
+        return (
+            self.siteid == other.siteid
+            and self.sitename == other.sitename
+            and self.altitude == other.altitude
+            and self.area == other.area
+            and self.sitedescription == other.sitedescription
+            and self.notes == other.notes
+            and self.geog == other.geog
+        )
 
     def insert_to_db(self, cur):
         """Insert the site into the Neotoma database.
@@ -104,7 +109,7 @@ class Site:
         Returns:
             int: The siteid assigned by the database.
         """
-        site_query = """SELECT ts.insertsite(_sitename := %(sitename)s, 
+        site_query = """SELECT ts.insertsite(_sitename := %(sitename)s,
                         _altitude := %(altitude)s,
                         _area := %(area)s,
                         _descript := %(sitedescription)s,
@@ -157,13 +162,9 @@ class Site:
         if not self.geog:
             latitudeN = None
             longitudeE = None
-            latitudeS = None
-            longitudeW = None
         else:
             latitudeN = self.geog.latitudeN
             longitudeE = self.geog.longitudeE
-            latitudeS = self.geog.latitudeS
-            longitudeW = self.geog.longitudeW
         inputs = {
             "sitename": self.sitename,
             "altitude": self.altitude,
@@ -171,9 +172,9 @@ class Site:
             "sitedescription": self.sitedescription,
             "notes": self.notes,
             "ns": latitudeN,
-            #"s": latitudeS,
+            # "s": latitudeS,
             "ew": longitudeE,
-            #"w": longitudeW,
+            # "w": longitudeW,
         }
         cur.execute(site_query, inputs)
         self.siteid = cur.fetchone()[0]
@@ -195,10 +196,12 @@ class Site:
                         ORDER BY dist
                         LIMIT %(lim)s;"""
         try:
-            params = {"long": self.geog.longitudeE,
-                      "lat": self.geog.latitudeN,
-                      "dist": dist,
-                      "lim": limit}
+            params = {
+                "long": self.geog.longitudeE,
+                "lat": self.geog.latitudeN,
+                "dist": dist,
+                "lim": limit,
+            }
             cur.execute(close_site, params)
             close_sites = cur.fetchall()
             return close_sites
@@ -219,18 +222,14 @@ class Site:
             siteresponse = type("Response", (), {})()  # Create a simple object
             siteresponse.match = {}
             siteresponse.message = []
-        attributes = ["sitename",
-                      "altitude",
-                      "area",
-                      "sitedescription",
-                      "notes",
-                      "geog"]
+        attributes = ["sitename", "altitude", "area", "sitedescription", "notes", "geog"]
         updated_attributes = []
         for attr in attributes:
             if getattr(self, attr) != getattr(other, attr):
                 siteresponse.matched[attr] = False
-                siteresponse.message.append(f"? {attr} does not match."
-                                            f" Update set to {overwrite[attr]}.")
+                siteresponse.message.append(
+                    f"? {attr} does not match. Update set to {overwrite[attr]}."
+                )
             else:
                 siteresponse.valid.append(True)
                 siteresponse.message.append(f"✔  {attr} match.")
@@ -249,6 +248,7 @@ class Site:
         differences = []
         for attr in SITE_PARAMS:
             if _eq(getattr(self, attr), getattr(other, attr)) is False:
-                differences.append(f"CSV {attr}: {getattr(self, attr)} != Neotoma {attr}: "
-                                   f"{getattr(other, attr)}")
+                differences.append(
+                    f"CSV {attr}: {getattr(self, attr)} != Neotoma {attr}: {getattr(other, attr)}"
+                )
         return differences

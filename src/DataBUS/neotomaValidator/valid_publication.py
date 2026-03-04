@@ -1,8 +1,8 @@
 import DataBUS.neotomaHelpers as nh
 from DataBUS import Response
 
-INSERT_DATASET_PUBLICATION = """SELECT ts.insertdatasetpublication(%(datasetid)s, 
-                                                          %(publicationid)s, 
+INSERT_DATASET_PUBLICATION = """SELECT ts.insertdatasetpublication(%(datasetid)s,
+                                                          %(publicationid)s,
                                                           %(primarypub)s)"""
 
 

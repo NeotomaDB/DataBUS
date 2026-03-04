@@ -40,7 +40,7 @@ class Response:
         self.name = {}
         self.indices = []
         self.counter = 0
-    
+
     @property
     def validAll(self):
         """
@@ -58,7 +58,7 @@ class Response:
             str: Formatted string showing validity and messages.
         """
         new_msg = "\n".join(str(m) for m in self.message)
-        if self.validAll == False:
-            return f"Valid: {str(self.validAll).upper()} \n" f"Message: \n" f"{new_msg}"
+        if not self.validAll:
+            return f"Valid: {str(self.validAll).upper()} \nMessage: \n{new_msg}"
         else:
-            return f"Valid: {self.validAll} \n" f"Message: \n" f"{new_msg}"
+            return f"Valid: {self.validAll} \nMessage: \n{new_msg}"

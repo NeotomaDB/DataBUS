@@ -1,14 +1,24 @@
-SAMPLE_PARAMS = ["samplename", "analysisdate", "labnumber",
-                 "prepmethod", "notes", "sampledate", "taxonid"]
 from .neotomaHelpers.utils import validate_int_values
+
+SAMPLE_PARAMS = [
+    "samplename",
+    "analysisdate",
+    "labnumber",
+    "prepmethod",
+    "notes",
+    "sampledate",
+    "taxonid",
+]
+
+
 class Sample:
     """A sample in Neotoma.
 
     The intersection between an analysis unit and a dataset, representing
     physical material analyzed with associated metadata.
-    
+
     See the [Neotoma Manual](https://open.neotomadb.org/manual/sample-related-tables-1.html#Samples)
-    
+
     Attributes:
         analysisunitid (int | None): Analysis unit ID.
         datasetid (int | None): Dataset ID.
@@ -37,7 +47,8 @@ class Sample:
         taxonid=None,
         labnumber=None,
         prepmethod=None,
-        notes=None):
+        notes=None,
+    ):
         if analysisunitid is None or datasetid is None:
             raise ValueError("Both analysisunitid and datasetid are required to create a Sample.")
         self.analysisunitid = validate_int_values(analysisunitid, "analysisunitid")

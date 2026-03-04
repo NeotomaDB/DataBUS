@@ -1,4 +1,6 @@
 from .neotomaHelpers.utils import validate_int_values
+
+
 class Datum:
     """A data point measurement in the Neotoma database.
 

@@ -1,5 +1,7 @@
-from DataBUS import insert_entityrelationship_to_db
 import csv
+
+from DataBUS import insert_entityrelationship_to_db
+
 
 def speleothem_reference_inserts(cur, conn, file_path="data/references_entities.csv"):
     """Insert speleothem reference entity relationships into database.
@@ -22,7 +24,7 @@ def speleothem_reference_inserts(cur, conn, file_path="data/references_entities.
     Returns:
         None
     """
-    with open(file_path, "r", newline="") as f:
+    with open(file_path, newline="") as f:
         reader = csv.reader(f)
         next(reader)
         seen = set()
@@ -36,9 +38,9 @@ def speleothem_reference_inserts(cur, conn, file_path="data/references_entities.
                        WHERE entityid = %(entityid)s
                          AND entitystatusid = %(entitystatusid)s
                          AND referenceentityid = %(referenceentityid)s"""
-            cur.execute(query, {'entityid': row[0],
-                                'entitystatusid': row[1],
-                                'referenceentityid': row[2]})
+            cur.execute(
+                query, {"entityid": row[0], "entitystatusid": row[1], "referenceentityid": row[2]}
+            )
             result = cur.fetchone()
             if result:
                 seen.add(row_tuple)
@@ -48,6 +50,6 @@ def speleothem_reference_inserts(cur, conn, file_path="data/references_entities.
                     insert_entityrelationship_to_db(cur, row[0], row[1], row[2])
                     # SUGGESTION: Should this call conn.commit() instead of conn.rollback() after successful insert?
                     conn.rollback()
-                except Exception as e:
+                except Exception:
                     # SUGGESTION: Log the exception (e) for debugging purposes
                     conn.rollback()

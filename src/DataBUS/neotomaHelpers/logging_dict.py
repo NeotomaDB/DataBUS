@@ -1,5 +1,6 @@
 from DataBUS import Response
 
+
 def logging_response(response, logfile):
     """Append Response object string representation to logfile.
 

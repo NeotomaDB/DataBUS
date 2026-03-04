@@ -1,6 +1,7 @@
 import csv
 import logging
 
+
 def read_csv(filename):
     """Read CSV file and return a structured list of dictionaries.
 
@@ -31,9 +32,9 @@ def read_csv(filename):
         except Exception as e:
             logging.error(f"Error reading CSV file {filename}: {e}")
             return []
-        
+
         try:
-            return [dict(zip(headers, row)) for row in file_data]
+            return [dict(zip(headers, row, strict=False)) for row in file_data]
         except Exception as e:
             logging.error(f"Error parsing CSV rows from {filename}: {e}")
             return []

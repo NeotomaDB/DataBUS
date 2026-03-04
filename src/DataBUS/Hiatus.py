@@ -1,9 +1,21 @@
 import importlib.resources
-from .neotomaHelpers.utils import validate_int_values
-insert_hiatus = importlib.resources.files("DataBUS.sqlHelpers").joinpath("insert_hiatus.sql").read_text(encoding="UTF-8")
 
-insert_hiatuschronology = importlib.resources.files("DataBUS.sqlHelpers").joinpath("insert_hiatuschronology.sql").read_text(encoding="UTF-8")
-HIATUS_PARAMS = ['hiatus', 'notes']
+from .neotomaHelpers.utils import validate_int_values
+
+insert_hiatus = (
+    importlib.resources.files("DataBUS.sqlHelpers")
+    .joinpath("insert_hiatus.sql")
+    .read_text(encoding="UTF-8")
+)
+
+insert_hiatuschronology = (
+    importlib.resources.files("DataBUS.sqlHelpers")
+    .joinpath("insert_hiatuschronology.sql")
+    .read_text(encoding="UTF-8")
+)
+HIATUS_PARAMS = ["hiatus", "notes"]
+
+
 class Hiatus:
     """A hiatus or stratigraphic gap in a sediment sequence.
 
@@ -25,14 +37,10 @@ class Hiatus:
         >>> hiatus.analysisunitstart
         10
     """
+
     description = "Hiatus object in Neotoma"
 
-    def __init__(
-        self,
-        hiatusid=None,
-        analysisunitstart=None,
-        analysisunitend=None,
-        notes=None):
+    def __init__(self, hiatusid=None, analysisunitstart=None, analysisunitend=None, notes=None):
         if not analysisunitstart or not analysisunitend:
             raise ValueError("Both analysisunitstart and analysisunitend are required.")
         self.hiatusid = validate_int_values(hiatusid, "hiatusid")
@@ -81,7 +89,7 @@ class Hiatus:
         inputs = {
             "analysisunitstart": self.analysisunitstart,
             "analysisunitend": self.analysisunitend,
-            "notes": self.notes
+            "notes": self.notes,
         }
         cur.execute(hiatus_query, inputs)
         self.hiatusid = cur.fetchone()[0]
@@ -109,7 +117,7 @@ class Hiatus:
             "hiatusid": self.hiatusid,
             "chronologyid": chronologyid,
             "hiatuslength": hiatuslength,
-            "hiatusuncertainty": hiatusuncertainty
+            "hiatusuncertainty": hiatusuncertainty,
         }
         cur.execute(hiatus_query, inputs)
         return

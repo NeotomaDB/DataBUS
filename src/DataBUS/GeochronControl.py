@@ -1,4 +1,6 @@
 from .neotomaHelpers.utils import validate_int_values
+
+
 class GeochronControl:
     """A link between a chronological control and geochronological date.
 
@@ -7,14 +9,14 @@ class GeochronControl:
 
     Geochronologies are explained further in the
     [Neotoma Manual](https://open.neotomadb.org/manual/chronology-age-related-tables-1.html#Geochronology)
-    
+
     Attributes:
         chroncontrolid (int): Chrono control ID.
         geochronid (int): Geochron ID.
         geochroncontrolid (int | None): Geochron control ID (assigned after insertion).
 
     Examples:
-        >>> gc = GeochronControl(chroncontrolid=1, geochronid=2) 
+        >>> gc = GeochronControl(chroncontrolid=1, geochronid=2)
         >>> gc.chroncontrolid
         1
     """
@@ -38,10 +40,7 @@ class GeochronControl:
                   SELECT ts.insertgeochroncontrol(%(chroncontrolid)s,
                                                   %(geochronid)s)
                  """
-        inputs = {
-            'chroncontrolid': self.chroncontrolid,
-            'geochronid': self.geochronid
-        }
+        inputs = {"chroncontrolid": self.chroncontrolid, "geochronid": self.geochronid}
 
         cur.execute(geochroncontrol_q, inputs)
         self.geochroncontrolid = cur.fetchone()[0]
