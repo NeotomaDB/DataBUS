@@ -1,7 +1,10 @@
 import DataBUS.neotomaHelpers as nh
 from DataBUS import Response
+INSERT_DATASET_PUBLICATION = """SELECT ts.insertdatasetpublication(%(datasetid)s, 
+                                                          %(publicationid)s, 
+                                                          %(primarypub)s)"""
 
-def valid_publication(cur, yml_dict, csv_file):
+def valid_publication(cur, yml_dict, csv_file, databus=None):
     """Validates a publication for the database.
 
     Validates publication information by checking against the Neotoma database.
@@ -34,6 +37,13 @@ def valid_publication(cur, yml_dict, csv_file):
         response.message.append(f"✗  Error pulling parameters: {e}")
         return response
 
+    try:
+        datasetid = databus['datasets'].id_int
+        response.valid.append(True)
+    except Exception as e:
+        response.message.append(f"✗ Cannot retrieve Dataset ID from databus: {e}")
+        response.valid.append(False)
+        datasetid = 1  # placeholder
     for key in params:
         if key in inputs:
             inputs[key] = _flatten_list(inputs[key], delim=' | ')    
@@ -47,6 +57,17 @@ def valid_publication(cur, yml_dict, csv_file):
         if result:
             response.message.append(f"✔  Found Publication: {result[0]} in Neotoma.")
             response.valid.append(True)
+            response.id_list.append(inputs['publicationid'])
+            try:
+                cur.execute(INSERT_DATASET_PUBLICATION,
+                            {'datasetid': datasetid,
+                             'publicationid': inputs['publicationid'],
+                             'primarypub': True})
+                response.message.append(f"✔  Publication linked to dataset.")
+                response.valid.append(True)
+            except Exception as e:
+                response.message.append(f"✗  Could not link publication to dataset: {e}")
+                response.valid.append(False)
         else:
             response.message.append("✗  The publication does not exist in Neotoma.")
             response.valid.append(False)
@@ -59,13 +80,23 @@ def valid_publication(cur, yml_dict, csv_file):
                'citation': """SELECT publicationid FROM ndb.publications
                             WHERE LOWER(citation) = LOWER(%(ref)s)"""}
     query = queries[search_param[0]]
-    
     for i, pub in enumerate(inputs.get(search_param[0], [])):
         cur.execute(query, {'ref': pub})
         result = cur.fetchone()
         if result:
             response.message.append(f"✔  Found Publication: {pub} in Neotoma.")
             response.valid.append(True)
+            response.id_list.append(result[0])
+            try:
+                cur.execute(INSERT_DATASET_PUBLICATION,
+                            {'datasetid': datasetid,
+                                'publicationid': result[0],
+                                'primarypub': True})
+                response.message.append(f"✔  Publication linked to dataset.")
+                response.valid.append(True)
+            except Exception as e:
+                response.message.append(f"✗  Could not link publication to dataset: {e}")
+                response.valid.append(False)
         else:
             if search_param[1] == 2:
                 response.message.append(f"?  No DOI {pub} found in Neotoma.")
@@ -74,6 +105,17 @@ def valid_publication(cur, yml_dict, csv_file):
                 if result:
                     response.message.append(f"✔  Found Publication: {inputs[priority_params[1][0]][i]} in Neotoma.")
                     response.valid.append(True)
+                    response.id_list.append(result[0])
+                    try:
+                        cur.execute(INSERT_DATASET_PUBLICATION,
+                                    {'datasetid': datasetid,
+                                        'publicationid': result[0],
+                                        'primarypub': True})
+                        response.message.append(f"✔  Publication linked to dataset.")
+                        response.valid.append(True)
+                    except Exception as e:
+                        response.message.append(f"✗  Could not link publication to dataset: {e}")
+                        response.valid.append(False)
                 else:
                     response.message.append(f"✗  The publication does not exist in Neotoma: {inputs[priority_params[1][0]][i]}.")
                     response.valid.append(False)
