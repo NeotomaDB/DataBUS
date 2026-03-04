@@ -1,5 +1,6 @@
 from DataBUS import Dataset, Response
 
+
 def valid_geochron_dataset(cur, yml_dict, csv_file, databus=None):
     """Validates and inserts a geochronological dataset.
 
@@ -30,32 +31,32 @@ def valid_geochron_dataset(cur, yml_dict, csv_file, databus=None):
     try:
         cur.execute(
             """SELECT datasettypeid FROM ndb.datasettypes
-               WHERE LOWER(datasettype) = 'geochronologic'""")
+               WHERE LOWER(datasettype) = 'geochronologic'"""
+        )
         result = cur.fetchone()
         if result:
             datasettypeid = result[0]
-            response.message.append(
-                f"✔ Geochronologic dataset type found: ID {datasettypeid}.")
+            response.message.append(f"✔ Geochronologic dataset type found: ID {datasettypeid}.")
             response.valid.append(True)
         else:
             response.message.append(
-                "? 'geochronologic' not found in datasettypes; using fallback "
-                "datasettypeid=1.")
+                "? 'geochronologic' not found in datasettypes; using fallback datasettypeid=1."
+            )
             response.valid.append(True)
     except Exception as e:
         response.message.append(
-            f"? Could not query datasettypes ({e}); using fallback "
-            f"datasettypeid=1.")
+            f"? Could not query datasettypes ({e}); using fallback datasettypeid=1."
+        )
         response.valid.append(True)
 
     # Resolve collectionunitid
     collunitid = 1  # placeholder
     if databus is not None:
-        cu_id = databus.get('collunits') and databus['collunits'].id_int
+        cu_id = databus.get("collunits") and databus["collunits"].id_int
         if isinstance(cu_id, int):
             collunitid = cu_id
 
-    inputs = {'datasettypeid': datasettypeid, 'collectionunitid': collunitid}
+    inputs = {"datasettypeid": datasettypeid, "collectionunitid": collunitid}
 
     try:
         ds = Dataset(**inputs)
@@ -70,12 +71,10 @@ def valid_geochron_dataset(cur, yml_dict, csv_file, databus=None):
     if databus is not None and isinstance(collunitid, int) and collunitid != 1:
         try:
             response.id_int = ds.insert_to_db(cur)
-            response.message.append(
-                f"✔ Geochronology dataset inserted with ID {response.id_int}.")
+            response.message.append(f"✔ Geochronology dataset inserted with ID {response.id_int}.")
             response.valid.append(True)
         except Exception as e:
-            response.message.append(
-                f"✗ Geochronology dataset could not be inserted: {e}")
+            response.message.append(f"✗ Geochronology dataset could not be inserted: {e}")
             response.valid.append(False)
 
     return response

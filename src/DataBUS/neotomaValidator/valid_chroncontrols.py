@@ -2,6 +2,7 @@ import DataBUS.neotomaHelpers as nh
 from DataBUS import ChronControl, Response
 from DataBUS.ChronControl import CCONTROL_PARAMS
 
+
 def valid_chroncontrols(cur, yml_dict, csv_file, databus=None):
     """Validates and inserts chronological control points for age models.
 
@@ -36,55 +37,67 @@ def valid_chroncontrols(cur, yml_dict, csv_file, databus=None):
         if all(value is None for value in inputs.values()):
             response.valid.append(True)
             response.message.append(
-                "✔ No chronology control parameters provided, skipping validation.")
+                "✔ No chronology control parameters provided, skipping validation."
+            )
             return response
-        indices = [i for i, value in enumerate(inputs['age']) if value is not None]
-        inputs = {k: [v for i, v in enumerate(inputs[k]) if i in indices]
-                  if isinstance(inputs[k], list) else inputs[k]
-                  for k in inputs}
+        indices = [i for i, value in enumerate(inputs["age"]) if value is not None]
+        inputs = {
+            k: [v for i, v in enumerate(inputs[k]) if i in indices]
+            if isinstance(inputs[k], list)
+            else inputs[k]
+            for k in inputs
+        }
     except Exception as e:
         response.valid.append(False)
         response.message.append(
-            f"✗ Chronology parameters cannot be properly extracted. "
-            f"Verify the CSV file.: {e}")
+            f"✗ Chronology parameters cannot be properly extracted. Verify the CSV file.: {e}"
+        )
         return response
 
     agetype_query = """SELECT agetypeid FROM ndb.agetypes
                    WHERE LOWER(agetype) = LOWER(%(agetype)s)"""
     chroncontrol_q = """SELECT chroncontroltypeid FROM ndb.chroncontroltypes
                         WHERE LOWER(chroncontroltype) = LOWER(%(chroncontroltype)s)"""
-    par = {'agetypeid': [agetype_query, 'agetype'],
-           'chroncontroltypeid': [chroncontrol_q, 'chroncontroltype']}
+    par = {
+        "agetypeid": [agetype_query, "agetype"],
+        "chroncontroltypeid": [chroncontrol_q, "chroncontroltype"],
+    }
 
     # Pull chronologyid – prefer real ID from databus
-    chronos_raw = inputs.pop('chronologyid', None)
-    if databus.get('chronologies') is not None:
-        chronos = databus.get('chronologies').id_list
+    chronos_raw = inputs.pop("chronologyid", None)
+    if databus.get("chronologies") is not None:
+        chronos = databus.get("chronologies").id_list
         response.valid.append(True)
     else:
         if chronos_raw and isinstance(chronos_raw, list) and chronos_raw[0] is not None:
-            chronos = list(dict.fromkeys(chronos_raw))  # assuming given chronologyid(s) are valid if provided
+            chronos = list(
+                dict.fromkeys(chronos_raw)
+            )  # assuming given chronologyid(s) are valid if provided
             response.valid.append(True)
         else:
             chronos = [1]
             response.valid.append(False)
-            response.message.append(f"✗ No chronology found in databus. Using placeholder value for chronologyid.")
+            response.message.append(
+                "✗ No chronology found in databus. Using placeholder value for chronologyid."
+            )
 
     # Resolve analysisunitids – prefer real IDs from databus
-    if databus.get('analysisunits'):
-        au_ids = databus['analysisunits'].id_list
+    if databus.get("analysisunits"):
+        au_ids = databus["analysisunits"].id_list
         # take only the AUs for the indices we have
         au_ids = [au_ids[i] for i in indices if i < len(au_ids)]
-        inputs['analysisunitid'] = au_ids
+        inputs["analysisunitid"] = au_ids
     else:
         response.valid.append(False)
-        response.message.append(f"✗ No analysis units found in databus. Using placeholder values for analysisunitid.")
-        inputs['analysisunitid'] = [i + 1 for i in range(len(inputs['age']))]
+        response.message.append(
+            "✗ No analysis units found in databus. Using placeholder values for analysisunitid."
+        )
+        inputs["analysisunitid"] = [i + 1 for i in range(len(inputs["age"]))]
 
     for chron in chronos:
-        for row in zip(*inputs.values()):
-            control = dict(zip(inputs.keys(), row))
-            control['chronologyid'] = chron
+        for row in zip(*inputs.values(), strict=False):
+            control = dict(zip(inputs.keys(), row, strict=False))
+            control["chronologyid"] = chron
             # Resolve string lookup fields
             for param, (query, key) in par.items():
                 if isinstance(control.get(param), str):
@@ -92,41 +105,44 @@ def valid_chroncontrols(cur, yml_dict, csv_file, databus=None):
                     result = cur.fetchone()
                     if result:
                         control[param] = result[0]
-                        if (f"✔ The provided {param} is correct: {result[0]}"
-                                not in response.message):
+                        if (
+                            f"✔ The provided {param} is correct: {result[0]}"
+                            not in response.message
+                        ):
                             response.message.append(
-                                f"✔ The provided {param} is correct: {result[0]}")
+                                f"✔ The provided {param} is correct: {result[0]}"
+                            )
                         response.valid.append(True)
                     else:
-                        if (f"✗ The provided {param} with value "
-                                f"{control[param]} does not exist in Neotoma DB."
-                                not in response.message):
+                        if (
+                            f"✗ The provided {param} with value "
+                            f"{control[param]} does not exist in Neotoma DB."
+                            not in response.message
+                        ):
                             response.message.append(
                                 f"✗ The provided {param} with value "
-                                f"{control[param]} does not exist in Neotoma DB.")
+                                f"{control[param]} does not exist in Neotoma DB."
+                            )
                         response.valid.append(False)
             try:
                 cc = ChronControl(**control)
                 if "✔  Chron controls can be created." not in response.message:
-                   response.message.append("✔  Chron controls can be created.")
+                    response.message.append("✔  Chron controls can be created.")
                 response.valid.append(True)
                 try:
                     cc_id = cc.insert_to_db(cur)
                     response.id_list.append(cc_id)
-                    response.message.append(
-                        f"✔  ChronControl inserted with ID {cc_id}.")
+                    response.message.append(f"✔  ChronControl inserted with ID {cc_id}.")
                     response.valid.append(True)
                 except Exception as e:
-                    if (f"✗  ChronControl could not be inserted: {e}"
-                            not in response.message):
-                        response.message.append(
-                            f"✗  ChronControl could not be inserted: {e}")
+                    if f"✗  ChronControl could not be inserted: {e}" not in response.message:
+                        response.message.append(f"✗  ChronControl could not be inserted: {e}")
                     response.valid.append(False)
                     continue
             except Exception as e:
                 response.message.append(
-                    f"✗  Could not create chron control with provided "
-                    f"parameters: {e}")
+                    f"✗  Could not create chron control with provided parameters: {e}"
+                )
                 response.valid.append(False)
-                continue        
+                continue
     return response

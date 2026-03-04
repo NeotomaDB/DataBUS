@@ -2,6 +2,7 @@ import DataBUS.neotomaHelpers as nh
 from DataBUS import Response, Speleothem
 from DataBUS.Speleothem import SPELEOTHEM_PARAMS
 
+
 def valid_speleothem(cur, yml_dict, csv_file, databus=None):
     """Validates speleothem data against the Neotoma database.
 
@@ -49,63 +50,70 @@ def valid_speleothem(cur, yml_dict, csv_file, databus=None):
     units_q = """SELECT variableunitsid
                  FROM ndb.variableunits
                  WHERE LOWER(variableunits) = %(element)s"""
-    par = {'speleothemdriptypeid': [driptype_q, 'speleothemdriptypeid'],
-           'entitystatusid': [entitystatus_q, 'entitystatusid'],
-           'speleothemtypeid': [speleothemtypes_q, 'speleothemtypeid'],
-           'speleothemgeologyid': [rocktype_q, 'speleothemgeologyid'], # also uses rocktype_q
-           'covertypeid': [covertype_q, 'entitycoverid'],
-           'landusecovertypeid': [landusecovertype_q, 'landusecovertypeid'],
-           'vegetationcovertypeid': [vegetationcovertype_q, 'vegetationcovertypeid'],
-           'rockageid': [rockage_q, 'rockageid'],
-           'rocktypeid': [rocktype_q, 'rocktypeid'],
-           'dripheightunitsid': [units_q, 'dripheightunitsid'],
-           'entitycoverunitsid': [units_q, 'entitycoverunitsid'],
-           'entrancedistanceunitsid': [units_q, 'entrancedistanceunitsid']}
+    par = {
+        "speleothemdriptypeid": [driptype_q, "speleothemdriptypeid"],
+        "entitystatusid": [entitystatus_q, "entitystatusid"],
+        "speleothemtypeid": [speleothemtypes_q, "speleothemtypeid"],
+        "speleothemgeologyid": [rocktype_q, "speleothemgeologyid"],  # also uses rocktype_q
+        "covertypeid": [covertype_q, "entitycoverid"],
+        "landusecovertypeid": [landusecovertype_q, "landusecovertypeid"],
+        "vegetationcovertypeid": [vegetationcovertype_q, "vegetationcovertypeid"],
+        "rockageid": [rockage_q, "rockageid"],
+        "rocktypeid": [rocktype_q, "rocktypeid"],
+        "dripheightunitsid": [units_q, "dripheightunitsid"],
+        "entitycoverunitsid": [units_q, "entitycoverunitsid"],
+        "entrancedistanceunitsid": [units_q, "entrancedistanceunitsid"],
+    }
     try:
         inputs = nh.pull_params(SPELEOTHEM_PARAMS, yml_dict, csv_file, "ndb.speleothems")
     except Exception as e:
-            response.valid.append(False)
-            response.message.append(f"✗ Speleothem elements in the CSV file are not properly defined.\n"
-                                    f"Please verify the CSV file. {e}")
-            return response
+        response.valid.append(False)
+        response.message.append(
+            f"✗ Speleothem elements in the CSV file are not properly defined.\n"
+            f"Please verify the CSV file. {e}"
+        )
+        return response
     if all(value is None for value in inputs.values()):
         response.valid.append(True)
         response.message.append("✔ No speleothem parameters provided.")
         return response
-    if inputs.get('monitoring', '').lower() == 'yes':
-        inputs['monitoring'] = True
+    if inputs.get("monitoring", "").lower() == "yes":
+        inputs["monitoring"] = True
     else:
-        inputs['monitoring'] = False
-    if isinstance(inputs.get('ref_id'), str):
-        inputs['ref_id'] = list(map(int, inputs.get('ref_id', []).split(',')))
+        inputs["monitoring"] = False
+    if isinstance(inputs.get("ref_id"), str):
+        inputs["ref_id"] = list(map(int, inputs.get("ref_id", []).split(",")))
     for inp in inputs:
-        if isinstance(inputs.get(inp), str) and inp.endswith('id') and inputs[inp] is not None:
+        if isinstance(inputs.get(inp), str) and inp.endswith("id") and inputs[inp] is not None:
             original_value = inputs[inp]
             query = par[inp][0]
-            cur.execute(query, {'element': inputs[inp].lower()})
+            cur.execute(query, {"element": inputs[inp].lower()})
             inputs[inp] = cur.fetchone()
             if not inputs[inp]:
-                response.message.append(f"✗  {inp} for {original_value} not found. "
-                                        f"Does it exist in Neotoma?")
+                response.message.append(
+                    f"✗  {inp} for {original_value} not found. Does it exist in Neotoma?"
+                )
                 response.valid.append(False)
             else:
                 inputs[inp] = inputs[inp][0]
                 response.valid.append(True)
                 response.message.append(f"✔  {inp} for {inputs[inp]} found.")
     if databus is not None:
-        siteid = databus['sites'].id_int
+        siteid = databus["sites"].id_int
     else:
         siteid = 1  # placeholder
         response.valid.append(False)
         response.message.append("✗ Site ID not available; using placeholder.")
     try:
-        sp = Speleothem(siteid=siteid,
-                        entityname=inputs.get('entityname'),
-                        monitoring=inputs.get('monitoring'),
-                        rockageid=inputs.get('rockageid'),
-                        entrancedistance=inputs.get('entrancedistance'),
-                        entrancedistanceunits=inputs.get('entrancedistanceunits'),
-                        speleothemtypeid=inputs.get('speleothemtypeid'))
+        sp = Speleothem(
+            siteid=siteid,
+            entityname=inputs.get("entityname"),
+            monitoring=inputs.get("monitoring"),
+            rockageid=inputs.get("rockageid"),
+            entrancedistance=inputs.get("entrancedistance"),
+            entrancedistanceunits=inputs.get("entrancedistanceunits"),
+            speleothemtypeid=inputs.get("speleothemtypeid"),
+        )
         if databus is not None:
             try:
                 response.id_int = sp.insert_to_db(cur)

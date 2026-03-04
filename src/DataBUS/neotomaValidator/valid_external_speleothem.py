@@ -1,6 +1,7 @@
 import DataBUS.neotomaHelpers as nh
-from DataBUS import Response, ExternalSpeleothem
+from DataBUS import ExternalSpeleothem, Response
 from DataBUS.Speleothem import EX_SP_PARAMS
+
 
 def valid_external_speleothem(cur, yml_dict, csv_file, databus=None):
     """Validates external speleothem data against the Neotoma database.
@@ -29,39 +30,45 @@ def valid_external_speleothem(cur, yml_dict, csv_file, databus=None):
         inputs = nh.pull_params(EX_SP_PARAMS, yml_dict, csv_file, "ndb.externalspeleothemdata")
         if all(value is None for value in inputs.values()):
             response.valid.append(True)
-            response.message.append("✔  No external speleothem parameters provided, skipping validation.")
+            response.message.append(
+                "✔  No external speleothem parameters provided, skipping validation."
+            )
             return response
     except Exception as e:
         response.message.append(f"✗  Cannot pull external speleothem parameters from CSV file. {e}")
         response.valid.append(False)
         return response
 
-    if isinstance(inputs.get('extdatabaseid'), str):
-        cur.execute(query, {'extdatabaseid': inputs.get('extdatabaseid').lower().strip()})
+    if isinstance(inputs.get("extdatabaseid"), str):
+        cur.execute(query, {"extdatabaseid": inputs.get("extdatabaseid").lower().strip()})
         result = cur.fetchone()
         if not result:
-            response.message.append(f"✗  extdatabaseid for {inputs.get('extdatabaseid')} not found. "
-                                    f"Does it exist in Neotoma?")
+            response.message.append(
+                f"✗  extdatabaseid for {inputs.get('extdatabaseid')} not found. "
+                f"Does it exist in Neotoma?"
+            )
             response.valid.append(False)
         else:
-            inputs['extdatabaseid'] = result[0]
+            inputs["extdatabaseid"] = result[0]
             response.valid.append(True)
             response.message.append(f"✔  extdatabaseid for {inputs.get('extdatabaseid')} found.")
 
-    if isinstance(inputs.get('externaldescription'), str):
-        inputs['externaldescription'] = inputs['externaldescription'].strip(', ').strip()
+    if isinstance(inputs.get("externaldescription"), str):
+        inputs["externaldescription"] = inputs["externaldescription"].strip(", ").strip()
         response.valid.append(True)
     if databus is not None:
-        entityid = databus['speleothems'].id_int
+        entityid = databus["speleothems"].id_int
     else:
         entityid = 2  # placeholder
         response.valid.append(False)
         response.message.append("✗ Speleothem entity ID not available; using placeholder.")
     try:
-        es = ExternalSpeleothem(entityid=entityid,
-                                externalid=inputs.get('externalid'),
-                                extdatabaseid=inputs.get('extdatabaseid'),
-                                externaldescription=inputs.get('externaldescription'))
+        es = ExternalSpeleothem(
+            entityid=entityid,
+            externalid=inputs.get("externalid"),
+            extdatabaseid=inputs.get("extdatabaseid"),
+            externaldescription=inputs.get("externaldescription"),
+        )
         response.valid.append(True)
         if databus is not None:
             try:

@@ -1,8 +1,10 @@
+from itertools import groupby
+
 import DataBUS.neotomaHelpers as nh
 from DataBUS import Hiatus, Response
 from DataBUS.Hiatus import HIATUS_PARAMS
-from itertools import groupby
- 
+
+
 def valid_hiatus(cur, yml_dict, csv_file, databus=None):
     """Validates hiatus data for chronological models.
 
@@ -25,33 +27,37 @@ def valid_hiatus(cur, yml_dict, csv_file, databus=None):
     response = Response()
     inputs = nh.pull_params(HIATUS_PARAMS, yml_dict, csv_file, "ndb.hiatuses")
 
-    if inputs.get('hiatus'):
-        indices = [i for i, value in enumerate(inputs['hiatus']) if value is not None]
+    if inputs.get("hiatus"):
+        indices = [i for i, value in enumerate(inputs["hiatus"]) if value is not None]
     else:
         response.valid.append(True)
         response.message.append("✔ No hiatuses found in the data.")
         return response
-    
+
     clusters = _find_clusters(indices)
-    inputs = {k: [v for i, v in enumerate(inputs[k]) if i in indices]
-              if isinstance(inputs[k], list) else inputs[k]
-              for k in inputs}
-    inputs['indices'] = indices  # Only as placeholder for analysis unit IDs
+    inputs = {
+        k: [v for i, v in enumerate(inputs[k]) if i in indices]
+        if isinstance(inputs[k], list)
+        else inputs[k]
+        for k in inputs
+    }
+    inputs["indices"] = indices  # Only as placeholder for analysis unit IDs
 
     if databus is not None:
-        au_ids = databus['analysisunits'].id_list
-        resolved = [[au_ids[c[0]], au_ids[c[-1]]] if len(c) > 1 else [au_ids[c[0]]]
-                    for c in clusters]
+        au_ids = databus["analysisunits"].id_list
+        resolved = [
+            [au_ids[c[0]], au_ids[c[-1]]] if len(c) > 1 else [au_ids[c[0]]] for c in clusters
+        ]
     else:
         resolved = clusters
 
     for values in resolved:
         try:
-            h = Hiatus(analysisunitstart=values[0],
-                       analysisunitend=values[-1],
-                       notes=inputs.get('notes'))
+            h = Hiatus(
+                analysisunitstart=values[0], analysisunitend=values[-1], notes=inputs.get("notes")
+            )
             response.valid.append(True)
-            if f"✔ Hiatus can be created." not in response.message:
+            if "✔ Hiatus can be created." not in response.message:
                 response.message.append("✔ Hiatus can be created.")
             if databus is not None:
                 try:
@@ -66,6 +72,7 @@ def valid_hiatus(cur, yml_dict, csv_file, databus=None):
                 response.message.append(f"✗ Hiatus cannot be created: {e}")
     return response
 
+
 def _find_clusters(indices):
     """Group consecutive indices into clusters.
     Takes a list of indices and groups consecutive integers together.
@@ -75,7 +82,6 @@ def _find_clusters(indices):
         return []
     indices = sorted(indices)
     clusters = [
-        [x[1] for x in group]
-        for k, group in groupby(enumerate(indices), lambda x: x[1] - x[0])
+        [x[1] for x in group] for k, group in groupby(enumerate(indices), lambda x: x[1] - x[0])
     ]
     return clusters

@@ -2,6 +2,7 @@ import DataBUS.neotomaHelpers as nh
 from DataBUS import Dataset, Response
 from DataBUS.Dataset import DATASET_PARAMS
 
+
 def valid_dataset(cur, yml_dict, csv_file, databus=None):
     """Validates a dataset based on YAML configuration and CSV data.
 
@@ -27,7 +28,7 @@ def valid_dataset(cur, yml_dict, csv_file, databus=None):
         val = nh.retrieve_dict(yml_dict, param[1])
         if val:
             try:
-                inputs[param[0]] = val[0]['value']
+                inputs[param[0]] = val[0]["value"]
             except Exception as e:
                 response.valid.append(False)
                 response.message.append(f"✗ {param[0]} value is missing in template: {e}")
@@ -36,7 +37,7 @@ def valid_dataset(cur, yml_dict, csv_file, databus=None):
     query = """SELECT datasettypeid
                FROM ndb.datasettypes
                WHERE LOWER(datasettype) = %(ds_type)s"""
-    if isinstance(inputs.get('datasettypeid'), str):
+    if isinstance(inputs.get("datasettypeid"), str):
         cur.execute(query, {"ds_type": inputs.get("datasettypeid").lower().strip()})
         datasettypeid = cur.fetchone()
         if datasettypeid:
@@ -44,10 +45,12 @@ def valid_dataset(cur, yml_dict, csv_file, databus=None):
             response.valid.append(True)
         else:
             inputs["datasettypeid"] = None
-            response.message.append("✗ Dataset type is not known to Neotoma and needs to be created first.")
+            response.message.append(
+                "✗ Dataset type is not known to Neotoma and needs to be created first."
+            )
             response.valid.append(False)
     else:
-        datasettypeid = inputs.get('datasettypeid')
+        datasettypeid = inputs.get("datasettypeid")
         ch = """SELECT datasettypeid, datasettype
                FROM ndb.datasettypes
                WHERE datasettypeid = %(ds_typeid)s"""
@@ -55,15 +58,19 @@ def valid_dataset(cur, yml_dict, csv_file, databus=None):
         datasettypeid = cur.fetchone()
         if datasettypeid:
             inputs["datasettypeid"] = datasettypeid[0]
-            response.message.append(f"✔ Dataset type ID {datasettypeid[0]} corresponds to dataset type '{datasettypeid[1]}'.")
+            response.message.append(
+                f"✔ Dataset type ID {datasettypeid[0]} corresponds to dataset type '{datasettypeid[1]}'."
+            )
             response.valid.append(True)
         else:
             inputs["datasettypeid"] = None
-            response.message.append("✗ Dataset type is not known to Neotoma and needs to be created first.")
+            response.message.append(
+                "✗ Dataset type is not known to Neotoma and needs to be created first."
+            )
             response.valid.append(False)
-    inputs["notes"] = nh.pull_params(["notes"], yml_dict, csv_file, "ndb.datasets").get('notes')
+    inputs["notes"] = nh.pull_params(["notes"], yml_dict, csv_file, "ndb.datasets").get("notes")
     if databus is not None:
-        inputs["collectionunitid"] = databus['collunits'].id_int
+        inputs["collectionunitid"] = databus["collunits"].id_int
     else:
         inputs["collectionunitid"] = 1  # placeholder
         response.valid.append(False)

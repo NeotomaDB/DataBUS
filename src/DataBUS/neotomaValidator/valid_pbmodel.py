@@ -2,6 +2,7 @@ import DataBUS.neotomaHelpers as nh
 from DataBUS import LeadModel, Response
 from DataBUS.LeadModel import LEAD_MODEL_PARAMS
 
+
 def valid_pbmodel(cur, yml_dict, csv_file, databus):
     """Validates lead-210 dating model parameters.
 
@@ -42,18 +43,20 @@ def valid_pbmodel(cur, yml_dict, csv_file, databus):
     if inputs.get("pbbasisid") is not None:
         inputs["pbbasisid"] = inputs["pbbasisid"][0]
 
-    if databus.get('analysisunits') and databus['analysisunits'].id_list:
-        au_ids = databus['analysisunits'].id_list
+    if databus.get("analysisunits") and databus["analysisunits"].id_list:
+        au_ids = databus["analysisunits"].id_list
     else:
         au_ids = range(1, 10)  # placeholder
         response.valid.append(False)
         response.message.append("✗ Analysis unit IDs not available; using placeholder range.")
     for j in au_ids:
         try:
-            pb_model = LeadModel(pbbasisid=inputs.get("pbbasisid"),
-                                 analysisunitid=j,
-                                 cumulativeinventory=inputs.get("cumulativeinventory"),
-                                 datinghorizon=inputs.get("datinghorizon"))
+            pb_model = LeadModel(
+                pbbasisid=inputs.get("pbbasisid"),
+                analysisunitid=j,
+                cumulativeinventory=inputs.get("cumulativeinventory"),
+                datinghorizon=inputs.get("datinghorizon"),
+            )
             response.valid.append(True)
         except Exception as e:
             response.valid.append(False)
@@ -63,8 +66,8 @@ def valid_pbmodel(cur, yml_dict, csv_file, databus):
         try:
             pb_model.insert_to_db(cur)
             response.valid.append(True)
-            if f"✔  Lead model can be inserted." not in response.message:
-                response.message.append(f"✔  Lead model can be inserted.")
+            if "✔  Lead model can be inserted." not in response.message:
+                response.message.append("✔  Lead model can be inserted.")
         except Exception as e:
             response.valid.append(False)
             if f"✗  Lead model cannot be inserted: {e}" not in response.message:

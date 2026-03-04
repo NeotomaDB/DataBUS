@@ -1,6 +1,7 @@
 import DataBUS.neotomaHelpers as nh
-from DataBUS import SampleAge, Response
+from DataBUS import Response, SampleAge
 from DataBUS.SampleAge import SAMPLE_AGE_PARAMS
+
 
 def valid_sample_age(cur, yml_dict, csv_file, databus=None):
     """Validates sample age data for paleontological samples.
@@ -39,48 +40,50 @@ def valid_sample_age(cur, yml_dict, csv_file, databus=None):
             inputs = inputs.get("sampleages")
     except Exception as e:
         response.valid.append(False)
-        response.message.append(
-            f"✗ Sample Age parameters cannot be properly extracted. {e}")
+        response.message.append(f"✗ Sample Age parameters cannot be properly extracted. {e}")
         return response
 
-    if databus.get('chronologies') is not None:
-        chron_id_map = databus['chronologies'].name
+    if databus.get("chronologies") is not None:
+        chron_id_map = databus["chronologies"].name
         response.valid.append(True)
     else:
-        chron_id_map = {'placeholder': 1}
+        chron_id_map = {"placeholder": 1}
         response.valid.append(False)
-        response.message.append(f"✗ No chronologies found in databus. Using placeholder chronology IDs.")
-    if databus.get('samples') is not None:
+        response.message.append(
+            "✗ No chronologies found in databus. Using placeholder chronology IDs."
+        )
+    if databus.get("samples") is not None:
         response.valid.append(True)
-        sample_ids = databus['samples'].id_list
+        sample_ids = databus["samples"].id_list
     else:
         response.valid.append(False)
         response.message.append(" ✗ No samples found in databus")
         return response
     for chron in inputs:
         sa = inputs[chron]
-        sa['sampleid'] = sample_ids
+        sa["sampleid"] = sample_ids
         sa = {k: v if isinstance(v, list) else [v] for k, v in sa.items()}
         chronologyid = chron_id_map.get(chron)
-        for j, row in enumerate(zip(*sa.values())):
-            sa_age = dict(zip(sa.keys(), row))
-            sa_age['agemodel'] = agemodel
-            sa_age['chronologyid'] = chronologyid
-            if not sa_age.get('age'):
+        for _, row in enumerate(zip(*sa.values(), strict=False)):
+            sa_age = dict(zip(sa.keys(), row, strict=False))
+            sa_age["agemodel"] = agemodel
+            sa_age["chronologyid"] = chronologyid
+            if not sa_age.get("age"):
                 continue
-            if isinstance(sa_age.get('agemodel'), str):
-                if (sa_age.get('agemodel').lower() == 'collection date' or
-                    'calendar years' in sa_age.get('agemodel').lower()):
+            if isinstance(sa_age.get("agemodel"), str) and (
+                sa_age.get("agemodel").lower() == "collection date"
+                or "calendar years" in sa_age.get("agemodel").lower()
+            ):
                     try:
-                        sa_age['age'] = nh.convert_to_bp(sa_age.get('age'))
-                        sa_age['ageolder'] = nh.convert_to_bp(sa_age.get('ageolder'))
-                        sa_age['ageyounger'] = nh.convert_to_bp(sa_age.get('ageyounger'))
+                        sa_age["age"] = nh.convert_to_bp(sa_age.get("age"))
+                        sa_age["ageolder"] = nh.convert_to_bp(sa_age.get("ageolder"))
+                        sa_age["ageyounger"] = nh.convert_to_bp(sa_age.get("ageyounger"))
                     except Exception as e:
                         response.valid.append(False)
                         response.message.append(f"✗ Error parsing collection date: {e}")
                         continue
             try:
-                sa_age.pop('agemodel')
+                sa_age.pop("agemodel")
                 sa_obj = SampleAge(**sa_age)
                 response.valid.append(True)
                 if "✔ Sample Age is valid." not in response.message:

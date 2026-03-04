@@ -2,6 +2,7 @@ import DataBUS.neotomaHelpers as nh
 from DataBUS import Contact, Response
 from DataBUS.Contact import CONTACT_PARAMS, CONTACT_TABLES
 
+
 def valid_contact(cur, yml_dict, csv_file, tables=CONTACT_TABLES, databus=None):
     """Validates contact information against the Neotoma Paleoecology Database.
 
@@ -46,20 +47,26 @@ def valid_contact(cur, yml_dict, csv_file, tables=CONTACT_TABLES, databus=None):
 
     for key in inputs:
         response.message.append(f"=== Validating Contacts for Table: {key} ===")
-        if not (isinstance(inputs[key].get("contactid"), list) and
-                all(isinstance(i, int) for i in inputs[key]["contactid"])):
-            if not (isinstance(inputs[key].get("contactname"), str) or
-                    (isinstance(inputs[key]["contactname"], list) and
-                    all(isinstance(i, str) for i in inputs[key]["contactname"]))):
-                response.message.append(f"✗ Invalid contact information for {key}: {inputs[key]['contactname']}.")
+        if not (
+            isinstance(inputs[key].get("contactid"), list)
+            and all(isinstance(i, int) for i in inputs[key]["contactid"])
+        ):
+            if not (
+                isinstance(inputs[key].get("contactname"), str)
+                or (
+                    isinstance(inputs[key]["contactname"], list)
+                    and all(isinstance(i, str) for i in inputs[key]["contactname"])
+                )
+            ):
+                response.message.append(
+                    f"✗ Invalid contact information for {key}: {inputs[key]['contactname']}."
+                )
                 response.valid.append(False)
                 continue
             else:
-                counter = 0
                 if isinstance(inputs[key]["contactname"], str):
                     inputs[key]["contactname"] = [inputs[key]["contactname"]]
-                for name in inputs[key]["contactname"]:
-                    counter += 1
+                for counter, name in enumerate(inputs[key]["contactname"], start=1):
                     get_name = nh.get_contacts(cur, name)
                     get_name["order"] = counter
                     if get_name["id"] is None:
@@ -67,12 +74,15 @@ def valid_contact(cur, yml_dict, csv_file, tables=CONTACT_TABLES, databus=None):
                         response.valid.append(False)
                     else:
                         try:
-                            contact = Contact(contactid=get_name["id"],
-                                              contactname=get_name["name"],
-                                              order=get_name["order"])
+                            contact = Contact(
+                                contactid=get_name["id"],
+                                contactname=get_name["name"],
+                                order=get_name["order"],
+                            )
                             response.valid.append(True)
                             response.message.append(
-                                f"✓ Valid contact: {get_name['name']} (ID: {get_name['id']}) for {key}.")
+                                f"✓ Valid contact: {get_name['name']} (ID: {get_name['id']}) for {key}."
+                            )
                             response.id_list.append(get_name["id"])
                             try:
                                 _insert_contact(cur, contact, key, databus, response)
@@ -82,7 +92,8 @@ def valid_contact(cur, yml_dict, csv_file, tables=CONTACT_TABLES, databus=None):
                                 response.valid.append(False)
                         except Exception as e:
                             response.message.append(
-                                f"✗ Cannot create Contact object for: {name}. {e}")
+                                f"✗ Cannot create Contact object for: {name}. {e}"
+                            )
                             response.valid.append(False)
         else:
             counter = 0
@@ -99,6 +110,7 @@ def valid_contact(cur, yml_dict, csv_file, tables=CONTACT_TABLES, databus=None):
                     response.valid.append(False)
     return response
 
+
 def _insert_contact(cur, contact, table_key, databus, response):
     """Dispatch the correct insert method based on the contact table.
 
@@ -110,23 +122,23 @@ def _insert_contact(cur, contact, table_key, databus, response):
         response (Response): Response object to append messages to.
     """
     try:
-        collunitid = databus.get('collunits').id_int
-        datasetid = databus.get('datasets').id_int
-        sample_ids = databus.get('samples').id_list
+        collunitid = databus.get("collunits").id_int
+        datasetid = databus.get("datasets").id_int
+        sample_ids = databus.get("samples").id_list
         response.valid.append(True)
     except Exception as e:
         response.message.append(f"✗ Error retrieving ID from databus: {e}")
         response.valid.append(False)
-        collunitid = 2 #Placeholder
-        datasetid = 1 # Placeholder
-        sample_ids = [1, 2, 3] # Placeholder
+        collunitid = 2  # Placeholder
+        datasetid = 1  # Placeholder
+        sample_ids = [1, 2, 3]  # Placeholder
 
-    if table_key == "ndb.collectors": 
+    if table_key == "ndb.collectors":
         try:
             contact.insert_collector(cur, collunitid=collunitid)
             response.message.append(
-                f"✔  Inserted collector (contactid={contact.contactid}) "
-                f"for collunit {collunitid}.")
+                f"✔  Inserted collector (contactid={contact.contactid}) for collunit {collunitid}."
+            )
             response.valid.append(True)
         except Exception as e:
             response.message.append(f"✗ Could not insert collector: {e}")
@@ -135,8 +147,8 @@ def _insert_contact(cur, contact, table_key, databus, response):
         try:
             contact.insert_pi(cur, datasetid=datasetid)
             response.message.append(
-                f"✔  Inserted dataset PI (contactid={contact.contactid}) "
-                f"for dataset {datasetid}.")
+                f"✔  Inserted dataset PI (contactid={contact.contactid}) for dataset {datasetid}."
+            )
             response.valid.append(True)
         except Exception as e:
             response.message.append(f"✗ Could not insert dataset PI: {e}")
@@ -146,7 +158,8 @@ def _insert_contact(cur, contact, table_key, databus, response):
             contact.insert_data_processor(cur, datasetid=datasetid)
             response.message.append(
                 f"✔  Inserted data processor (contactid={contact.contactid}) "
-                f"for dataset {datasetid}.")
+                f"for dataset {datasetid}."
+            )
             response.valid.append(True)
         except Exception as e:
             response.message.append(f"✗ Could not insert data processor: {e}")
@@ -159,13 +172,16 @@ def _insert_contact(cur, contact, table_key, databus, response):
                 inserted += 1
             except Exception as e:
                 response.message.append(
-                    f"✗ Could not insert sample analyst for sample {sampleid}: {e}")
+                    f"✗ Could not insert sample analyst for sample {sampleid}: {e}"
+                )
                 response.valid.append(False)
         if inserted:
             response.message.append(
                 f"✔  Inserted sample analyst (contactid={contact.contactid}) "
-                f"for {inserted} sample(s).")
+                f"for {inserted} sample(s)."
+            )
     elif table_key == "ndb.chronologies":
         response.message.append(
-            f"✔  Contact (contactid={contact.contactid}) will be associated with chronology record.")
+            f"✔  Contact (contactid={contact.contactid}) will be associated with chronology record."
+        )
         response.valid.append(True)

@@ -1,4 +1,5 @@
-from DataBUS import Response, GeochronControl
+from DataBUS import GeochronControl, Response
+
 
 def valid_geochroncontrol(cur, databus):
     """Validates and inserts geochronological control linkage records.
@@ -34,9 +35,9 @@ def valid_geochroncontrol(cur, databus):
     # Guard: if either upstream result is missing, skip gracefully
     if chron_controls_resp is None or geochron_resp is None:
         response.message.append(
-            "✔ No chron_controls or geochron results available, "
-            "skipping geochroncontrol linking.")
-        response.valid.append(True) 
+            "✔ No chron_controls or geochron results available, skipping geochroncontrol linking."
+        )
+        response.valid.append(True)
         return response
 
     cc_ids = [i for i in chron_controls_resp.id_list if i is not None]
@@ -63,12 +64,13 @@ def valid_geochroncontrol(cur, databus):
             geo_ids_paired = geo_ids[:min_len]
             response.message.append(
                 f"?  Mismatch: {len(cc_ids)} chroncontrol IDs vs "
-                f"{len(geo_ids)} geochron IDs. Linking first {min_len} pairs.")
+                f"{len(geo_ids)} geochron IDs. Linking first {min_len} pairs."
+            )
     except ZeroDivisionError:
         response.valid.append(True)
         return response
 
-    for cc_id, geo_id in zip(cc_ids_paired, geo_ids_paired):
+    for cc_id, geo_id in zip(cc_ids_paired, geo_ids_paired, strict=False):
         try:
             if geo_id is None:
                 response.valid.append(True)
@@ -78,12 +80,13 @@ def valid_geochroncontrol(cur, databus):
             gcc.insert_to_db(cur)
             response.valid.append(True)
             response.message.append(
-                f"✔ GeochronControl inserted "
-                f"(chroncontrolid={cc_id}, geochronid={geo_id}).")
+                f"✔ GeochronControl inserted (chroncontrolid={cc_id}, geochronid={geo_id})."
+            )
         except Exception as e:
             response.valid.append(False)
             response.message.append(
                 f"✗  GeochronControl not inserted "
-                f"(chroncontrolid={cc_id}, geochronid={geo_id}): {e}")
+                f"(chroncontrolid={cc_id}, geochronid={geo_id}): {e}"
+            )
 
     return response

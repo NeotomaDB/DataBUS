@@ -1,7 +1,8 @@
 import DataBUS.neotomaHelpers as nh
 from DataBUS import Response, UThSeries
 from DataBUS.UThSeries import UTH_PARAMS
- 
+
+
 def valid_uth_series(cur, yml_dict, csv_file, databus=None):
     """Validates and inserts uranium-thorium series data for geochronological samples.
 
@@ -34,37 +35,45 @@ def valid_uth_series(cur, yml_dict, csv_file, databus=None):
             response.valid.append(True)
             response.message.append("✔ No U-Th series parameters provided, skipping validation.")
             return response
-        indices = [i for i, value in enumerate(inputs['decayconstantid']) if value is not None]
-        inputs = {k: [v for i, v in enumerate(inputs[k]) if i in indices]
-                  if isinstance(inputs[k], list) else inputs[k]
-                  for k in inputs}
-        if databus.get('geochron'):
-            geochron_ids = databus['geochron'].id_list
-            geochron_idx = databus['geochron'].indices
+        indices = [i for i, value in enumerate(inputs["decayconstantid"]) if value is not None]
+        inputs = {
+            k: [v for i, v in enumerate(inputs[k]) if i in indices]
+            if isinstance(inputs[k], list)
+            else inputs[k]
+            for k in inputs
+        }
+        if databus.get("geochron"):
+            geochron_ids = databus["geochron"].id_list
+            geochron_idx = databus["geochron"].indices
             common = set(indices) & set(geochron_idx)
             common_positions = [i for i, val in enumerate(geochron_idx) if val in common]
-            inputs['geochronid'] = [geochron_ids[i] for i in common_positions]
+            inputs["geochronid"] = [geochron_ids[i] for i in common_positions]
             response.valid.append(True)
         else:
             response.valid.append(False)
-            inputs['geochronid'] = [i + 1 for i in range(len(inputs['decayconstantid']))]
-            response.message.append("✗ Geochron IDs not found in databus, using placeholder IDs for validation.")
+            inputs["geochronid"] = [i + 1 for i in range(len(inputs["decayconstantid"]))]
+            response.message.append(
+                "✗ Geochron IDs not found in databus, using placeholder IDs for validation."
+            )
     except Exception as e:
         response.valid.append(False)
         response.message.append(f"✗ U-Th series parameters cannot be properly extracted: {e}.")
         return response
     decay_query = """SELECT decayconstantid FROM ndb.decayconstants
                      WHERE LOWER(decayconstant) = %(decayconstant)s;"""
-    for row in zip(*inputs.values()):
-        uth = dict(zip(inputs.keys(), row))
-        if isinstance(uth.get('decayconstantid'), str) and uth['decayconstantid'].strip().lower() == 'none':
-            uth['decayconstantid'] = None
-        if isinstance(uth.get('decayconstantid'), str):
-            n = uth.get('decayconstantid')
-            cur.execute(decay_query, {'decayconstant': uth.get('decayconstantid').lower().strip()})
-            uth['decayconstantid'] = cur.fetchone()
-            if uth['decayconstantid']:
-                uth['decayconstantid'] = uth['decayconstantid'][0]
+    for row in zip(*inputs.values(), strict=False):
+        uth = dict(zip(inputs.keys(), row, strict=False))
+        if (
+            isinstance(uth.get("decayconstantid"), str)
+            and uth["decayconstantid"].strip().lower() == "none"
+        ):
+            uth["decayconstantid"] = None
+        if isinstance(uth.get("decayconstantid"), str):
+            n = uth.get("decayconstantid")
+            cur.execute(decay_query, {"decayconstant": uth.get("decayconstantid").lower().strip()})
+            uth["decayconstantid"] = cur.fetchone()
+            if uth["decayconstantid"]:
+                uth["decayconstantid"] = uth["decayconstantid"][0]
                 response.valid.append(True)
                 if f"✔ Decay constant {n} found in database." not in response.message:
                     response.message.append(f"✔ Decay constant {n} found in database.")

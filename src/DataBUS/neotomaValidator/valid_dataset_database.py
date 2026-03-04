@@ -1,5 +1,6 @@
 import DataBUS.neotomaHelpers as nh
-from DataBUS import Response, DatasetDatabase
+from DataBUS import DatasetDatabase, Response
+
 
 def valid_dataset_database(cur, yml_dict, databus=None):
     """Validates dataset-database associations.
@@ -25,7 +26,7 @@ def valid_dataset_database(cur, yml_dict, databus=None):
 
     db_query = """SELECT databaseid FROM ndb.constituentdatabases
                   WHERE LOWER(databasename) LIKE %(databasename)s"""
-    
+
     if isinstance(inputs["databasename"], str):
         cur.execute(db_query, {"databasename": inputs["databasename"].lower().strip()})
         inputs["databaseid"] = cur.fetchone()
@@ -36,7 +37,7 @@ def valid_dataset_database(cur, yml_dict, databus=None):
             response.message.append(f"✗ Database '{inputs['databasename']}' not found in Neotoma.")
             return response
     try:
-        datasetid = databus['datasets'].id_int
+        datasetid = databus["datasets"].id_int
         response.valid.append(True)
     except Exception as e:
         response.message.append(f"✗ Cannot retrieve Dataset ID from databus: {e}")
@@ -50,7 +51,7 @@ def valid_dataset_database(cur, yml_dict, databus=None):
         response.id_int = inputs["databaseid"]
         try:
             db.insert_to_db(cur)
-            response.message.append(f"✔ Dataset-database link inserted.")
+            response.message.append("✔ Dataset-database link inserted.")
         except Exception as e:
             response.message.append(f"✗ Cannot insert DatasetDatabase: {e}")
             response.valid.append(False)

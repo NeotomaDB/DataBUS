@@ -1,6 +1,7 @@
 import DataBUS.neotomaHelpers as nh
 from DataBUS import Response
 
+
 def valid_geopolitical_units(cur, yml_dict, csv_file, databus=None):
     """Validates geopolitical unit assignments against Neotoma database.
 
@@ -23,8 +24,12 @@ def valid_geopolitical_units(cur, yml_dict, csv_file, databus=None):
         Response(valid=[True], message=[...], validAll=True)
     """
     response = Response()
-    params = ["national_unit", "subnational_unit_lv1",
-              "subnational_unit_lv2", "subnational_unit_lv3"]
+    params = [
+        "national_unit",
+        "subnational_unit_lv1",
+        "subnational_unit_lv2",
+        "subnational_unit_lv3",
+    ]
     inputs = nh.pull_params(params, yml_dict, csv_file, "ndb.sitegeopolitical")
 
     query = """SELECT geopoliticalid FROM ndb.geopoliticalunits
@@ -35,14 +40,14 @@ def valid_geopolitical_units(cur, yml_dict, csv_file, databus=None):
     insert_q = """SELECT ts.insertsitegeopol(_siteid:= %(siteid)s,
                                              _geopoliticalid := %(geopolid)s)"""
 
-    if inputs.get('national_unit') is None:
+    if inputs.get("national_unit") is None:
         response.message.append("? No Geopolitical Units given.")
         response.valid.append(True)
         return response
 
-    cur.execute(query, {'geopoliticalname': inputs.get('national_unit').lower()})
+    cur.execute(query, {"geopoliticalname": inputs.get("national_unit").lower()})
     gpid1 = cur.fetchone()
-    country = inputs.pop('national_unit', None)
+    country = inputs.pop("national_unit", None)
 
     if not gpid1:
         response.message.append(f"✗  National Unit {country} not found.")
@@ -56,14 +61,16 @@ def valid_geopolitical_units(cur, yml_dict, csv_file, databus=None):
     response.id_list.append(gpid1)
     if databus is not None:
         try:
-            cur.execute(insert_q, {'siteid': databus['sites'].id_int, 'geopolid': gpid1})
+            cur.execute(insert_q, {"siteid": databus["sites"].id_int, "geopolid": gpid1})
         except Exception as e:
             response.message.append(f"✗ Could not link national unit to site: {e}")
             response.valid.append(False)
 
     for unit in inputs:
-        cur.execute(query_with_parent, {'geopoliticalname': inputs[unit].lower(),
-                                        'highergeopoliticalid': current_id})
+        cur.execute(
+            query_with_parent,
+            {"geopoliticalname": inputs[unit].lower(), "highergeopoliticalid": current_id},
+        )
         gpid2 = cur.fetchone()
         if not gpid2:
             response.message.append(f"? Subregional Unit {inputs[unit]} not found.")
@@ -74,7 +81,7 @@ def valid_geopolitical_units(cur, yml_dict, csv_file, databus=None):
         response.id_list.append(gpid2)
         if databus is not None:
             try:
-                cur.execute(insert_q, {'siteid': databus['sites'].id_int, 'geopolid': gpid2})
+                cur.execute(insert_q, {"siteid": databus["sites"].id_int, "geopolid": gpid2})
             except Exception as e:
                 response.message.append(f"✗ Could not link subregional unit to site: {e}")
                 response.valid.append(False)
