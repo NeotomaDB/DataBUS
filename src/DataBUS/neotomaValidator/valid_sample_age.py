@@ -50,7 +50,6 @@ def valid_sample_age(cur, yml_dict, csv_file, databus=None):
         chron_id_map = {'placeholder': 1}
         response.valid.append(False)
         response.message.append(f"✗ No chronologies found in databus. Using placeholder chronology IDs.")
-    print(chron_id_map)
     if databus.get('samples') is not None:
         response.valid.append(True)
         sample_ids = databus['samples'].id_list
@@ -92,12 +91,10 @@ def valid_sample_age(cur, yml_dict, csv_file, databus=None):
                     if "✔ Sample Age inserted." not in response.message:
                         response.message.append("✔ Sample Age inserted.")
                 except Exception as e:
-                    print(e)
                     response.valid.append(False)
                     if f"✗ Sample Age could not be inserted. {e}" not in response.message:
                         response.message.append(f"✗ Sample Age could not be inserted. {e}")
             except Exception as e:
-                print('err2', e)
                 response.valid.append(False)
                 if f"✗ Samples ages cannot be created. {e}" not in response.message:
                     response.message.append(f"✗ Samples ages cannot be created. {e}")

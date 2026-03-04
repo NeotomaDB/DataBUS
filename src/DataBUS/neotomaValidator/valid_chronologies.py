@@ -31,6 +31,7 @@ def valid_chronologies(cur, yml_dict, csv_file, databus=None):
     try:
         inputs = nh.pull_params(CHRONOLOGY_PARAMS, yml_dict, csv_file, "ndb.chronologies")
         agetype = inputs.get('agetypeid')
+        author = inputs.get('contactid', inputs.get('contactname'))
         if "chronologies" in inputs:
             inputs = inputs.get("chronologies")
         else:
@@ -49,8 +50,6 @@ def valid_chronologies(cur, yml_dict, csv_file, databus=None):
 
     agetype_query = """SELECT agetypeid FROM ndb.agetypes
                        WHERE LOWER(agetype) = %(agetype)s"""
-    contact_query = """SELECT contactid FROM ndb.contacts
-                       WHERE LOWER(contactname) = %(contactname)s"""
     
     if databus.get('collunits') is not None:
         cu_id = databus['collunits'].id_int
@@ -61,15 +60,13 @@ def valid_chronologies(cur, yml_dict, csv_file, databus=None):
         collunitid = 1 # placeholder
         response.valid.append(False)
         response.message.append(f"✗ No collection unit found in databus. Using placeholder value for collectionunitid.")
-
+        
     for chron_key in inputs:
         ch = inputs[chron_key]
         ch['agetypeid'] = agetype
-        # Use the YAML chronologyname grouping key as the DB chronologyname if not
-        # explicitly mapped (no template entry for ndb.chronologies.chronologyname).
+        ch['contactid'] = author
         if ch.get("chronologyname") is None:
             ch["chronologyname"] = chron_key
-        
         if ch.get("agetypeid") is not None:
             if isinstance(ch["agetypeid"], str):
                 cur.execute(agetype_query,
@@ -85,21 +82,16 @@ def valid_chronologies(cur, yml_dict, csv_file, databus=None):
                         "✗ The provided age type does not exist in Neotoma DB.")
                     response.valid.append(False)
                     continue
-        if ch.get("contactid") is not None:
-            if isinstance(ch["contactid"], str):
-                cur.execute(contact_query,
-                            {'contactname': ch["contactid"].lower().strip()})
-                result = cur.fetchone()
-                if result:
-                    ch['contactid'] = result[0]
-                    response.message.append(
-                        f"✔ The provided contact name is correct: {result[0]}")
-                    response.valid.append(True)
-                else:
-                    response.message.append(
-                        "✗ The provided contact name does not exist in Neotoma DB.")
-                    response.valid.append(False)
-                    continue
+        if isinstance(ch['contactid'], str):
+            result = nh.get_contacts(cur, ch["contactid"])
+            if result["id"] is None:
+                response.message.append(f"✗ Contact not found: {ch['contactid']}")
+                response.valid.append(False)
+                continue
+            ch["contactid"] = result["id"]
+            response.message.append(
+                f"✔ Contact resolved: {result['name']} (ID: {result['id']})")
+            response.valid.append(True)
         try:
             if ch.get('agemodel') == "collection date":
                 ch['ageboundolder'] = nh.convert_to_bp(ch.get('ageboundolder'))

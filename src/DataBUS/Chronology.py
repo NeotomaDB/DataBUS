@@ -1,5 +1,5 @@
 CHRONOLOGY_PARAMS = ['ageboundolder', 'ageboundyounger', 'agemodel', 'chronologyname',
-                     'agetypeid', 'contactid', 'dateprepared', 'notes']
+                     'agetypeid', 'contactid', 'contactname', 'dateprepared', 'notes']
 from .neotomaHelpers.utils import validate_int_values,validate_date_values
 
 class Chronology:

@@ -1,7 +1,6 @@
 CONTACT_PARAMS = ["contactid", "contactname"]
 CONTACT_TABLES = ["ndb.datasetpis", "ndb.collectors",
-                  "ndb.sampleanalysts", "ndb.datasetprocessor",
-                  "ndb.chronologies"]
+                  "ndb.sampleanalysts", "ndb.datasetprocessor"]
 from .neotomaHelpers.utils import validate_int_values
 class Contact:
     """A person who participated in data collection or processing in Neotoma.
