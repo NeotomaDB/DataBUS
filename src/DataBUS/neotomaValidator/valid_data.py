@@ -43,10 +43,18 @@ def valid_data(cur, yml_dict, csv_file, databus=None):
         response.valid.append(False)
         response.message.append(f"✗  Error pulling parameters: {e}")
         return response
+    try:
+        sampleids = databus['samples'].id_list
+    except Exception as e:
+        response.valid.append(False)
+        response.message.append(f"✗ Sample IDs not available; using placeholder: {e}")
     data = {}
     if inputs.get('value'):
         data = inputs2.copy()
         data['value'] = inputs['value']
+        # Surface samples or data from literature with no depths/unique AU.
+        if len(sampleids) == 1:
+            data['sampleid'] = [sampleids[0]] * len(inputs['value'])
         data = {k: (v if isinstance(v, list) 
                     else [v] * len(inputs['value']))
                     for k, v in data.items()}
@@ -55,6 +63,11 @@ def valid_data(cur, yml_dict, csv_file, databus=None):
         for key in inputs:
             data[key]['taxonid'] = [key] * len(inputs[key]['value'])
             data[key]['value'] = inputs[key]['value']
+            if sampleids:
+                data[key]['sampleid'] = sampleids
+            else:
+                data[key]['sampleid'] = [i + 1 for i in range(len(inputs[key]['value']))] # placeholder
+                response.valid.append(False)
         for key in list(data.keys()):
             if 'value' not in data[key] or all(v is None for v in data[key]['value']):
                 data.pop(key)
@@ -69,16 +82,14 @@ def valid_data(cur, yml_dict, csv_file, databus=None):
                 else:
                     combined_data[k].extend(v if isinstance(v, list) else [v] * length)
         data = combined_data
-    vals = {}
-    try:
-        sample_ids = databus['samples'].id_list
-    except Exception as e:
-        sample_ids = list(range(1, 10))  # placeholder
-        response.valid.append(False)
-        response.message.append(f"✗ Sample IDs not available; using placeholder: {e}")
 
+    vals = {}
+    response.id_dict = {}
     for row_idx, datum in enumerate(zip(*data.values())):
         datum = dict(zip(list(data.keys()), datum))
+        txname = datum.get('taxonid')
+        if txname not in response.id_dict:
+            response.id_dict[txname] = []
         for param, (query, key) in par.items():
             if isinstance(datum.get(param), str) and datum[param].strip().lower() == 'none':
                 datum[param] = None
@@ -100,7 +111,7 @@ def valid_data(cur, yml_dict, csv_file, databus=None):
                             response.message.append(f"✗ The provided {param} with value {datum[param]} does not exist in Neotoma DB.")
                         response.valid.append(False)
         try:
-            var = Variable(**{k: v for k, v in datum.items() if k != 'value'})
+            var = Variable(**{k: v for k, v in datum.items() if k not in ('value', 'sampleid')})
             response.valid.append(True)
         except Exception as e:
             response.valid.append(False)
@@ -119,16 +130,14 @@ def valid_data(cur, yml_dict, csv_file, databus=None):
             if f"✗  Var ID cannot be retrieved from db: {e}" not in response.message:
                 response.message.append(f"✗  Var ID cannot be retrieved from db: {e}")
             continue
-        sampleid = sample_ids[row_idx] if row_idx < len(sample_ids) else sample_ids[-1]
-        value = datum.get('value')
         try:
-            d = Datum(sampleid=sampleid,
+            d = Datum(sampleid=datum.get('sampleid'),
                       variableid=varid,
-                      value=value)
+                      value=datum.get('value'))
             response.valid.append(True)
             try:
                 d_id = d.insert_to_db(cur)
-                response.id_list.append(d_id)
+                response.id_dict[txname].append(d_id)
             except Exception as e:
                 response.valid.append(False)
                 if f"✗  Datum cannot be inserted: {e}" not in response.message:
@@ -137,4 +146,6 @@ def valid_data(cur, yml_dict, csv_file, databus=None):
             response.valid.append(False)
             if f"✗  Datum cannot be created: {e}" not in response.message:
                 response.message.append(f"✗  Datum cannot be created: {e}")
+    for k in response.id_dict:
+        print(k, len(response.id_dict[k]))
     return response
