@@ -50,12 +50,15 @@ def valid_geochron_dataset(cur, yml_dict, csv_file, databus=None):
         response.valid.append(True)
 
     # Resolve collectionunitid
-    collunitid = 1  # placeholder
-    if databus is not None:
-        cu_id = databus.get("collunits") and databus["collunits"].id_int
-        if isinstance(cu_id, int):
-            collunitid = cu_id
-
+    try:
+        collunitid = databus.get("collunits").id_int
+        response.valid.append(True)
+    except Exception as e:
+        collunitid = 1  # placeholder
+        response.valid.append(False)
+        response.message.append(
+            f"✗ No collection unit found in databus. Using placeholder value for collectionunitid: {e}"
+        )
     inputs = {"datasettypeid": datasettypeid, "collectionunitid": collunitid}
 
     try:
@@ -66,15 +69,12 @@ def valid_geochron_dataset(cur, yml_dict, csv_file, databus=None):
         response.message.append(f"✗ Geochronology Dataset cannot be created: {e}")
         response.valid.append(False)
         return response
-
-    # Insert when databus is provided and we have a real collection unit
-    if databus is not None and isinstance(collunitid, int) and collunitid != 1:
-        try:
-            response.id_int = ds.insert_to_db(cur)
-            response.message.append(f"✔ Geochronology dataset inserted with ID {response.id_int}.")
-            response.valid.append(True)
-        except Exception as e:
-            response.message.append(f"✗ Geochronology dataset could not be inserted: {e}")
-            response.valid.append(False)
+    try:
+        response.id_int = ds.insert_to_db(cur)
+        response.message.append(f"✔ Geochronology dataset inserted with ID {response.id_int}.")
+        response.valid.append(True)
+    except Exception as e:
+        response.message.append(f"✗ Geochronology dataset could not be inserted: {e}")
+        response.valid.append(False)
 
     return response

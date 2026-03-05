@@ -4,22 +4,28 @@ from DataBUS.Speleothem import EX_SP_PARAMS
 
 
 def valid_external_speleothem(cur, yml_dict, csv_file, databus=None):
-    """Validates external speleothem data against the Neotoma database.
+    """Validates external speleothem data and inserts the record when databus is provided.
 
     Validates external speleothem parameters including external database ID,
     external ID, and description. Queries the database for valid external
     database references and creates ExternalSpeleothem objects.
 
+    When ``databus`` is provided, uses ``databus["speleothems"].id_int`` as the
+    speleothem entity ID and inserts the record via
+    ``es.insert_externalspeleothem_to_db(cur)``.
+
     Args:
         cur (cursor): Database cursor to query ndb.externaldatabases table.
         yml_dict (dict): Dictionary of configuration parameters from YAML file.
-        csv_file (str): Path or identifier for CSV file with external speleothem data.
+        csv_file (list[dict]): List of row dicts from the CSV file.
+        databus (dict | None): Prior validation results. When not None, uses
+            ``databus["speleothems"].id_int`` for the insert. Defaults to None.
 
     Returns:
         Response: Response object with validation results and messages.
 
     Examples:
-        >>> valid_external_speleothem(cursor, config_dict, "ext_speleothem_data.csv")
+        >>> valid_external_speleothem(cursor, config_dict, csv_rows)
         Response(valid=[True], message=[...], validAll=True)
     """
     response = Response()
@@ -56,12 +62,12 @@ def valid_external_speleothem(cur, yml_dict, csv_file, databus=None):
     if isinstance(inputs.get("externaldescription"), str):
         inputs["externaldescription"] = inputs["externaldescription"].strip(", ").strip()
         response.valid.append(True)
-    if databus is not None:
+    try:
         entityid = databus["speleothems"].id_int
-    else:
+    except Exception as e:
         entityid = 2  # placeholder
         response.valid.append(False)
-        response.message.append("✗ Speleothem entity ID not available; using placeholder.")
+        response.message.append(f"✗ Speleothem entity ID not available; using placeholder: {e}.")
     try:
         es = ExternalSpeleothem(
             entityid=entityid,
@@ -70,13 +76,12 @@ def valid_external_speleothem(cur, yml_dict, csv_file, databus=None):
             externaldescription=inputs.get("externaldescription"),
         )
         response.valid.append(True)
-        if databus is not None:
-            try:
-                es.insert_externalspeleothem_to_db(cur)
-                response.message.append("✔  ExternalSpeleothem inserted.")
-            except Exception as e:
-                response.message.append(f"✗  Cannot insert ExternalSpeleothem: {e}")
-                response.valid.append(False)
+        try:
+            es.insert_externalspeleothem_to_db(cur)
+            response.message.append("✔  ExternalSpeleothem inserted.")
+        except Exception as e:
+            response.message.append(f"✗  Cannot insert ExternalSpeleothem: {e}")
+            response.valid.append(False)
     except Exception as e:
         response.message.append(f"✗  Cannot create ExternalSpeleothem object. {e}")
         response.valid.append(False)

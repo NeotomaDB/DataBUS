@@ -4,23 +4,27 @@ from DataBUS.LeadModel import LEAD_MODEL_PARAMS
 
 
 def valid_pbmodel(cur, yml_dict, csv_file, databus):
-    """Validates lead-210 dating model parameters.
+    """Validates lead-210 dating model parameters and inserts records when databus is provided.
 
     Validates lead model parameters including basis (dating assumption) and
     cumulative inventory. Creates LeadModel objects for each analysis unit
     with validated basis ID.
 
+    When ``databus["analysisunits"].id_list`` is available, resolves analysis unit IDs
+    and inserts each LeadModel record into ``ndb.leadmodels`` via ``lm.insert_to_db(cur)``.
+
     Args:
         cur (psycopg2.cursor): Database cursor for executing SQL queries.
         yml_dict (dict): Dictionary containing YAML configuration data.
-        csv_file (str): Path to CSV file containing lead model data.
-        databus (dict): Dictionary containing validation parameters from prior steps.
+        csv_file (list[dict]): List of row dicts from the CSV file.
+        databus (dict): Prior validation results. Uses
+            ``databus["analysisunits"].id_list`` for AU IDs during insert.
 
     Returns:
         Response: Response object containing validation messages and overall validity status.
 
     Examples:
-        >>> valid_pbmodel(cursor, config_dict, "pb_data.csv", databus)
+        >>> valid_pbmodel(cursor, config_dict, csv_rows, databus)
         Response(valid=[True], message=[...], validAll=True)
     """
     response = Response()

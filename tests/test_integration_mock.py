@@ -11,7 +11,7 @@ import pytest
 import DataBUS.neotomaHelpers as nh
 import DataBUS.neotomaValidator as nv
 from DataBUS import Response
-from tests.conftest import real_csv, real_yml
+from tests.conftest import toy_csv, toy_yml
 
 
 def _run_chain(cur, csv_file, yml_dict):
@@ -43,16 +43,16 @@ def _run_chain(cur, csv_file, yml_dict):
 class TestIntegrationSISALMock:
     def test_full_chain_does_not_raise(self, mock_cur):
         mock_cur.mock_fetchone = (1,)
-        csv_file = nh.read_csv(real_csv("SISAL", "sisal_entity_13.csv"))
-        yml_dict = nh.template_to_dict(real_yml("SISAL", "template.yml"))
+        csv_file = nh.read_csv(toy_csv("test_sisal.csv"))
+        yml_dict = nh.template_to_dict(toy_yml("test_sisal_template.yml"))
         databus = _run_chain(mock_cur, csv_file, yml_dict)
         # Chain should have produced Response objects for at least sites
         assert "sites" in databus
 
     def test_sites_step_is_response(self, mock_cur):
         mock_cur.mock_fetchone = (1,)
-        csv_file = nh.read_csv(real_csv("SISAL", "sisal_entity_13.csv"))
-        yml_dict = nh.template_to_dict(real_yml("SISAL", "template.yml"))
+        csv_file = nh.read_csv(toy_csv("test_sisal.csv"))
+        yml_dict = nh.template_to_dict(toy_yml("test_sisal_template.yml"))
         result = nv.valid_site(cur=mock_cur, yml_dict=yml_dict,
                                csv_file=csv_file)
         assert isinstance(result, Response)
@@ -61,8 +61,8 @@ class TestIntegrationSISALMock:
 class TestIntegration210PbMock:
     def test_full_chain_does_not_raise(self, mock_cur):
         mock_cur.mock_fetchone = (1,)
-        csv_file = nh.read_csv(real_csv("210Pb", "Cayou 1993 VOYA.csv"))
-        yml_dict = nh.template_to_dict(real_yml("210Pb", "template.yml"))
+        csv_file = nh.read_csv(toy_csv("test_210Pb.csv"))
+        yml_dict = nh.template_to_dict(toy_yml("test_210pb_template.yml"))
         databus = _run_chain(mock_cur, csv_file, yml_dict)
         assert "sites" in databus
 
@@ -70,8 +70,8 @@ class TestIntegration210PbMock:
 class TestIntegrationNODEMock:
     def test_full_chain_does_not_raise(self, mock_cur):
         mock_cur.mock_fetchone = (1,)
-        csv_file = nh.read_csv(real_csv("NODE-OST", "NODE-R32.csv"))
-        yml_dict = nh.template_to_dict(real_yml("NODE-OST", "node_template.yml"))
+        csv_file = nh.read_csv(toy_csv("test_node.csv"))
+        yml_dict = nh.template_to_dict(toy_yml("test_node_template.yml"))
         databus = _run_chain(mock_cur, csv_file, yml_dict)
         assert "sites" in databus
 
@@ -79,7 +79,7 @@ class TestIntegrationNODEMock:
 class TestIntegrationEANODEMock:
     def test_full_chain_does_not_raise(self, mock_cur):
         mock_cur.mock_fetchone = (1,)
-        csv_file = nh.read_csv(real_csv("EANODE-OST", "EA000017.csv"))
-        yml_dict = nh.template_to_dict(real_yml("EANODE-OST", "eanode_template.yml"))
+        csv_file = nh.read_csv(toy_csv("test_eanode.csv"))
+        yml_dict = nh.template_to_dict(toy_yml("test_eanode_template.yml"))
         databus = _run_chain(mock_cur, csv_file, yml_dict)
         assert "sites" in databus

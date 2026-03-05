@@ -90,14 +90,14 @@ def valid_collunit(cur, yml_dict, csv_file, databus=None):
         response.message.append("✔  No handle found. Creating a new collection unit.")
         response.valid.append(True)
         _check_close_handles(cu, found_cu=None, cur=cur, response=response, limit=1)
-        if databus is not None:
-            try:
-                cu.siteid = databus["sites"].id_int
-                response.id_int = cu.insert_to_db(cur)
-                response.message.append(f"✔  Collection unit inserted with ID {response.id_int}.")
-            except Exception as e:
-                response.valid.append(False)
-                response.message.append(f"✗ Failed to insert collection unit: {e}")
+        try:
+            siteid = databus.get("sites").id_int
+            cu.siteid = siteid
+            response.id_int = cu.insert_to_db(cur)
+            response.message.append(f"✔  Collection unit inserted with ID {response.id_int}.")
+        except Exception as e:
+            response.valid.append(False)
+            response.message.append(f"✗ Failed to insert collection unit: {e}")
         return response
     # Handle exists
     response.message.append("? There is a handle with this handlename.")
@@ -166,7 +166,7 @@ def valid_collunit(cur, yml_dict, csv_file, databus=None):
         response.valid.append(True)
         response.id_int = found_cu.collectionunitid
         _check_close_handles(cu, found_cu=found_cu, cur=cur, response=response)
-    if response.id_int is None and databus is not None:
+    if response.id_int is None:
         response.id_int = 1
         response.valid.append(False)
         response.message.append(

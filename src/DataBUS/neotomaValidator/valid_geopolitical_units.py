@@ -3,24 +3,28 @@ from DataBUS import Response
 
 
 def valid_geopolitical_units(cur, yml_dict, csv_file, databus=None):
-    """Validates geopolitical unit assignments against Neotoma database.
+    """Validates geopolitical unit assignments and inserts site-geopolitical links when databus is provided.
 
     Validates provided geopolitical units (national_unit, state, county, etc.) by
     querying the database for matching geopolitical IDs. Returns the most
     specific (lowest level) valid geopolitical unit found.
 
+    When ``databus`` is provided and ``databus["sites"].id_int`` is available,
+    inserts the site-to-geopolitical-unit associations into ``ndb.sitegeopoliticalunits``
+    for both the national unit and the most specific subregional unit found.
+
     Args:
         cur (psycopg2.extensions.connection): Database connection to Neotoma database.
         yml_dict (dict): Dictionary containing parameters from YAML configuration.
-        csv_file (str): Path to CSV file containing additional parameters.
-        uploader (dict, optional): Dictionary containing uploaded site data. Defaults to None.
-        insert (bool, optional): Whether to insert geopolitical data. Defaults to False.
+        csv_file (list[dict]): List of row dicts from the CSV file.
+        databus (dict | None): Prior validation results. When not None, uses
+            ``databus["sites"].id_int`` to insert site-geopolitical-unit links.
 
     Returns:
         Response: Response object containing validation results and messages.
 
     Examples:
-        >>> valid_geopolitical_units(cursor, config_dict, "geo_data.csv", insert=False)
+        >>> valid_geopolitical_units(cursor, config_dict, csv_rows)
         Response(valid=[True], message=[...], validAll=True)
     """
     response = Response()
@@ -59,12 +63,12 @@ def valid_geopolitical_units(cur, yml_dict, csv_file, databus=None):
     response.message.append(f"✔ National Unit {country} found.")
     response.valid.append(True)
     response.id_list.append(gpid1)
-    if databus is not None:
-        try:
-            cur.execute(insert_q, {"siteid": databus["sites"].id_int, "geopolid": gpid1})
-        except Exception as e:
-            response.message.append(f"✗ Could not link national unit to site: {e}")
-            response.valid.append(False)
+    try:
+        cur.execute(insert_q, {"siteid": databus["sites"].id_int, "geopolid": gpid1})
+        response.valid.append(True)
+    except Exception as e:
+        response.message.append(f"✗ Could not link national unit to site: {e}")
+        response.valid.append(False)
 
     for unit in inputs:
         cur.execute(

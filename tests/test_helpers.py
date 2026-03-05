@@ -4,54 +4,46 @@ import os
 import pytest
 
 import DataBUS.neotomaHelpers as nh
-from tests.conftest import real_csv, real_yml
+from tests.conftest import toy_csv, toy_yml
 
 
 class TestReadCsv:
     def test_read_csv_returns_list_of_dicts(self):
-        path = real_csv("SISAL", "sisal_entity_13.csv")
-        rows = nh.read_csv(path)
+        rows = nh.read_csv(toy_csv("test_sisal.csv"))
         assert isinstance(rows, list)
         assert len(rows) > 0
         assert isinstance(rows[0], dict)
 
     def test_read_csv_210pb(self):
-        path = real_csv("210Pb", "Cayou 1993 VOYA.csv")
-        rows = nh.read_csv(path)
+        rows = nh.read_csv(toy_csv("test_210Pb.csv"))
         assert len(rows) > 0
 
     def test_read_csv_node(self):
-        path = real_csv("NODE-OST", "NODE-R32.csv")
-        rows = nh.read_csv(path)
+        rows = nh.read_csv(toy_csv("test_node.csv"))
         assert len(rows) > 0
 
     def test_read_csv_eanode(self):
-        path = real_csv("EANODE-OST", "EA000017.csv")
-        rows = nh.read_csv(path)
+        rows = nh.read_csv(toy_csv("test_eanode.csv"))
         assert len(rows) > 0
 
 
 class TestTemplateToDist:
     def test_template_to_dict_sisal(self):
-        path = real_yml("SISAL", "template.yml")
-        d = nh.template_to_dict(path)
+        d = nh.template_to_dict(toy_yml("test_sisal_template.yml"))
         assert isinstance(d, dict)
         assert "metadata" in d
         assert len(d["metadata"]) > 0
 
     def test_template_to_dict_210pb(self):
-        path = real_yml("210Pb", "template.yml")
-        d = nh.template_to_dict(path)
+        d = nh.template_to_dict(toy_yml("test_210pb_template.yml"))
         assert isinstance(d, dict)
 
     def test_template_to_dict_node(self):
-        path = real_yml("NODE-OST", "node_template.yml")
-        d = nh.template_to_dict(path)
+        d = nh.template_to_dict(toy_yml("test_node_template.yml"))
         assert isinstance(d, dict)
 
     def test_template_to_dict_eanode(self):
-        path = real_yml("EANODE-OST", "eanode_template.yml")
-        d = nh.template_to_dict(path)
+        d = nh.template_to_dict(toy_yml("test_eanode_template.yml"))
         assert isinstance(d, dict)
 
 

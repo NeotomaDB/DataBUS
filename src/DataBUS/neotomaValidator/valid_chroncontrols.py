@@ -65,10 +65,10 @@ def valid_chroncontrols(cur, yml_dict, csv_file, databus=None):
 
     # Pull chronologyid – prefer real ID from databus
     chronos_raw = inputs.pop("chronologyid", None)
-    if databus.get("chronologies") is not None:
+    try:
         chronos = databus.get("chronologies").id_list
         response.valid.append(True)
-    else:
+    except Exception as e:
         if chronos_raw and isinstance(chronos_raw, list) and chronos_raw[0] is not None:
             chronos = list(
                 dict.fromkeys(chronos_raw)

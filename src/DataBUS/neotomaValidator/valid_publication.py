@@ -7,22 +7,29 @@ INSERT_DATASET_PUBLICATION = """SELECT ts.insertdatasetpublication(%(datasetid)s
 
 
 def valid_publication(cur, yml_dict, csv_file, databus=None):
-    """Validates a publication for the database.
+    """Validates a publication and links it to the dataset when databus is provided.
 
     Validates publication information by checking against the Neotoma database.
     Accepts publication ID, DOI, or citation and performs similarity matching
     when exact matches are not found. Can also validate DOIs against CrossRef API.
 
+    When ``databus`` is provided and ``databus["datasets"].id_int`` is available,
+    calls ``ts.insertdatasetpublication`` to link the validated publication to the
+    dataset. The publication ID is stored in ``response.id_int``.
+
     Args:
         cur (psycopg2.cursor): Database cursor to execute SQL commands.
         yml_dict (dict): Dictionary containing YAML configuration data with publication parameters.
-        csv_file (str): Path to CSV file containing publication data.
+        csv_file (list[dict]): List of row dicts from the CSV file.
+        databus (dict | None): Prior validation results. When not None, uses
+            ``databus["datasets"].id_int`` to insert the dataset-publication link.
 
     Returns:
-        Response: Response object containing validation messages, validity list, and overall validity status.
+        Response: Response object containing validation messages, validity list,
+            overall validity status, and the publication ID in ``response.id_int``.
 
     Examples:
-        >>> valid_publication(cursor, config_dict, "publication_data.csv")
+        >>> valid_publication(cursor, config_dict, csv_rows)
         Response(valid=[True, True], message=[...], validAll=True)
     """
     response = Response()

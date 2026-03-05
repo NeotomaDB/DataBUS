@@ -3,22 +3,29 @@ from DataBUS import DatasetDatabase, Response
 
 
 def valid_dataset_database(cur, yml_dict, databus=None):
-    """Validates dataset-database associations.
+    """Validates dataset-database associations and inserts the link when databus is provided.
 
     Validates the database name provided in YAML configuration against the
     Neotoma database's constituent databases. Creates a DatasetDatabase object
     with the validated database ID.
 
+    When ``databus`` is provided and ``databus["datasets"].id_int`` is available,
+    calls ``ts.insertdatasetdatabase`` to create the link between the dataset and the
+    constituent database. The database ID is stored in ``response.id_int``.
+
     Args:
         cur (cursor object): Database cursor to execute SQL queries.
         yml_dict (dict): Dictionary containing YAML configuration data.
+        databus (dict | None): Prior validation results. When not None, uses
+            ``databus["datasets"].id_int`` to insert the dataset-database link.
 
     Returns:
-        Response: Response object with validation results, messages, and database ID.
+        Response: Response object with validation results, messages, and
+            the constituent database ID in ``response.id_int``.
 
     Examples:
         >>> valid_dataset_database(cursor, config_dict)
-        Response(valid=[True], message=[...], validAll=True, id=1)
+        Response(valid=[True], message=[...], validAll=True)
     """
     response = Response()
     db_name = nh.retrieve_dict(yml_dict, "ndb.datasetdatabases.databasename")

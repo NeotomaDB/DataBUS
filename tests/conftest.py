@@ -18,9 +18,8 @@ from unittest.mock import MagicMock
 import pytest
 
 # ── paths ─────────────────────────────────────────────────────────────────────
-TESTS_DIR  = os.path.dirname(__file__)
-TOY_DIR    = os.path.join(TESTS_DIR, "toy_data")
-DATA_DIR   = os.path.join(TESTS_DIR, "..", "data")
+TESTS_DIR = os.path.dirname(__file__)
+TOY_DIR   = os.path.join(TESTS_DIR, "toy_data")
 
 
 # ── toy data helpers ──────────────────────────────────────────────────────────
@@ -29,14 +28,9 @@ def toy_csv(name):
     return os.path.join(TOY_DIR, name)
 
 
-def real_csv(folder, name):
-    """Return absolute path to a real data CSV file."""
-    return os.path.join(DATA_DIR, folder, name)
-
-
-def real_yml(folder, name):
-    """Return absolute path to a real template YAML file."""
-    return os.path.join(DATA_DIR, folder, name)
+def toy_yml(name):
+    """Return absolute path to a toy YAML template file."""
+    return os.path.join(TOY_DIR, name)
 
 
 # ── mock database objects ─────────────────────────────────────────────────────
@@ -148,33 +142,25 @@ def conn(real_connection, mock_conn):
 def sisal_pair():
     """Return (csv_file_rows, yml_dict) for the SISAL toy dataset."""
     import DataBUS.neotomaHelpers as nh
-    csv_path = real_csv("SISAL", "sisal_entity_13.csv")
-    yml_path = real_yml("SISAL", "template.yml")
-    return nh.read_csv(csv_path), nh.template_to_dict(yml_path)
+    return nh.read_csv(toy_csv("test_sisal.csv")), nh.template_to_dict(toy_yml("test_sisal_template.yml"))
 
 
 @pytest.fixture
 def pb210_pair():
     """Return (csv_file_rows, yml_dict) for the 210Pb toy dataset."""
     import DataBUS.neotomaHelpers as nh
-    csv_path = real_csv("210Pb", "Cayou 1993 VOYA.csv")
-    yml_path = real_yml("210Pb", "template.yml")
-    return nh.read_csv(csv_path), nh.template_to_dict(yml_path)
+    return nh.read_csv(toy_csv("test_210Pb.csv")), nh.template_to_dict(toy_yml("test_210pb_template.yml"))
 
 
 @pytest.fixture
 def node_pair():
     """Return (csv_file_rows, yml_dict) for the NODE toy dataset."""
     import DataBUS.neotomaHelpers as nh
-    csv_path = real_csv("NODE-OST", "NODE-R32.csv")
-    yml_path = real_yml("NODE-OST", "node_template.yml")
-    return nh.read_csv(csv_path), nh.template_to_dict(yml_path)
+    return nh.read_csv(toy_csv("test_node.csv")), nh.template_to_dict(toy_yml("test_node_template.yml"))
 
 
 @pytest.fixture
 def eanode_pair():
     """Return (csv_file_rows, yml_dict) for the EANODE toy dataset."""
     import DataBUS.neotomaHelpers as nh
-    csv_path = real_csv("EANODE-OST", "EA000017.csv")
-    yml_path = real_yml("EANODE-OST", "eanode_template.yml")
-    return nh.read_csv(csv_path), nh.template_to_dict(yml_path)
+    return nh.read_csv(toy_csv("test_eanode.csv")), nh.template_to_dict(toy_yml("test_eanode_template.yml"))

@@ -4,22 +4,29 @@ from DataBUS.Dataset import DATASET_PARAMS
 
 
 def valid_dataset(cur, yml_dict, csv_file, databus=None):
-    """Validates a dataset based on YAML configuration and CSV data.
+    """Validates a dataset and inserts it into the database when databus is provided.
 
     Validates dataset name and dataset type against the Neotoma database.
     Attempts to resolve dataset type by querying the database if not provided.
     Creates a Dataset object with validated parameters.
 
+    When ``databus`` is provided, uses ``databus["collunits"].id_int`` as the
+    collectionunitid and inserts the dataset into ``ndb.datasets``. The resulting
+    dataset ID is stored in ``response.id_int``.
+
     Args:
         cur (cursor): Database cursor to execute SQL queries.
         yml_dict (dict): Dictionary containing YAML configuration data.
-        csv_file (str): Path to CSV file containing data.
+        csv_file (list[dict]): List of row dicts from the CSV file.
+        databus (dict | None): Prior validation results. When not None, uses
+            ``databus["collunits"].id_int`` for the insert.
 
     Returns:
-        Response: Response object containing validation messages, validity list, and overall status.
+        Response: Response object containing validation messages, validity list,
+            overall status, and the inserted dataset ID in ``response.id_int``.
 
     Examples:
-        >>> valid_dataset(cursor, config_dict, "data.csv")
+        >>> valid_dataset(cursor, config_dict, csv_rows)
         Response(valid=[True], message=[...], validAll=True)
     """
     response = Response()
@@ -69,23 +76,22 @@ def valid_dataset(cur, yml_dict, csv_file, databus=None):
             )
             response.valid.append(False)
     inputs["notes"] = nh.pull_params(["notes"], yml_dict, csv_file, "ndb.datasets").get("notes")
-    if databus is not None:
+    try:
         inputs["collectionunitid"] = databus["collunits"].id_int
-    else:
+    except Exception as e:
         inputs["collectionunitid"] = 1  # placeholder
         response.valid.append(False)
-        response.message.append("✗ Collection unit ID not available; using placeholder.")
+        response.message.append(f"✗ Collection unit ID not available; using placeholder: {e}")
     try:
         ds = Dataset(**inputs)
         response.message.append("✔ Dataset can be created.")
         response.valid.append(True)
-        if databus is not None:
-            try:
-                response.id_int = ds.insert_to_db(cur)
-                response.message.append(f"✔ Dataset inserted with ID {response.id_int}.")
-            except Exception as e:
-                response.valid.append(False)
-                response.message.append(f"✗ Failed to insert dataset: {e}")
+        try:
+            response.id_int = ds.insert_to_db(cur)
+            response.message.append(f"✔ Dataset inserted with ID {response.id_int}.")
+        except Exception as e:
+            response.valid.append(False)
+            response.message.append(f"✗ Failed to insert dataset: {e}")
     except Exception as e:
         response.message.append(f"✗ Dataset cannot be created: {e}")
         response.valid.append(False)

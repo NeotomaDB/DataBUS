@@ -121,13 +121,11 @@ class TestReadCsv:
             read_csv("/nonexistent/path/file.csv")
 
     def test_real_toy_csv(self):
-        path = os.path.join(os.path.dirname(__file__), "..", "data", "SISAL",
-                            "sisal_entity_13.csv")
-        if os.path.exists(path):
-            result = read_csv(path)
-            assert isinstance(result, list)
-            assert len(result) > 0
-            assert isinstance(result[0], dict)
+        path = os.path.join(os.path.dirname(__file__), "toy_data", "test_sisal.csv")
+        result = read_csv(path)
+        assert isinstance(result, list)
+        assert len(result) > 0
+        assert isinstance(result[0], dict)
 
 
 # ── check_file ────────────────────────────────────────────────────────────────

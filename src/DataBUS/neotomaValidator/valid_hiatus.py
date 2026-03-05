@@ -6,22 +6,28 @@ from DataBUS.Hiatus import HIATUS_PARAMS
 
 
 def valid_hiatus(cur, yml_dict, csv_file, databus=None):
-    """Validates hiatus data for chronological models.
+    """Validates hiatus data and inserts hiatus records when databus is provided.
 
     Identifies hiatus intervals (stratigraphic gaps) in sample analysis units.
     Groups consecutive analysis units with hiatus data and creates Hiatus objects
     spanning from start to end of each hiatus interval.
 
+    When ``databus`` is provided, resolves cluster indices to real analysis unit IDs
+    using ``databus["analysisunits"].id_list`` and inserts each Hiatus record into
+    ``ndb.hiatuses`` via ``hiatus.insert_to_db(cur)``.
+
     Args:
         cur (psycopg2.cursor): Database cursor for executing SQL queries.
         yml_dict (dict): Dictionary containing YAML configuration data.
-        csv_file (str): Path to CSV file containing hiatus information.
+        csv_file (list[dict]): List of row dicts from the CSV file.
+        databus (dict | None): Prior validation results. When not None, uses
+            ``databus["analysisunits"].id_list`` to resolve AU IDs for the insert.
 
     Returns:
         Response: Response object containing validation messages and overall validity status.
 
     Examples:
-        >>> valid_hiatus(cursor, config_dict, "hiatus_data.csv")
+        >>> valid_hiatus(cursor, config_dict, csv_rows)
         Response(valid=[True], message=[...], validAll=True)
     """
     response = Response()
@@ -43,13 +49,17 @@ def valid_hiatus(cur, yml_dict, csv_file, databus=None):
     }
     inputs["indices"] = indices  # Only as placeholder for analysis unit IDs
 
-    if databus is not None:
+    try:
         au_ids = databus["analysisunits"].id_list
         resolved = [
             [au_ids[c[0]], au_ids[c[-1]]] if len(c) > 1 else [au_ids[c[0]]] for c in clusters
         ]
-    else:
+        response.valid.append(True)
+    except Exception as e:
+        response.valid.append(False)
         resolved = clusters
+        response.message.append(f"✗ Could not resolve analysis unit IDs from databus. Using placeholder indices: {e}")
+
 
     for values in resolved:
         try:
@@ -59,13 +69,13 @@ def valid_hiatus(cur, yml_dict, csv_file, databus=None):
             response.valid.append(True)
             if "✔ Hiatus can be created." not in response.message:
                 response.message.append("✔ Hiatus can be created.")
-            if databus is not None:
-                try:
-                    h.insert_to_db(cur)
-                    response.message.append("✔ Hiatus inserted.")
-                except Exception as e:
-                    response.valid.append(False)
-                    response.message.append(f"✗ Could not insert hiatus: {e}")
+            try:
+                h.insert_to_db(cur)
+                response.valid.append(True)
+                response.message.append("✔ Hiatus inserted.")
+            except Exception as e:
+                response.valid.append(False)
+                response.message.append(f"✗ Could not insert hiatus: {e}")
         except Exception as e:
             response.valid.append(False)
             if f"✗ Hiatus cannot be created: {e}" not in response.message:

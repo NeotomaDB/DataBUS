@@ -4,22 +4,30 @@ from DataBUS.Speleothem import SPELEOTHEM_PARAMS
 
 
 def valid_speleothem(cur, yml_dict, csv_file, databus=None):
-    """Validates speleothem data against the Neotoma database.
+    """Validates speleothem data and inserts the record when databus is provided.
 
     Validates speleothem parameters including entity properties, drip type, geology,
     cover type, and land use information. Queries the database for valid values
     and creates a Speleothem object with validated parameters.
 
+    When ``databus`` is provided, uses ``databus["sites"].id_int`` as the site ID
+    and inserts the Speleothem record into ``ndb.speleothems`` via
+    ``sp.insert_to_db(cur)``. The resulting speleothem ID is stored in
+    ``response.id_int``.
+
     Args:
         cur (psycopg2.cursor): Database cursor for executing SQL queries.
         yml_dict (dict): Dictionary containing YAML configuration data.
-        csv_file (str): Path to CSV file containing speleothem data.
+        csv_file (list[dict]): List of row dicts from the CSV file.
+        databus (dict | None): Prior validation results. When not None, uses
+            ``databus["sites"].id_int`` for the insert. Defaults to None.
 
     Returns:
-        Response: Response object containing validation messages, validity list, and overall status.
+        Response: Response object containing validation messages, validity list,
+            overall status, and the inserted speleothem ID in ``response.id_int``.
 
     Examples:
-        >>> valid_speleothem(cursor, config_dict, "speleothem_data.csv")
+        >>> valid_speleothem(cursor, config_dict, csv_rows)
         Response(valid=[True], message=[...], validAll=True)
     """
     response = Response()
@@ -98,12 +106,12 @@ def valid_speleothem(cur, yml_dict, csv_file, databus=None):
                 inputs[inp] = inputs[inp][0]
                 response.valid.append(True)
                 response.message.append(f"✔  {inp} for {inputs[inp]} found.")
-    if databus is not None:
+    try:
         siteid = databus["sites"].id_int
-    else:
+    except Exception as e:
         siteid = 1  # placeholder
         response.valid.append(False)
-        response.message.append("✗ Site ID not available; using placeholder.")
+        response.message.append(f"✗ Site ID not available; using placeholder {e}.")
     try:
         sp = Speleothem(
             siteid=siteid,
@@ -114,13 +122,12 @@ def valid_speleothem(cur, yml_dict, csv_file, databus=None):
             entrancedistanceunits=inputs.get("entrancedistanceunits"),
             speleothemtypeid=inputs.get("speleothemtypeid"),
         )
-        if databus is not None:
-            try:
-                response.id_int = sp.insert_to_db(cur)
-                response.message.append(f"✔ Speleothem inserted with ID {response.id_int}.")
-            except Exception as e:
-                response.valid.append(False)
-                response.message.append(f"✗ Could not insert speleothem: {e}")
+        try:
+            response.id_int = sp.insert_to_db(cur)
+            response.message.append(f"✔ Speleothem inserted with ID {response.id_int}.")
+        except Exception as e:
+            response.valid.append(False)
+            response.message.append(f"✗ Could not insert speleothem: {e}")
     except Exception as e:
         response.valid.append(False)
         response.message.append(f"✗ Speleothem Entity cannot be created: {e}")

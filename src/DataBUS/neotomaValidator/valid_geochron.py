@@ -56,14 +56,14 @@ def valid_geochron(cur, yml_dict, csv_file, databus=None):
         inputs[key] = val if isinstance(val, list) else [val] * len(indices)
 
     # Retrieve IDs from databus
-    if databus.get("samples") is not None:
+    try:
         sample_ids = databus["samples"].id_list
         response.valid.append(True)
         inputs["sampleid"] = [sample_ids[i] for i in indices]
-    else:
+    except Exception as e:
         response.valid.append(False)
         response.message.append(
-            "✗  Sample IDs are required for geochronology insertion. Using placeholders."
+            f"✗  Sample IDs are required for geochronology insertion. Using placeholders: {e}."
         )
         inputs["sampleid"] = [i + 1 for i in range(len(indices))]
 

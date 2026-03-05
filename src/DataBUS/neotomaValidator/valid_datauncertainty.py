@@ -4,23 +4,28 @@ from DataBUS.DataUncertainty import DATAUNCERTAINTY_PARAMS
 
 
 def valid_datauncertainty(cur, yml_dict, csv_file, databus=None):
-    """Validates data uncertainty values against the Neotoma database.
+    """Validates data uncertainty values and inserts records when databus is provided.
 
     Validates uncertainty values, units, and basis information. Queries database
     for valid uncertainty basis IDs and variable unit IDs, then creates DataUncertainty
     objects with validated parameters. Supports both long and wide data formats.
 
+    When ``databus`` is provided and ``databus["samples"].id_list`` is available,
+    inserts each DataUncertainty record into ``ndb.datauncertainties`` via
+    ``du.insert_to_db(cur)``.
+
     Args:
         cur (cursor): Database cursor for executing SQL queries.
         yml_dict (dict): Dictionary containing YAML configuration parameters.
-        csv_file (str): Path to CSV file containing data to validate.
-        wide (bool, optional): Flag for wide format taxa handling. Defaults to False.
+        csv_file (list[dict]): List of row dicts from the CSV file.
+        databus (dict | None): Prior validation results. When not None, uses
+            ``databus["samples"].id_list`` for sample IDs during insert. Defaults to None.
 
     Returns:
         Response: Response object containing validation messages, validity list, and overall status.
 
     Examples:
-        >>> valid_datauncertainty(cursor, config_dict, "uncertainty_data.csv")
+        >>> valid_datauncertainty(cursor, config_dict, csv_rows)
         Response(valid=[True], message=[...], validAll=True)
     """
     response = Response()

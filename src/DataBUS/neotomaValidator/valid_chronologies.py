@@ -51,16 +51,15 @@ def valid_chronologies(cur, yml_dict, csv_file, databus=None):
     agetype_query = """SELECT agetypeid FROM ndb.agetypes
                        WHERE LOWER(agetype) = %(agetype)s"""
 
-    if databus.get("collunits") is not None:
+    try:
         cu_id = databus["collunits"].id_int
-        if isinstance(cu_id, int):
-            collunitid = cu_id
-            response.valid.append(True)
-    else:
+        collunitid = cu_id
+        response.valid.append(True)
+    except Exception as e:
         collunitid = 1  # placeholder
         response.valid.append(False)
         response.message.append(
-            "✗ No collection unit found in databus. Using placeholder value for collectionunitid."
+            f"✗ No collection unit found in databus. Using placeholder value for collectionunitid: {e}"
         )
 
     for chron_key in inputs:

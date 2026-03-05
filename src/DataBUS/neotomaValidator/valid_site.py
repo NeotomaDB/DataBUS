@@ -9,20 +9,22 @@ def valid_site(cur, yml_dict, csv_file):
     Validates site details including coordinates, name, altitude, and area.
     Checks if site exists in Neotoma, finds close/matching sites, and compares
     provided data with existing database records. Handles coordinate validation
-    and hemisphere determination. If 'insert' is True, inserts new site if not found.
+    and hemisphere determination. Always attempts to insert new sites when no
+    matching site is found; the caller (validation_playground.py) controls
+    whether changes are committed via transaction management.
 
     Args:
         cur (psycopg2.extensions.connection): Database connection to Neotoma database.
         yml_dict (dict): Dictionary containing parameters from YAML configuration.
-        csv_file (str): Path to CSV file containing additional site parameters.
-        insert (bool, optional): Whether to insert new sites. Defaults to False.
+        csv_file (list[dict]): List of row dicts from the CSV file.
 
     Returns:
         Response: Contains validation results, site list, hemisphere info, and messages.
+            ``response.id_int`` is set to the matched or newly inserted site ID.
 
     Examples:
-        >>> valid_site(cursor, config_dict, "mirror_lake_site.csv")
-        Response(valid=[True], message=[...], validAll=True, closesites=[...])
+        >>> valid_site(cursor, config_dict, csv_rows)
+        Response(valid=[True], message=[...], validAll=True)
     """
     response = Response()
     inputs = nh.pull_params(SITE_PARAMS, yml_dict, csv_file, "ndb.sites")
