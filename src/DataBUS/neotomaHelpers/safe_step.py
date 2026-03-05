@@ -52,6 +52,7 @@ def safe_step(name, fn, logfile, conn):
         logfile.append(msg)
         # Import Response here to avoid any module state issues
         from DataBUS.Response import Response as ResponseClass
+
         response = ResponseClass()
         response.valid.append(False)
         response.message.append(msg)
