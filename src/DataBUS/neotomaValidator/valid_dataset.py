@@ -90,6 +90,7 @@ def valid_dataset(cur, yml_dict, csv_file, databus=None):
             response.id_int = ds.insert_to_db(cur)
             response.message.append(f"✔ Dataset inserted with ID {response.id_int}.")
         except Exception as e:
+            response.id_int = 1 # placeholder
             response.valid.append(False)
             response.message.append(f"✗ Failed to insert dataset: {e}")
     except Exception as e:

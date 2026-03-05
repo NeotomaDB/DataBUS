@@ -1,4 +1,4 @@
-from DataBUS import Response
+from DataBUS.Response import Response
 
 
 def safe_step(name, fn, logfile, conn):
@@ -50,7 +50,9 @@ def safe_step(name, fn, logfile, conn):
             conn.rollback()
         msg = f"✗ [{name}] Unexpected error (rolled back): {e}"
         logfile.append(msg)
-        response = Response()
+        # Import Response here to avoid any module state issues
+        from DataBUS.Response import Response as ResponseClass
+        response = ResponseClass()
         response.valid.append(False)
         response.message.append(msg)
         return response
