@@ -19,8 +19,6 @@ Core classes representing the fundamental data models used throughout the DataBU
 ::: DataBUS.Geog
 ::: DataBUS.Hiatus
 ::: DataBUS.LeadModel
-::: DataBUS.Publication
-::: DataBUS.Repository
 ::: DataBUS.Response
 ::: DataBUS.Sample
 ::: DataBUS.SampleAge

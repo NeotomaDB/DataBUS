@@ -11,10 +11,9 @@ plugins:
 
 nav:
   - DataBUS Docs: index.md
-  - tutorials.md
+  - Tutorials: tutorials.md
   - How-To Guides: how-to-guide.md
-  - reference.md
-  - explanation.md
+  - Documentation: reference.md
 
 extra:
   version: 1.0
