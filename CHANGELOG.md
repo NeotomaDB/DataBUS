@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.0] - 2026-03-05
+
 ### Added
 
 - Universal YAML template (`data/template_example.yml`).
@@ -64,7 +66,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Entity cover insertion errors in the database layer.
 - Various fixes for community-specific edge cases (NODE, 210Pb, SISAL).
 
-## [0.0.1] - 2023-11-15
+## [] - 2023-11-15
 
 ### Added
 
@@ -75,6 +77,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CLI argument parsing via `parse_arguments`.
 - Basic pollen dataset upload workflow.
 
-[Unreleased]: https://github.com/NeotomaDB/DataBUS/compare/v1.0.0...HEAD
+[2.0.0]: https://github.com/NeotomaDB/DataBUS/compare/v1.0.0...v2.0.0
 [1.0.0]: https://github.com/NeotomaDB/DataBUS/compare/v0.0.1...v1.0.0
-[0.0.1]: https://github.com/NeotomaDB/DataBUS/releases/tag/v0.0.1
+[]: https://github.com/NeotomaDB/DataBUS/releases/tag/v0.0.1

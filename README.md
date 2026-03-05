@@ -2,6 +2,7 @@
 [![lifecycle](https://img.shields.io/badge/lifecycle-stable-green.svg)](https://lifecycle.r-lib.org/articles/stages.html#stable)
 [![NSF-1948926](https://img.shields.io/badge/NSF-1948926-blue.svg)](https://www.nsf.gov/awardsearch/showAward?AWD_ID=1948926)
 [![NSF-2410961](https://img.shields.io/badge/NSF-2410961-blue.svg)](https://www.nsf.gov/awardsearch/showAward?AWD_ID=2410961)
+[![DOI](https://zenodo.org/badge/719335737.svg)](https://doi.org/10.5281/zenodo.10201957)
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/11101/badge)](https://www.bestpractices.dev/projects/11101)
 [![CI](https://github.com/NeotomaDB/DataBUS/actions/workflows/ci.yml/badge.svg)](https://github.com/NeotomaDB/DataBUS/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/NeotomaDB/DataBUS/branch/main/graph/badge.svg)](https://codecov.io/gh/NeotomaDB/DataBUS)
