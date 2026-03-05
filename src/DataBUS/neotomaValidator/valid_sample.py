@@ -43,8 +43,8 @@ def valid_sample(cur, yml_dict, csv_file, databus):
             response.valid.append(False)
             response.message.append(
                 f"✗ No analysis units found in databus. Cannot validate samples "
-                "without analysis unit IDs. Using placeholder values for "
-                "analysisunitid and datasetid: {e}."
+                f"without analysis unit IDs. Using placeholder values for "
+                f"analysisunitid and datasetid: {e}."
             )
             inputs["analysisunitid"] = list(range(1, databus["analysisunits"].counter + 1))
             inputs["datasetid"] = list(range(1, databus["analysisunits"].counter + 1))
