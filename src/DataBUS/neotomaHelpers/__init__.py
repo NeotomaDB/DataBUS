@@ -7,7 +7,7 @@ Attributes:
     __version__ (str): Version of the neotomaHelpers module.
 """
 
-__version__ = "0.1.0"
+__version__ = "2.0.0"
 
 from .check_file import check_file
 from .get_contacts import get_contacts

@@ -4,10 +4,10 @@ This package contains validation modules for the Neotoma Paleoecology Database.
 It provides functions to validate various paleontological and geochronological data
 types before insertion into the Neotoma database.
 
-Version: 0.1.0
+Version: 2.0.0
 """
 
-__version__ = "0.1.0"
+__version__ = "2.0.0"
 
 import argparse
 import datetime

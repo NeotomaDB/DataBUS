@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "DataBUS"
-version = "0.1.0"
+version = "2.0.0"
 description = "Upload dataset records to the Neotoma Database"
 authors = [{name = "Socorro E Dominguez Vidana", email = "dominguezvid@uwisc.edu"}]
 license = "MIT"
