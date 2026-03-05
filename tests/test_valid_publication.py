@@ -42,8 +42,12 @@ class TestValidPublicationMock:
     def test_publicationid_not_found(self, mock_cur):
         mock_cur.mock_fetchone = None
         databus = {"datasets": MagicMock(id_int=5)}
+        # csv_file must contain the column referenced in _pub_yml so pull_params
+        # can extract the value; with an empty csv it returns None and the
+        # function exits early with True ("no publication info").
         result = nv.valid_publication(
-            cur=mock_cur, yml_dict=_pub_yml(pubid=9999), csv_file=[], databus=databus
+            cur=mock_cur, yml_dict=_pub_yml(pubid=9999),
+            csv_file=[{"PubID": "9999"}], databus=databus
         )
         assert isinstance(result, Response)
         assert False in result.valid
@@ -78,10 +82,12 @@ class TestValidPublicationMock:
     def test_citation_not_found(self, mock_cur):
         mock_cur.mock_fetchone = None
         databus = {"datasets": MagicMock(id_int=3)}
+        # csv_file must contain the "Citation" column so pull_params extracts
+        # the value; an empty csv returns None and the function exits early with True.
         result = nv.valid_publication(
             cur=mock_cur,
             yml_dict=_pub_yml(citation="Unknown Author 1800"),
-            csv_file=[], databus=databus
+            csv_file=[{"Citation": "Unknown Author 1800"}], databus=databus
         )
         assert isinstance(result, Response)
         assert False in result.valid

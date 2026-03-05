@@ -205,6 +205,7 @@ class TestSample:
 
     def test_str_representation(self):
         s = Sample(analysisunitid=1, datasetid=1, samplename="S1")
+        s.sampleid = None  # sampleid is only assigned after insert_to_db
         assert "S1" in str(s)
 
     def test_optional_fields_none(self):

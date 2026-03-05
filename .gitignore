@@ -3,11 +3,10 @@
 uv.lock
 .env
 .venv
+.coverage
+.claude
 **/__pycache__/
 **.egg-info/
-.coverage
-htmlcov/
-
 data/*
 # But keep these two files
 !data/template_example.yml

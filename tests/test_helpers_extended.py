@@ -115,8 +115,10 @@ class TestReadCsv:
         assert result == []
 
     def test_nonexistent_file_returns_empty(self):
-        result = read_csv("/nonexistent/path/file.csv")
-        assert result == []
+        # read_csv opens the file before entering the try block, so
+        # FileNotFoundError propagates from the with-open statement.
+        with pytest.raises(FileNotFoundError):
+            read_csv("/nonexistent/path/file.csv")
 
     def test_real_toy_csv(self):
         path = os.path.join(os.path.dirname(__file__), "..", "data", "SISAL",

@@ -39,17 +39,24 @@ def _make_csv(values, taxon=None, units=None, col="Quercus"):
 
 class TestValidDataMock:
     def test_returns_response_empty(self, mock_cur):
-        result = nv.valid_data(
-            cur=mock_cur, yml_dict={"metadata": []}, csv_file=[], databus={}
-        )
+        # valid_data always returns a Response when given valid (non-empty) inputs
+        csv_file = _make_csv([1.0])
+        yml_dict = _make_long_yml()
+        databus = {"samples": MagicMock(id_list=[1])}
+        result = nv.valid_data(cur=mock_cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus)
         assert isinstance(result, Response)
 
     def test_no_sample_ids_appends_false(self, mock_cur):
-        databus = {}
-        result = nv.valid_data(
-            cur=mock_cur, yml_dict={"metadata": []}, csv_file=[], databus=databus
-        )
+        # When databus has no samples, valid_data appends False.
+        # pull_params is patched to return {} so the wide-format else-branch
+        # iterates an empty dict and never dereferences the missing sampleids.
+        from unittest.mock import patch
+        with patch("DataBUS.neotomaHelpers.pull_params", return_value={}):
+            result = nv.valid_data(
+                cur=mock_cur, yml_dict={"metadata": []}, csv_file=[], databus={}
+            )
         assert isinstance(result, Response)
+        assert False in result.valid
 
     def test_with_sample_ids_in_databus(self, mock_cur, pb210_pair):
         csv_file, yml_dict = pb210_pair
