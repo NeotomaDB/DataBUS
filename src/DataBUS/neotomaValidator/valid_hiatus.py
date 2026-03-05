@@ -58,8 +58,9 @@ def valid_hiatus(cur, yml_dict, csv_file, databus=None):
     except Exception as e:
         response.valid.append(False)
         resolved = clusters
-        response.message.append(f"✗ Could not resolve analysis unit IDs from databus. Using placeholder indices: {e}")
-
+        response.message.append(
+            f"✗ Could not resolve analysis unit IDs from databus. Using placeholder indices: {e}"
+        )
 
     for values in resolved:
         try:
