@@ -1,7 +1,7 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 authors:
-- family-names: "Dominguez"
+- family-names: "Dominguez Vidana"
   given-names: "Socorro"
   orcid: "https://orcid.org/0000-0002-7926-4935"
 - family-names: "Goring"
@@ -9,5 +9,5 @@ authors:
   orcid: "https://orcid.org/0000-0002-2700-4605"
 title: "Neotoma Paleoecology Database DataBUS"
 version: 2.0.0
-date-released: 2023-11-15
+date-released: 2026-03-05
 url: "https://github.com/NeotomaDB/DataBUS"
