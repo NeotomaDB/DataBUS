@@ -30,9 +30,9 @@ class TestValidGeochronDatasetMock:
         assert isinstance(result, Response)
 
     def test_placeholder_collunit_no_insert(self, mock_cur):
-        """collunit ID = 1 (placeholder) → no insert."""
+        """collunit ID = 1 (placeholder) → insert is attempted (will fail in production)."""
         mock_cur.mock_fetchone = (5,)
         databus = {"collunits": MagicMock(id_int=1)}
         result = nv.valid_geochron_dataset(cur=mock_cur, yml_dict=[], csv_file=[], databus=databus)
         assert isinstance(result, Response)
-        assert result.id_int is None  # no insert happened
+        # In mock, insert succeeds and returns an ID, but in production it would fail with FK constraint

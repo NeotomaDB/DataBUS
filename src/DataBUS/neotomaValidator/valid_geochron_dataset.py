@@ -52,7 +52,6 @@ def valid_geochron_dataset(cur, yml_dict, csv_file, databus=None):
     # Resolve collectionunitid
     try:
         collunitid = databus.get("collunits").id_int
-        response.valid.append(True)
     except Exception as e:
         collunitid = 1  # placeholder
         response.valid.append(False)
@@ -69,6 +68,7 @@ def valid_geochron_dataset(cur, yml_dict, csv_file, databus=None):
         response.message.append(f"✗ Geochronology Dataset cannot be created: {e}")
         response.valid.append(False)
         return response
+    
     try:
         response.id_int = ds.insert_to_db(cur)
         response.message.append(f"✔ Geochronology dataset inserted with ID {response.id_int}.")

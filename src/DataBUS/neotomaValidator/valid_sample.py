@@ -35,6 +35,8 @@ def valid_sample(cur, yml_dict, csv_file, databus):
         inputs = nh.pull_params(SAMPLE_PARAMS, yml_dict, csv_file, "ndb.samples")
         try:
             inputs["analysisunitid"] = databus["analysisunits"].id_list
+            if not inputs["analysisunitid"]:
+                raise ValueError("Analysis unit id_list is empty")
             response.valid.append(True)
             inputs["datasetid"] = [databus["datasets"].id_int] * len(
                 databus["analysisunits"].id_list
