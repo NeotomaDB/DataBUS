@@ -1,4 +1,5 @@
 """Tests for valid_sample_age validator."""
+
 from unittest.mock import MagicMock
 
 import pytest
@@ -65,7 +66,5 @@ class TestValidSampleAgeMock:
 
     def test_empty_databus(self, mock_cur, pb210_pair):
         csv_file, yml_dict = pb210_pair
-        result = nv.valid_sample_age(
-            cur=mock_cur, yml_dict=yml_dict, csv_file=csv_file, databus={}
-        )
+        result = nv.valid_sample_age(cur=mock_cur, yml_dict=yml_dict, csv_file=csv_file, databus={})
         assert isinstance(result, Response)

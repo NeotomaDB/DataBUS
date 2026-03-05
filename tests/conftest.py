@@ -19,7 +19,7 @@ import pytest
 
 # ── paths ─────────────────────────────────────────────────────────────────────
 TESTS_DIR = os.path.dirname(__file__)
-TOY_DIR   = os.path.join(TESTS_DIR, "toy_data")
+TOY_DIR = os.path.join(TESTS_DIR, "toy_data")
 
 
 # ── toy data helpers ──────────────────────────────────────────────────────────
@@ -48,15 +48,15 @@ class MockCursor:
     """
 
     def __init__(self):
-        self.last_query  = None
+        self.last_query = None
         self.last_params = None
-        self.mock_fetchone  = None
-        self.mock_fetchall  = []
-        self.description    = []
+        self.mock_fetchone = None
+        self.mock_fetchall = []
+        self.description = []
         self._execute_calls = []
 
     def execute(self, query, params=None):
-        self.last_query  = query
+        self.last_query = query
         self.last_params = params
         self._execute_calls.append((query, params))
 
@@ -94,8 +94,10 @@ def real_connection():
     """
     try:
         from dotenv import load_dotenv
+
         load_dotenv()
         import psycopg2
+
         conn_str = os.getenv("PGDB_TANK")
         if not conn_str:
             return None
@@ -142,25 +144,37 @@ def conn(real_connection, mock_conn):
 def sisal_pair():
     """Return (csv_file_rows, yml_dict) for the SISAL toy dataset."""
     import DataBUS.neotomaHelpers as nh
-    return nh.read_csv(toy_csv("test_sisal.csv")), nh.template_to_dict(toy_yml("test_sisal_template.yml"))
+
+    return nh.read_csv(toy_csv("test_sisal.csv")), nh.template_to_dict(
+        toy_yml("test_sisal_template.yml")
+    )
 
 
 @pytest.fixture
 def pb210_pair():
     """Return (csv_file_rows, yml_dict) for the 210Pb toy dataset."""
     import DataBUS.neotomaHelpers as nh
-    return nh.read_csv(toy_csv("test_210Pb.csv")), nh.template_to_dict(toy_yml("test_210pb_template.yml"))
+
+    return nh.read_csv(toy_csv("test_210Pb.csv")), nh.template_to_dict(
+        toy_yml("test_210pb_template.yml")
+    )
 
 
 @pytest.fixture
 def node_pair():
     """Return (csv_file_rows, yml_dict) for the NODE toy dataset."""
     import DataBUS.neotomaHelpers as nh
-    return nh.read_csv(toy_csv("test_node.csv")), nh.template_to_dict(toy_yml("test_node_template.yml"))
+
+    return nh.read_csv(toy_csv("test_node.csv")), nh.template_to_dict(
+        toy_yml("test_node_template.yml")
+    )
 
 
 @pytest.fixture
 def eanode_pair():
     """Return (csv_file_rows, yml_dict) for the EANODE toy dataset."""
     import DataBUS.neotomaHelpers as nh
-    return nh.read_csv(toy_csv("test_eanode.csv")), nh.template_to_dict(toy_yml("test_eanode_template.yml"))
+
+    return nh.read_csv(toy_csv("test_eanode.csv")), nh.template_to_dict(
+        toy_yml("test_eanode_template.yml")
+    )

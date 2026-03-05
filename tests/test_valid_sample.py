@@ -1,4 +1,5 @@
 """Tests for valid_sample validator."""
+
 from unittest.mock import MagicMock
 
 import pytest

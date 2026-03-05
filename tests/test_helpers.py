@@ -1,4 +1,5 @@
 """Tests for neotomaHelpers utilities."""
+
 import os
 
 import pytest
@@ -51,12 +52,14 @@ class TestPullParams:
     def test_pull_params_sisal_sites(self, sisal_pair):
         csv_file, yml_dict = sisal_pair
         from DataBUS.Site import SITE_PARAMS
+
         result = nh.pull_params(SITE_PARAMS, yml_dict, csv_file, "ndb.sites")
         assert isinstance(result, dict)
 
     def test_pull_params_returns_dict(self, pb210_pair):
         csv_file, yml_dict = pb210_pair
         from DataBUS.Site import SITE_PARAMS
+
         result = nh.pull_params(SITE_PARAMS, yml_dict, csv_file, "ndb.sites")
         assert isinstance(result, dict)
 
@@ -66,30 +69,36 @@ class TestToyData:
 
     def test_toy_sisal_readable(self):
         from tests.conftest import toy_csv
+
         rows = nh.read_csv(toy_csv("test_sisal.csv"))
         assert len(rows) > 0
 
     def test_toy_210pb_readable(self):
         from tests.conftest import toy_csv
+
         rows = nh.read_csv(toy_csv("test_210Pb.csv"))
         assert len(rows) > 0
 
     def test_toy_node_readable(self):
         from tests.conftest import toy_csv
+
         rows = nh.read_csv(toy_csv("test_node.csv"))
         assert len(rows) > 0
 
     def test_toy_eanode_readable(self):
         from tests.conftest import toy_csv
+
         rows = nh.read_csv(toy_csv("test_eanode.csv"))
         assert len(rows) > 0
 
     def test_toy_sisal_site_name_modified(self):
         from tests.conftest import toy_csv
+
         rows = nh.read_csv(toy_csv("test_sisal.csv"))
         assert rows[0].get("site_name") == "TestSite_SISAL"
 
     def test_toy_210pb_site_name_modified(self):
         from tests.conftest import toy_csv
+
         rows = nh.read_csv(toy_csv("test_210Pb.csv"))
         assert rows[0].get("Site.name") == "TestSite_210Pb"

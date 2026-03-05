@@ -1,4 +1,5 @@
 """Tests for valid_data validator."""
+
 from unittest.mock import MagicMock
 
 import pytest
@@ -10,19 +11,39 @@ from DataBUS import Response
 def _make_long_yml(taxon="Quercus", units="NISP", element=None, context=None, value_col="Quercus"):
     """Build a wide-format yml_dict for valid_data."""
     meta = [
-        {"neotoma": "ndb.data.value", "column": value_col,
-         "rowwise": True, "required": True, "type": "float"},
-        {"neotoma": "ndb.variables.taxonid", "column": "Taxon",
-         "value": taxon, "rowwise": False},
-        {"neotoma": "ndb.variables.variableunitsid", "column": "Units",
-         "value": units, "rowwise": False},
+        {
+            "neotoma": "ndb.data.value",
+            "column": value_col,
+            "rowwise": True,
+            "required": True,
+            "type": "float",
+        },
+        {"neotoma": "ndb.variables.taxonid", "column": "Taxon", "value": taxon, "rowwise": False},
+        {
+            "neotoma": "ndb.variables.variableunitsid",
+            "column": "Units",
+            "value": units,
+            "rowwise": False,
+        },
     ]
     if element:
-        meta.append({"neotoma": "ndb.variables.variableelementid", "column": "Element",
-                      "value": element, "rowwise": False})
+        meta.append(
+            {
+                "neotoma": "ndb.variables.variableelementid",
+                "column": "Element",
+                "value": element,
+                "rowwise": False,
+            }
+        )
     if context:
-        meta.append({"neotoma": "ndb.variables.variablecontextid", "column": "Context",
-                      "value": context, "rowwise": False})
+        meta.append(
+            {
+                "neotoma": "ndb.variables.variablecontextid",
+                "column": "Context",
+                "value": context,
+                "rowwise": False,
+            }
+        )
     return {"metadata": meta}
 
 
@@ -51,10 +72,9 @@ class TestValidDataMock:
         # pull_params is patched to return {} so the wide-format else-branch
         # iterates an empty dict and never dereferences the missing sampleids.
         from unittest.mock import patch
+
         with patch("DataBUS.neotomaHelpers.pull_params", return_value={}):
-            result = nv.valid_data(
-                cur=mock_cur, yml_dict={"metadata": []}, csv_file=[], databus={}
-            )
+            result = nv.valid_data(cur=mock_cur, yml_dict={"metadata": []}, csv_file=[], databus={})
         assert isinstance(result, Response)
         assert False in result.valid
 
@@ -62,9 +82,7 @@ class TestValidDataMock:
         csv_file, yml_dict = pb210_pair
         mock_cur.mock_fetchone = (10,)
         databus = {"samples": MagicMock(id_list=[1, 2, 3, 4, 5])}
-        result = nv.valid_data(
-            cur=mock_cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus
-        )
+        result = nv.valid_data(cur=mock_cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus)
         assert isinstance(result, Response)
 
     def test_valid_variable_found_in_db(self, mock_cur):
@@ -73,9 +91,7 @@ class TestValidDataMock:
         yml_dict = _make_long_yml()
         mock_cur.mock_fetchone = (5,)
         databus = {"samples": MagicMock(id_list=[1, 2, 3])}
-        result = nv.valid_data(
-            cur=mock_cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus
-        )
+        result = nv.valid_data(cur=mock_cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus)
         assert isinstance(result, Response)
 
     def test_variable_not_in_db_appends_false(self, mock_cur):
@@ -84,9 +100,7 @@ class TestValidDataMock:
         yml_dict = _make_long_yml(taxon="UnknownTaxon")
         mock_cur.mock_fetchone = None
         databus = {"samples": MagicMock(id_list=[1, 2])}
-        result = nv.valid_data(
-            cur=mock_cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus
-        )
+        result = nv.valid_data(cur=mock_cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus)
         assert isinstance(result, Response)
         assert False in result.valid
 
@@ -94,9 +108,7 @@ class TestValidDataMock:
         csv_file, yml_dict = sisal_pair
         mock_cur.mock_fetchone = (1,)
         databus = {"samples": MagicMock(id_list=list(range(1, len(csv_file) + 1)))}
-        result = nv.valid_data(
-            cur=mock_cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus
-        )
+        result = nv.valid_data(cur=mock_cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus)
         assert isinstance(result, Response)
 
     def test_id_dict_populated(self, mock_cur):
@@ -104,9 +116,7 @@ class TestValidDataMock:
         yml_dict = _make_long_yml()
         mock_cur.mock_fetchone = (99,)
         databus = {"samples": MagicMock(id_list=[1, 2, 3])}
-        result = nv.valid_data(
-            cur=mock_cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus
-        )
+        result = nv.valid_data(cur=mock_cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus)
         assert isinstance(result.id_dict, dict)
 
     def test_single_sample_id_broadcast(self, mock_cur):
@@ -115,9 +125,7 @@ class TestValidDataMock:
         yml_dict = _make_long_yml()
         mock_cur.mock_fetchone = (7,)
         databus = {"samples": MagicMock(id_list=[42])}
-        result = nv.valid_data(
-            cur=mock_cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus
-        )
+        result = nv.valid_data(cur=mock_cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus)
         assert isinstance(result, Response)
 
     def test_pb210_pair_returns_response(self, mock_cur, pb210_pair):
@@ -125,7 +133,5 @@ class TestValidDataMock:
         mock_cur.mock_fetchone = (1,)
         n = len(csv_file)
         databus = {"samples": MagicMock(id_list=list(range(1, n + 1)))}
-        result = nv.valid_data(
-            cur=mock_cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus
-        )
+        result = nv.valid_data(cur=mock_cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus)
         assert isinstance(result, Response)

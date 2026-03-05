@@ -4,6 +4,7 @@ These tests verify that the playground's step sequence (site → collunit →
 dataset → chronologies → ...) can complete without crashing even when the
 database is offline and every SQL call returns None/empty.
 """
+
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -19,16 +20,56 @@ def _run_chain(cur, csv_file, yml_dict):
     databus = {}
 
     for step_name, fn in [
-        ("sites",          lambda: nv.valid_site(cur=cur, yml_dict=yml_dict, csv_file=csv_file)),
-        ("collunits",      lambda: nv.valid_collunit(cur=cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus)),
-        ("datasets",       lambda: nv.valid_dataset(cur=cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus)),
-        ("geodataset",     lambda: nv.valid_geochron_dataset(cur=cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus)),
-        ("chronologies",   lambda: nv.valid_chronologies(cur=cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus)),
-        ("chron_controls", lambda: nv.valid_chroncontrols(cur=cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus)),
-        ("geochron",       lambda: nv.valid_geochron(cur=cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus)),
-        ("geochroncontrol",lambda: nv.valid_geochroncontrol(cur=cur, databus=databus)),
-        ("uth_series",     lambda: nv.valid_uth_series(cur=cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus)),
-        ("contacts",       lambda: nv.valid_contact(cur=cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus)),
+        ("sites", lambda: nv.valid_site(cur=cur, yml_dict=yml_dict, csv_file=csv_file)),
+        (
+            "collunits",
+            lambda: nv.valid_collunit(
+                cur=cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus
+            ),
+        ),
+        (
+            "datasets",
+            lambda: nv.valid_dataset(
+                cur=cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus
+            ),
+        ),
+        (
+            "geodataset",
+            lambda: nv.valid_geochron_dataset(
+                cur=cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus
+            ),
+        ),
+        (
+            "chronologies",
+            lambda: nv.valid_chronologies(
+                cur=cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus
+            ),
+        ),
+        (
+            "chron_controls",
+            lambda: nv.valid_chroncontrols(
+                cur=cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus
+            ),
+        ),
+        (
+            "geochron",
+            lambda: nv.valid_geochron(
+                cur=cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus
+            ),
+        ),
+        ("geochroncontrol", lambda: nv.valid_geochroncontrol(cur=cur, databus=databus)),
+        (
+            "uth_series",
+            lambda: nv.valid_uth_series(
+                cur=cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus
+            ),
+        ),
+        (
+            "contacts",
+            lambda: nv.valid_contact(
+                cur=cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus
+            ),
+        ),
     ]:
         try:
             result = fn()
@@ -53,8 +94,7 @@ class TestIntegrationSISALMock:
         mock_cur.mock_fetchone = (1,)
         csv_file = nh.read_csv(toy_csv("test_sisal.csv"))
         yml_dict = nh.template_to_dict(toy_yml("test_sisal_template.yml"))
-        result = nv.valid_site(cur=mock_cur, yml_dict=yml_dict,
-                               csv_file=csv_file)
+        result = nv.valid_site(cur=mock_cur, yml_dict=yml_dict, csv_file=csv_file)
         assert isinstance(result, Response)
 
 

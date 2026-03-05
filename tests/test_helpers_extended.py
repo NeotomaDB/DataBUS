@@ -1,4 +1,5 @@
 """Extended tests for neotomaHelpers utilities."""
+
 import os
 import tempfile
 import pytest
@@ -12,10 +13,17 @@ from DataBUS.neotomaHelpers.check_file import check_file
 # ── pull_required ─────────────────────────────────────────────────────────────
 class TestPullRequired:
     def _yml(self, neotoma_key, required=True):
-        return {"metadata": [
-            {"neotoma": neotoma_key, "column": "X", "required": required,
-             "rowwise": False, "type": "string"}
-        ]}
+        return {
+            "metadata": [
+                {
+                    "neotoma": neotoma_key,
+                    "column": "X",
+                    "required": required,
+                    "rowwise": False,
+                    "type": "string",
+                }
+            ]
+        }
 
     def test_required_true(self):
         yml = self._yml("ndb.sites.sitename", required=True)
@@ -33,12 +41,24 @@ class TestPullRequired:
         assert result["altitude"] is False
 
     def test_multiple_params(self):
-        yml = {"metadata": [
-            {"neotoma": "ndb.sites.sitename", "column": "Name",
-             "required": True, "rowwise": False, "type": "string"},
-            {"neotoma": "ndb.sites.altitude", "column": "Alt",
-             "required": False, "rowwise": False, "type": "float"},
-        ]}
+        yml = {
+            "metadata": [
+                {
+                    "neotoma": "ndb.sites.sitename",
+                    "column": "Name",
+                    "required": True,
+                    "rowwise": False,
+                    "type": "string",
+                },
+                {
+                    "neotoma": "ndb.sites.altitude",
+                    "column": "Alt",
+                    "required": False,
+                    "rowwise": False,
+                    "type": "float",
+                },
+            ]
+        }
         result = pull_required(["sitename", "altitude"], yml, "ndb.sites")
         assert result["sitename"] is True
         assert result["altitude"] is False
@@ -58,10 +78,18 @@ class TestPullRequired:
 # ── pull_overwrite ────────────────────────────────────────────────────────────
 class TestPullOverwrite:
     def _yml(self, neotoma_key, overwrite=False):
-        return {"metadata": [
-            {"neotoma": neotoma_key, "column": "X", "overwrite": overwrite,
-             "required": False, "rowwise": False, "type": "string"}
-        ]}
+        return {
+            "metadata": [
+                {
+                    "neotoma": neotoma_key,
+                    "column": "X",
+                    "overwrite": overwrite,
+                    "required": False,
+                    "rowwise": False,
+                    "type": "string",
+                }
+            ]
+        }
 
     def test_overwrite_true(self):
         yml = self._yml("ndb.sites.sitename", overwrite=True)

@@ -1,4 +1,5 @@
 """Extended unit tests for DataBUS domain classes (no DB required)."""
+
 import pytest
 
 from DataBUS import (
@@ -111,8 +112,7 @@ class TestSampleAge:
 class TestDataUncertainty:
     def test_valid_creation(self):
         du = DataUncertainty(
-            dataid=1, uncertaintyvalue=5.0,
-            uncertaintyunitid=2, uncertaintybasisid=1, notes=None
+            dataid=1, uncertaintyvalue=5.0, uncertaintyunitid=2, uncertaintybasisid=1, notes=None
         )
         assert du.uncertaintyvalue == 5.0
         assert du.uncertaintybasisid == 1
@@ -120,22 +120,34 @@ class TestDataUncertainty:
 
     def test_invalid_dataid_raises(self):
         with pytest.raises((ValueError, TypeError)):
-            DataUncertainty(dataid="bad", uncertaintyvalue=1.0,
-                            uncertaintyunitid=1, uncertaintybasisid=1, notes=None)
+            DataUncertainty(
+                dataid="bad",
+                uncertaintyvalue=1.0,
+                uncertaintyunitid=1,
+                uncertaintybasisid=1,
+                notes=None,
+            )
 
     def test_str_representation(self):
-        du = DataUncertainty(dataid=3, uncertaintyvalue=2.5,
-                             uncertaintyunitid=1, uncertaintybasisid=2, notes="test")
+        du = DataUncertainty(
+            dataid=3, uncertaintyvalue=2.5, uncertaintyunitid=1, uncertaintybasisid=2, notes="test"
+        )
         assert "3" in str(du)
 
     def test_none_units_allowed(self):
-        du = DataUncertainty(dataid=1, uncertaintyvalue=1.0,
-                             uncertaintyunitid=None, uncertaintybasisid=None, notes=None)
+        du = DataUncertainty(
+            dataid=1,
+            uncertaintyvalue=1.0,
+            uncertaintyunitid=None,
+            uncertaintybasisid=None,
+            notes=None,
+        )
         assert du.uncertaintyunitid is None
 
     def test_insert_to_db_calls_cursor(self, mock_cur):
-        du = DataUncertainty(dataid=1, uncertaintyvalue=2.0,
-                             uncertaintyunitid=1, uncertaintybasisid=1, notes=None)
+        du = DataUncertainty(
+            dataid=1, uncertaintyvalue=2.0, uncertaintyunitid=1, uncertaintybasisid=1, notes=None
+        )
         du.insert_to_db(mock_cur)
         assert mock_cur.last_query is not None
 

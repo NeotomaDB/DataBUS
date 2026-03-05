@@ -1,4 +1,5 @@
 """Tests for valid_geochron and valid_geochroncontrol validators."""
+
 from unittest.mock import MagicMock
 
 import pytest
@@ -9,8 +10,9 @@ from DataBUS import Response
 
 class TestValidGeochronMock:
     def test_no_age_returns_valid(self, mock_cur):
-        result = nv.valid_geochron(cur=mock_cur, yml_dict={"metadata": []},
-                                   csv_file=[], databus=None)
+        result = nv.valid_geochron(
+            cur=mock_cur, yml_dict={"metadata": []}, csv_file=[], databus=None
+        )
         assert isinstance(result, Response)
         assert True in result.valid
 
@@ -18,8 +20,7 @@ class TestValidGeochronMock:
         csv_file, yml_dict = sisal_pair
         mock_cur.mock_fetchone = (1,)
         # databus={} means no upstream sample IDs – code uses placeholders
-        result = nv.valid_geochron(cur=mock_cur, yml_dict=yml_dict,
-                                   csv_file=csv_file, databus={})
+        result = nv.valid_geochron(cur=mock_cur, yml_dict=yml_dict, csv_file=csv_file, databus={})
         assert isinstance(result, Response)
 
     def test_placeholder_sample_ids_when_no_databus(self, mock_cur, sisal_pair):
@@ -28,8 +29,7 @@ class TestValidGeochronMock:
         csv_file, yml_dict = sisal_pair
         mock_cur.mock_fetchone = (1,)
         # databus={} → databus.get("samples") is None → code falls back to placeholders
-        result = nv.valid_geochron(cur=mock_cur, yml_dict=yml_dict,
-                                   csv_file=csv_file, databus={})
+        result = nv.valid_geochron(cur=mock_cur, yml_dict=yml_dict, csv_file=csv_file, databus={})
         assert isinstance(result, Response)
         # The response must warn that sample IDs were not found and placeholders were used
         assert any("placeholder" in msg.lower() for msg in result.message)
@@ -40,8 +40,9 @@ class TestValidGeochronMock:
         # The SISAL file has age values at row indices up to ~449, so we need
         # at least 450 sample IDs in the list for index-based lookup to succeed.
         databus = {"samples": MagicMock(id_list=list(range(201, 201 + 500)))}
-        result = nv.valid_geochron(cur=mock_cur, yml_dict=yml_dict,
-                                   csv_file=csv_file, databus=databus)
+        result = nv.valid_geochron(
+            cur=mock_cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus
+        )
         assert isinstance(result, Response)
 
 

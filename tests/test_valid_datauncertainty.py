@@ -1,4 +1,5 @@
 """Tests for valid_datauncertainty validator."""
+
 from unittest.mock import MagicMock
 
 import pytest
@@ -8,15 +9,30 @@ from DataBUS import Response
 
 
 def _make_uncertainty_yml(taxon="Quercus", basis="standard deviation", units="percent"):
-    return {"metadata": [
-        {"neotoma": "ndb.datauncertainties.uncertaintyvalue",
-         "column": "Uncertainty", "rowwise": True, "taxonid": taxon,
-         "taxonname": taxon, "required": False},
-        {"neotoma": "ndb.datauncertainties.uncertaintybasisid",
-         "column": "UncBasis", "value": basis, "rowwise": False},
-        {"neotoma": "ndb.datauncertainties.uncertaintyunitid",
-         "column": "UncUnits", "value": units, "rowwise": False},
-    ]}
+    return {
+        "metadata": [
+            {
+                "neotoma": "ndb.datauncertainties.uncertaintyvalue",
+                "column": "Uncertainty",
+                "rowwise": True,
+                "taxonid": taxon,
+                "taxonname": taxon,
+                "required": False,
+            },
+            {
+                "neotoma": "ndb.datauncertainties.uncertaintybasisid",
+                "column": "UncBasis",
+                "value": basis,
+                "rowwise": False,
+            },
+            {
+                "neotoma": "ndb.datauncertainties.uncertaintyunitid",
+                "column": "UncUnits",
+                "value": units,
+                "rowwise": False,
+            },
+        ]
+    }
 
 
 def _make_csv(values, col="Uncertainty"):

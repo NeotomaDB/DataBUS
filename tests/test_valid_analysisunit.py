@@ -3,6 +3,7 @@
 Key invariant: the number of AnalysisUnits created must equal the number of
 depth/age values reported in the CSV (one AU per sample row).
 """
+
 import pytest
 
 import DataBUS.neotomaHelpers as nh
@@ -11,6 +12,7 @@ from DataBUS import Response
 from DataBUS.AnalysisUnit import ANALYSIS_UNIT_PARAMS
 
 # ── helpers ───────────────────────────────────────────────────────────────────
+
 
 def _au_yml(extra_cols=None):
     """Minimal yml_dict with a rowwise depth column.
@@ -46,31 +48,24 @@ def _au_csv(depths, extra_fields=None):
 
 # ── AU counter tests ───────────────────────────────────────────────────────────
 
+
 class TestAnalysisUnitCounter:
     """The number of AUs created must equal the number of depth rows."""
 
     def test_10_depths_produce_10_aus(self, mock_cur):
         depths = [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0]
-        result = nv.valid_analysisunit(
-            cur=mock_cur, yml_dict=_au_yml(), csv_file=_au_csv(depths)
-        )
+        result = nv.valid_analysisunit(cur=mock_cur, yml_dict=_au_yml(), csv_file=_au_csv(depths))
         assert isinstance(result, Response)
-        assert result.counter == len(depths), (
-            f"Expected {len(depths)} AUs but got {result.counter}"
-        )
+        assert result.counter == len(depths), f"Expected {len(depths)} AUs but got {result.counter}"
 
     def test_5_depths_produce_5_aus(self, mock_cur):
         depths = [0.5, 1.5, 2.5, 3.5, 4.5]
-        result = nv.valid_analysisunit(
-            cur=mock_cur, yml_dict=_au_yml(), csv_file=_au_csv(depths)
-        )
+        result = nv.valid_analysisunit(cur=mock_cur, yml_dict=_au_yml(), csv_file=_au_csv(depths))
         assert result.counter == len(depths)
 
     def test_1_depth_produces_1_au(self, mock_cur):
         depths = [5.0]
-        result = nv.valid_analysisunit(
-            cur=mock_cur, yml_dict=_au_yml(), csv_file=_au_csv(depths)
-        )
+        result = nv.valid_analysisunit(cur=mock_cur, yml_dict=_au_yml(), csv_file=_au_csv(depths))
         assert result.counter == 1
 
     def test_au_count_matches_pb210_data(self, mock_cur, pb210_pair):
@@ -80,9 +75,7 @@ class TestAnalysisUnitCounter:
         depths = inputs.get("depth")
         expected = len(depths) if isinstance(depths, list) else 1
 
-        result = nv.valid_analysisunit(
-            cur=mock_cur, yml_dict=yml_dict, csv_file=csv_file
-        )
+        result = nv.valid_analysisunit(cur=mock_cur, yml_dict=yml_dict, csv_file=csv_file)
         assert result.counter == expected, (
             f"Expected {expected} AUs for 210Pb dataset but got {result.counter}"
         )
@@ -107,15 +100,12 @@ class TestAnalysisUnitCounter:
 
 # ── other basic valid_analysisunit tests ─────────────────────────────────────
 
+
 class TestValidAnalysisUnitBasic:
     def test_returns_response(self, mock_cur):
-        result = nv.valid_analysisunit(
-            cur=mock_cur, yml_dict={"metadata": []}, csv_file=[]
-        )
+        result = nv.valid_analysisunit(cur=mock_cur, yml_dict={"metadata": []}, csv_file=[])
         assert isinstance(result, Response)
 
     def test_empty_csv_still_returns_response(self, mock_cur):
-        result = nv.valid_analysisunit(
-            cur=mock_cur, yml_dict=_au_yml(), csv_file=[]
-        )
+        result = nv.valid_analysisunit(cur=mock_cur, yml_dict=_au_yml(), csv_file=[])
         assert isinstance(result, Response)

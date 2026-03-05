@@ -1,4 +1,5 @@
 """Tests for valid_publication validator."""
+
 from unittest.mock import MagicMock
 
 import pytest
@@ -10,14 +11,27 @@ from DataBUS import Response
 def _pub_yml(doi=None, citation=None, pubid=None):
     meta = []
     if doi:
-        meta.append({"neotoma": "ndb.publications.doi", "column": "DOI",
-                      "value": doi, "rowwise": False})
+        meta.append(
+            {"neotoma": "ndb.publications.doi", "column": "DOI", "value": doi, "rowwise": False}
+        )
     if citation:
-        meta.append({"neotoma": "ndb.publications.citation", "column": "Citation",
-                      "value": citation, "rowwise": False})
+        meta.append(
+            {
+                "neotoma": "ndb.publications.citation",
+                "column": "Citation",
+                "value": citation,
+                "rowwise": False,
+            }
+        )
     if pubid:
-        meta.append({"neotoma": "ndb.publications.publicationid", "column": "PubID",
-                      "value": pubid, "rowwise": False})
+        meta.append(
+            {
+                "neotoma": "ndb.publications.publicationid",
+                "column": "PubID",
+                "value": pubid,
+                "rowwise": False,
+            }
+        )
     return {"metadata": meta}
 
 
@@ -46,8 +60,10 @@ class TestValidPublicationMock:
         # can extract the value; with an empty csv it returns None and the
         # function exits early with True ("no publication info").
         result = nv.valid_publication(
-            cur=mock_cur, yml_dict=_pub_yml(pubid=9999),
-            csv_file=[{"PubID": "9999"}], databus=databus
+            cur=mock_cur,
+            yml_dict=_pub_yml(pubid=9999),
+            csv_file=[{"PubID": "9999"}],
+            databus=databus,
         )
         assert isinstance(result, Response)
         assert False in result.valid
@@ -56,8 +72,10 @@ class TestValidPublicationMock:
         mock_cur.mock_fetchone = (7,)
         databus = {"datasets": MagicMock(id_int=5)}
         result = nv.valid_publication(
-            cur=mock_cur, yml_dict=_pub_yml(doi="10.1234/test", citation="Smith 2001"),
-            csv_file=[], databus=databus
+            cur=mock_cur,
+            yml_dict=_pub_yml(doi="10.1234/test", citation="Smith 2001"),
+            csv_file=[],
+            databus=databus,
         )
         assert isinstance(result, Response)
         assert True in result.valid
@@ -66,16 +84,19 @@ class TestValidPublicationMock:
         # First call (doi lookup) returns None; second (citation) returns id
         responses = [None, (8,), (8,)]
         idx = [0]
+
         def side_effect():
             val = responses[idx[0]]
             idx[0] = min(idx[0] + 1, len(responses) - 1)
             return val
+
         mock_cur.fetchone = side_effect
         databus = {"datasets": MagicMock(id_int=3)}
         result = nv.valid_publication(
             cur=mock_cur,
             yml_dict=_pub_yml(doi="10.9999/missing", citation="Jones 1999"),
-            csv_file=[], databus=databus
+            csv_file=[],
+            databus=databus,
         )
         assert isinstance(result, Response)
 
@@ -87,7 +108,8 @@ class TestValidPublicationMock:
         result = nv.valid_publication(
             cur=mock_cur,
             yml_dict=_pub_yml(citation="Unknown Author 1800"),
-            csv_file=[{"Citation": "Unknown Author 1800"}], databus=databus
+            csv_file=[{"Citation": "Unknown Author 1800"}],
+            databus=databus,
         )
         assert isinstance(result, Response)
         assert False in result.valid

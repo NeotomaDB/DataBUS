@@ -1,4 +1,5 @@
 """Unit tests for DataBUS domain classes (no DB required)."""
+
 import pytest
 
 from DataBUS import (
@@ -39,9 +40,13 @@ class TestContact:
 # ── Chronology ────────────────────────────────────────────────────────────────
 class TestChronology:
     def test_valid_chronology(self):
-        ch = Chronology(collectionunitid=1, agetypeid=2,
-                        chronologyname="Model A",
-                        ageboundyounger=-50, ageboundolder=12000)
+        ch = Chronology(
+            collectionunitid=1,
+            agetypeid=2,
+            chronologyname="Model A",
+            ageboundyounger=-50,
+            ageboundolder=12000,
+        )
         assert ch.chronologyname == "Model A"
         assert ch.ageboundolder == 12000
 
@@ -51,8 +56,7 @@ class TestChronology:
 
     def test_chronology_age_bounds_invalid(self):
         with pytest.raises(AssertionError):
-            Chronology(collectionunitid=1,
-                       ageboundyounger=5000, ageboundolder=100)
+            Chronology(collectionunitid=1, ageboundyounger=5000, ageboundolder=100)
 
     def test_chronology_list_contactid(self):
         ch = Chronology(collectionunitid=1, contactid=[3, 3])
@@ -66,9 +70,9 @@ class TestChronology:
 # ── ChronControl ─────────────────────────────────────────────────────────────
 class TestChronControl:
     def test_valid_chron_control(self):
-        cc = ChronControl(chronologyid=1, chroncontroltypeid=2,
-                          analysisunitid=3, agetypeid=1,
-                          depth=10.5, age=500)
+        cc = ChronControl(
+            chronologyid=1, chroncontroltypeid=2, analysisunitid=3, agetypeid=1, depth=10.5, age=500
+        )
         assert cc.age == 500
         assert cc.depth == 10.5
 
@@ -77,17 +81,18 @@ class TestChronControl:
             ChronControl()  # all required params missing
 
     def test_chron_control_str(self):
-        cc = ChronControl(chronologyid=1, chroncontroltypeid=1,
-                          analysisunitid=1, agetypeid=1,
-                          depth=5.0, age=200)
+        cc = ChronControl(
+            chronologyid=1, chroncontroltypeid=1, analysisunitid=1, agetypeid=1, depth=5.0, age=200
+        )
         assert "200" in str(cc)
 
 
 # ── Geochron ─────────────────────────────────────────────────────────────────
 class TestGeochron:
     def test_valid_geochron(self):
-        g = Geochron(sampleid=1, geochrontypeid=1, agetypeid=1,
-                     age=3250, errorolder=100, erroryounger=100)
+        g = Geochron(
+            sampleid=1, geochrontypeid=1, agetypeid=1, age=3250, errorolder=100, erroryounger=100
+        )
         assert g.age == 3250
         assert g.infinite is False
 
@@ -103,8 +108,7 @@ class TestGeochron:
 # ── UThSeries ────────────────────────────────────────────────────────────────
 class TestUThSeries:
     def test_valid_uth_series(self):
-        u = UThSeries(geochronid=1, decayconstantid=2,
-                      ratio230th232th=1.265)
+        u = UThSeries(geochronid=1, decayconstantid=2, ratio230th232th=1.265)
         assert u.ratio230th232th == 1.265
 
     def test_uth_missing_required_raises(self):
