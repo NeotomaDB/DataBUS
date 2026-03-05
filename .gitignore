@@ -14,12 +14,8 @@ data/*
 
 build/
 validation_playground.py
-docs/*.md
 
 playground_results.yml
-src/DataBUS/neotomaUploader/tests/
-src/DataBUS/neotomaHelpers/tests/
-
 
 # Eventually Add:
 .github/workflows/release.yml

@@ -27,7 +27,7 @@ Core classes representing the fundamental data models used throughout the DataBU
 ::: DataBUS.UThSeries
 ::: DataBUS.Variable
 
-## DataBUS Validator / Uploader
+## DataBUS
 
 Validation and insertion modules for the `neotomaValidator` package. Each function validates the
 corresponding Neotoma entity and, when a populated `databus` dict is supplied, also inserts the
@@ -65,34 +65,14 @@ template parsing, and transaction management.
 ### Parameter Extraction
 
 ::: DataBUS.neotomaHelpers.pull_params
-::: DataBUS.neotomaHelpers.pull_required
-::: DataBUS.neotomaHelpers.pull_overwrite
 
 ### Template & File Utilities
 
-::: DataBUS.neotomaHelpers.template_to_dict
 ::: DataBUS.neotomaHelpers.read_csv
 ::: DataBUS.neotomaHelpers.check_file
 ::: DataBUS.neotomaHelpers.hash_file
 ::: DataBUS.neotomaHelpers.excel_to_yaml
 
-### Database & Contact Helpers
-
-::: DataBUS.neotomaHelpers.get_contacts
-::: DataBUS.neotomaHelpers.utils
-
-### Transaction Management
-
-::: DataBUS.neotomaHelpers.safe_step
-
 ### Logging
 
 ::: DataBUS.neotomaHelpers.logging_dict
-
-### CLI
-
-::: DataBUS.neotomaHelpers.parse_arguments
-
-### Speleothem Reference Inserts
-
-::: DataBUS.neotomaHelpers.speleothem_reference_inserts

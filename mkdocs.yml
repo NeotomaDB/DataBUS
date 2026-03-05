@@ -7,7 +7,18 @@ theme:
   locale: en
 
 plugins:
-  - mkdocstrings
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            show_source: false
+            members_order: source
+            filters:
+              - "!^_"
+            show_root_heading: true
+            show_root_full_path: false
+            merge_init_into_class: true
+            docstring_section_style: spacy
 
 nav:
   - DataBUS Docs: index.md
