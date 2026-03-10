@@ -55,15 +55,6 @@ def parse_arguments():
     )
 
     parser.add_argument(
-        "--overwrite",
-        type=bool,
-        nargs="?",
-        const=False,
-        default=False,
-        help="True/False overwriting option for uploader",
-    )
-
-    parser.add_argument(
         "--upload",
         type=bool,
         nargs="?",
@@ -84,4 +75,4 @@ def parse_arguments():
             f"The file '{args.template}' could not be found within the current path."
         )
 
-    return {"data": args.data, "template": args.template, "overwrite": args.overwrite}
+    return {"data": args.data, "template": args.template, "upload": args.upload, "logs": args.logs}
