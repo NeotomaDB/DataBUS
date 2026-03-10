@@ -46,5 +46,4 @@ def insert_final(cur, databus):
         response.valid.append(False)
         response.message.append(f"✗ Dataset submission cannot be finalized: {e}")
     response.message = list(set(response.message))
-    response.validAll = all(response.valid)
     return response

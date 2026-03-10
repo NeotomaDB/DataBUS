@@ -71,11 +71,14 @@ def valid_geopolitical_units(cur, yml_dict, csv_file, databus=None):
         response.valid.append(False)
 
     for unit in inputs:
-        cur.execute(
-            query_with_parent,
-            {"geopoliticalname": inputs[unit].lower(), "highergeopoliticalid": current_id},
-        )
-        gpid2 = cur.fetchone()
+        if inputs[unit] is None:
+            break
+        else:
+            cur.execute(
+                query_with_parent,
+                {"geopoliticalname": inputs[unit].lower(), "highergeopoliticalid": current_id},
+            )
+            gpid2 = cur.fetchone()
         if not gpid2:
             response.message.append(f"? Subregional Unit {inputs[unit]} not found.")
             break
