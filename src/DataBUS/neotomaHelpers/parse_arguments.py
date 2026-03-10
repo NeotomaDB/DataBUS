@@ -75,4 +75,4 @@ def parse_arguments():
             f"The file '{args.template}' could not be found within the current path."
         )
 
-    return {"data": args.data, "template": args.template, "upload": args.upload, "logs": args.logs}
+    return {"data": args.data, "template": args.template, "upload": args.upload, "logs": args.log}
