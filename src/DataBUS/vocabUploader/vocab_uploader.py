@@ -11,54 +11,45 @@ def vocab_uploader(cur, yml_dict, csv_file, table, upload=False, logfile=[]):
         raise ValueError(f"Table '{table}' is not supported for vocab validation / upload.")
     
     inputs = nh.pull_params(PARAMS, yml_dict, csv_file, table)
-    inputs = {k: v for k, v in inputs.items() if not all(x is None for x in v)}
-    print(inputs)
+    inputs = {k: v for k, v in inputs.items() if v is not None and not (isinstance(v, list) and all(x is None for x in v))}
     outputs = []
     
     if table == "ndb.taxa":
-        query = """
-            SELECT taxonid
-            FROM ndb.taxa
-            WHERE taxoncode = %(taxoncode)s
-                AND taxonname = %(taxonname)s
-                AND author IS NOT DISTINCT FROM %(author)s
-                AND valid IS NOT DISTINCT FROM %(valid)s
-                AND highertaxonid IS NOT DISTINCT FROM %(highertaxonid)s
-                AND extinct IS NOT DISTINCT FROM %(extinct)s
-                AND taxagroupid IS NOT DISTINCT FROM %(taxagroupid)s
-                AND publicationid IS NOT DISTINCT FROM %(publicationid)s
-                AND validatorid IS NOT DISTINCT FROM %(validatorid)s
-                AND validatedate IS NOT DISTINCT FROM %(validatedate)s
-                AND notes IS NOT DISTINCT FROM %(notes)s
-        """
         id_params = {'publicationid': """SELECT publicationid
                                         FROM ndb.publications
                                         WHERE citation = %(publicationid)s""",
                      'validatorid': """SELECT contactid
                                        FROM ndb.contacts
-                                       WHERE username = %(validatorid)s""", 
+                                       WHERE contactname = %(validatorid)s""",
                      'highertaxonid': """SELECT taxonid
                                         FROM ndb.taxa
                                         WHERE taxonname = %(highertaxonid)s""",
                      'taxagroupid': """SELECT taxagroupid
                                         FROM ndb.taxagrouptypes
                                         WHERE taxagroupname = %(taxagroupid)s"""}
-        
-        # zip the inputs together and loop through each row to check if it exists in the database, 
+
+        # zip the inputs together and loop through each row to check if it exists in the database,
         for row in zip(*inputs.values()):
             row = dict(zip(list(inputs.keys()), row, strict=False))
+            row = {k: row.get(k) for k in PARAMS}
             for param, query_template in id_params.items():
                 param_value = row.get(param)
                 if isinstance(param_value, str) and param_value.strip() != "":
-                    cur.execute(query_template, {param: param_value})
-                    result = cur.fetchone()
-                    if result is not None:
-                        row[param] = result[0]
-                    else:
-                        logfile.append(f"Warning: '{param_value}' for parameter '{param}' does not exist in the database. It will be treated as NULL.")
-                        row[param] = None
+                    try:
+                        row[param] = int(param_value)
+                    except ValueError:
+                        cur.execute(query_template, {param: param_value})
+                        result = cur.fetchone()
+                        if result is not None:
+                            row[param] = result[0]
+                        else:
+                            logfile.append(f"Warning: '{param_value}' for parameter '{param}' does not exist in the database. It will be treated as NULL.")
+                            row[param] = None
             output = row.copy()
-            cur.execute(query, row)
+            optional_fields = [p for p in PARAMS if p != 'taxonname' and row.get(p) is not None]
+            conditions = ["taxonname = %(taxonname)s"] + [f"{p} IS NOT DISTINCT FROM %({p})s" for p in optional_fields]
+            dynamic_query = "SELECT taxonid FROM ndb.taxa WHERE " + " AND ".join(conditions)
+            cur.execute(dynamic_query, row)
             result = cur.fetchone()
             if result is not None:
                 output['taxonid'] = result[0]

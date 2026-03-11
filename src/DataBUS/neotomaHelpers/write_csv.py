@@ -9,7 +9,7 @@ def write_csv(data, filename="output.csv"):
         if not filename.endswith(".csv"):
             logging.warning(f"Filename '{filename}' does not end with '.csv'. Adding '.csv' extension.")
             filename += ".csv"
-        fieldnames = ["taxoncode", "taxonname", "author", "valid", "highertaxonid",
+        fieldnames = ["taxonid", "taxoncode", "taxonname", "author", "valid", "highertaxonid",
                       "extinct", "taxagroupid", "publicationid", "validatorid", 
                       "validatedate", "notes"]
         writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
