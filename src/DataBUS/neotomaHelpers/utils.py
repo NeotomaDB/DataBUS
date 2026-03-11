@@ -7,7 +7,7 @@ import warnings
 def convert_value_by_type(value_meta, clean_value):
     """Convert a value to its specified type.
 
-    Handles type conversions for: date, int, float, coordinates, string.
+    Handles type conversions for: date, int, float, coordinates, string, bool/boolean.
     Respects rowwise flag for bulk conversions.
 
     Args:
@@ -29,6 +29,8 @@ def convert_value_by_type(value_meta, clean_value):
         return _convert_coordinates(clean_value)
     elif type_spec in ("string", "str"):
         return _convert_string(clean_value, is_rowwise)
+    elif type_spec in ("bool", "boolean"):
+        return _convert_bool(clean_value, is_rowwise)
     return clean_value
 
 
@@ -56,6 +58,18 @@ def _convert_float(value, is_rowwise):
 def _convert_coordinates(value):
     """Convert comma-separated coordinate string to list of floats."""
     return [float(num) for num in value[0].split(",")]
+
+
+def _convert_bool(value, is_rowwise):
+    """Convert strings to booleans, treating 'true'/'false'/'1'/'0' case-insensitively."""
+    def _to_bool(v):
+        if v is None:
+            return None
+        if isinstance(v, bool):
+            return v
+        return str(v).strip().lower() in ("true", "1", "yes")
+
+    return [_to_bool(v) for v in value] if is_rowwise else _to_bool(value)
 
 
 def _convert_string(value, is_rowwise):
@@ -108,16 +122,17 @@ def prepare_parameters(params, yml_dict, table):
     return expanded_params
 
 
-def add_note_entry(add_unit_inputs):
+def add_note_entry(add_unit_inputs, clean_value):
     """Add a note entry to the accumulator, handling list aggregation.
 
     Args:
         add_unit_inputs (dict): Accumulator dictionary.
-        value_meta (dict): Metadata entry.
         clean_value: The cleaned value to add.
     """
     if isinstance(add_unit_inputs.get("notes"), list):
         add_unit_inputs["notes"] = " ".join(add_unit_inputs["notes"])
+    else:
+        add_unit_inputs["notes"] = clean_value
 
 
 def add_chronology_entry(add_unit_inputs, value_meta, clean_value, table, i):

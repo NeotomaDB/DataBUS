@@ -20,7 +20,6 @@ Example usage:
 """
 
 args = nh.parse_arguments()
-print(args)
 load_dotenv()
 connection = json.loads(os.getenv("PGDB_TANK"))
 
@@ -34,20 +33,19 @@ cur = conn.cursor()
 
 logfile = []
 start_time = datetime.now()
+
 msg = f"Start reading csv file at {start_time.strftime('%Y-%m-%d %H:%M:%S')}"
 logfile.append(msg)
-print(msg)
-
 try:
-    new_taxa = vu.vocab_uploader(cur, yml_dict, csv_file, "ndb.taxa", upload=False, logfile=logfile)
-
+    new_taxa = vu.vocab_uploader(cur,conn, yml_dict, csv_file, "ndb.taxa", upload=args['upload'], logfile=logfile)
     with open("data/chiro/taxa.valid.log", "w", encoding="utf-8") as writer:
         for i in logfile:
             writer.write(i)
             writer.write("\n")
-
-    # write a csv file too for the new_taxa list of dicts
     if new_taxa:
         nh.write_csv(new_taxa, "data/chiro/new_taxa.csv")
 except Exception as e:
     print(f"An error occurred: {e}")
+
+msg = f"Finished processing at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}. Total time: {datetime.now() - start_time}"
+logfile.append(msg)

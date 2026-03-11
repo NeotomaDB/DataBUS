@@ -64,7 +64,7 @@ def _process_value_entry(param_name, val_entry, csv_template, table, add_unit_in
             add_unit_inputs[param_name] = None
         return
     if param_name == "notes":
-        ut.add_note_entry(add_unit_inputs)
+        ut.add_note_entry(add_unit_inputs, clean_valor)
     elif any(k in table for k in ("chronologies", "sampleages")):
         ut.add_chronology_entry(add_unit_inputs, val_entry, clean_valor, table, param_name)
     elif "taxonname" in val_entry:

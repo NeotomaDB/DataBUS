@@ -1,6 +1,6 @@
 import DataBUS.neotomaHelpers as nh
 
-def vocab_uploader(cur, yml_dict, csv_file, table, upload=False, logfile=[]):
+def vocab_uploader(cur, conn, yml_dict, csv_file, table, upload=False, logfile=[]):
     if table == "ndb.publications":
         PARAMS = []
     elif table == "ndb.taxa":
@@ -26,9 +26,7 @@ def vocab_uploader(cur, yml_dict, csv_file, table, upload=False, logfile=[]):
                                         WHERE taxonname = %(highertaxonid)s""",
                      'taxagroupid': """SELECT taxagroupid
                                         FROM ndb.taxagrouptypes
-                                        WHERE taxagroupname = %(taxagroupid)s"""}
-
-        # zip the inputs together and loop through each row to check if it exists in the database,
+                                        WHERE taxagroup= %(taxagroupid)s"""}
         for row in zip(*inputs.values()):
             row = dict(zip(list(inputs.keys()), row, strict=False))
             row = {k: row.get(k) for k in PARAMS}
@@ -55,22 +53,26 @@ def vocab_uploader(cur, yml_dict, csv_file, table, upload=False, logfile=[]):
                 output['taxonid'] = result[0]
                 logfile.append(f"Taxon '{row['taxonname']}' already exists in the database with taxonid {result[0]}.")
             else:
-                if upload:
-                    insert_query = """
-                        INSERT INTO ndb.taxa (taxoncode, taxonname, author, valid, highertaxonid,
-                                              extinct, taxagroupid, publicationid, validatorid, 
-                                              validatedate, notes)
-                        VALUES (%(taxoncode)s, %(taxonname)s, %(author)s, %(valid)s, %(highertaxonid)s,
-                                %(extinct)s, %(taxagroupid)s, %(publicationid)s, %(validatorid)s, 
-                                %(validatedate)s, %(notes)s)
-                        RETURNING taxonid
-                    """
-                    cur.execute(insert_query, row)
-                    new_id = cur.fetchone()[0]
-                    output['taxonid'] = new_id
-                    logfile.append(f"Inserted new taxon '{row['taxonname']}' with taxonid {new_id}.")
-                else:
-                    output['taxonid'] = None
-                    logfile.append(f"Taxon '{row['taxonname']}' does not exist in the database and would be inserted if --upload were set to True.")
+                insert_query = """
+                        SELECT ts.inserttaxon(_code := %(taxoncode)s,
+                                              _name := %(taxonname)s,
+                                              _author := %(author)s,
+                                              _extinct := %(extinct)s,
+                                              _groupid := %(taxagroupid)s,
+                                              _higherid := %(highertaxonid)s,
+                                              _pubid := %(publicationid)s,
+                                              _validatorid := %(validatorid)s,
+                                              _validatedate := %(validatedate)s,
+                                              _notes := %(notes)s)
+                        """
+                cur.execute(insert_query, row)
+                new_id = cur.fetchone()[0]
+                output['taxonid'] = new_id
+            if upload:
+                conn.commit()
+                logfile.append(f"Inserted new taxon '{row['taxonname']}' with taxonid {new_id}.")
+            else: 
+                conn.rollback()
+                logfile.append(f"Validated new taxon '{row['taxonname']}' with taxonid {output.get('taxonid', 'N/A')}. Not uploaded to database.")
             outputs.append(output)
     return outputs
