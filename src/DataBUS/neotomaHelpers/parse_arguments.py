@@ -63,6 +63,15 @@ def parse_arguments():
         help="Set to True if data should be uploaded to the database after validation.",
     )
 
+    parser.add_argument(
+        "--vocab-csv",
+        type=bool,
+        nargs="?",
+        const=False,
+        default='taxa.csv',
+        help="Set to True if data should be uploaded to the database after validation.",
+    )
+
     args = parser.parse_args()
 
     if not os.path.isdir(args.data):
@@ -74,5 +83,5 @@ def parse_arguments():
         raise FileNotFoundError(
             f"The file '{args.template}' could not be found within the current path."
         )
-
-    return {"data": args.data, "template": args.template, "upload": args.upload, "logs": args.logs}
+    # return only the keys where there are values that are not None
+    return {k: v for k, v in vars(args).items() if v is not None}
