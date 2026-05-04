@@ -43,7 +43,6 @@ def valid_chronologies(cur, yml_dict, csv_file, databus=None):
         response.valid.append(False)
         response.message.append(f"✗  Chronology parameters cannot be properly extracted: {e}.")
         return response
-
     if len(inputs) > 1:
         response.message.append("✔ File with multiple chronologies.")
         response.message.append(f"{list(inputs.keys())}")
@@ -64,8 +63,8 @@ def valid_chronologies(cur, yml_dict, csv_file, databus=None):
 
     for chron_key in inputs:
         ch = inputs[chron_key]
-        ch["agetypeid"] = agetype
-        ch["contactid"] = author
+        ch["agetypeid"] = ch.get('agetypeid', agetype)
+        ch["contactid"] = ch.get('contactid', author)
         if ch.get("chronologyname") is None:
             ch["chronologyname"] = chron_key
         if ch.get("agetypeid") is not None and isinstance(ch["agetypeid"], str):

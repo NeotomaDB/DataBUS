@@ -48,9 +48,14 @@ def _process_parameter(param_name, table, yml_dict, csv_template, add_unit_input
 
 def _process_value_entry(param_name, val_entry, csv_template, table, add_unit_inputs):
     """Process a single value entry with type conversion and special case handling."""
+    sheet = val_entry.get("sheet")
+    if sheet is not None and isinstance(csv_template, dict):
+        template_rows = csv_template.get(sheet, [])
+    else:
+        template_rows = csv_template
     try:
         clean_valor = ut.clean_column(
-            val_entry.get("column"), csv_template, clean=not val_entry.get("rowwise")
+            val_entry.get("column"), template_rows, clean=not val_entry.get("rowwise")
         )
     except KeyError:
         return
@@ -64,7 +69,7 @@ def _process_value_entry(param_name, val_entry, csv_template, table, add_unit_in
             add_unit_inputs[param_name] = None
         return
     if param_name == "notes":
-        ut.add_note_entry(add_unit_inputs)
+        ut.add_note_entry(add_unit_inputs, clean_valor)
     elif any(k in table for k in ("chronologies", "sampleages")):
         ut.add_chronology_entry(add_unit_inputs, val_entry, clean_valor, table, param_name)
     elif "taxonname" in val_entry:

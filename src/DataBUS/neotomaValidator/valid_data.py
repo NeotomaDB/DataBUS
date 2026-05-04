@@ -91,7 +91,6 @@ def valid_data(cur, yml_dict, csv_file, databus=None):
                 else:
                     combined_data[k].extend(v if isinstance(v, list) else [v] * length)
         data = combined_data
-
     vals = {}
     response.id_dict = {}
     for datum in zip(*data.values(), strict=False):

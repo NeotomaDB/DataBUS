@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- New `vocabUploader` module (`src/DataBUS/vocabUploader/`) for uploading and validating vocabulary entries (taxa, publications) — BU-385.
+- `vocab_uploader` function supports dry-run mode (validates against DB via `ts.inserttaxon` then rolls back) and upload mode (commits).
+- `write_csv` helper in `neotomaHelpers` to serialise list-of-dicts results to CSV.
+- `taxa_upload-example.py` example script demonstrating the taxa upload workflow with log file and CSV output.
+- `bool`/`boolean` type support in `convert_value_by_type` and new `_convert_bool` helper in `utils.py`.
+
+### Changed
+
+- `vocab_uploader` signature now accepts a `conn` parameter to support explicit commit/rollback per row.
+- Taxa insertion switched from a raw `INSERT` to the `ts.inserttaxon` stored procedure.
+- `parse_arguments` updated to expose `--upload` flag consumed by the vocab uploader.
+- `add_note_entry` in `utils.py` now correctly accepts and stores `clean_value` (previously ignored the argument).
+
+### Fixed
+
+- `pull_params.py`: `add_note_entry` call now passes `clean_valor` so notes values are actually recorded.
+- `add_note_entry`: added missing `else` branch to assign `clean_value` when notes is not already a list.
+
 ## [2.0.0] - 2026-03-05
 
 ### Added

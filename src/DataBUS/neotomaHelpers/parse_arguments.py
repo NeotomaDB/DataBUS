@@ -56,7 +56,7 @@ def parse_arguments():
 
     parser.add_argument(
         "--upload",
-        type=bool,
+        type=lambda x: x.lower() == 'true',
         nargs="?",
         const=False,
         default=False,
@@ -65,14 +65,14 @@ def parse_arguments():
 
     args = parser.parse_args()
 
-    if not os.path.isdir(args.data):
+    if not os.path.exists(args.data):
         raise FileNotFoundError(
-            f"There is no directory named '{args.data}' within the current path."
+            f"The path '{args.data}' could not be found within the current path."
         )
 
     if not os.path.isfile(args.template):
         raise FileNotFoundError(
             f"The file '{args.template}' could not be found within the current path."
         )
-
-    return {"data": args.data, "template": args.template, "upload": args.upload, "logs": args.logs}
+    # return only the keys where there are values that are not None
+    return {k: v for k, v in vars(args).items() if v is not None}
