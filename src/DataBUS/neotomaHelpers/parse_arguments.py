@@ -56,7 +56,7 @@ def parse_arguments():
 
     parser.add_argument(
         "--upload",
-        type=bool,
+        type=lambda x: x.lower() == 'true',
         nargs="?",
         const=False,
         default=False,

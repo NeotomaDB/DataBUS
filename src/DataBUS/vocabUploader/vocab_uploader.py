@@ -13,7 +13,6 @@ def vocab_uploader(cur, conn, yml_dict, csv_file, table, upload=False, logfile=[
     inputs = nh.pull_params(PARAMS, yml_dict, csv_file, table)
     inputs = {k: v for k, v in inputs.items() if v is not None and not (isinstance(v, list) and all(x is None for x in v))}
     outputs = []
-    
     if table == "ndb.taxa":
         id_params = {'publicationid': """SELECT publicationid
                                         FROM ndb.publications
@@ -23,13 +22,14 @@ def vocab_uploader(cur, conn, yml_dict, csv_file, table, upload=False, logfile=[
                                        WHERE contactname = %(validatorid)s""",
                      'highertaxonid': """SELECT taxonid
                                         FROM ndb.taxa
-                                        WHERE taxonname = %(highertaxonid)s""",
-                     'taxagroupid': """SELECT taxagroupid
-                                        FROM ndb.taxagrouptypes
-                                        WHERE taxagroup= %(taxagroupid)s"""}
+                                        WHERE taxonname = %(highertaxonid)s"""}
+                    #  'taxagroupid': """SELECT taxagroupid
+                    #                     FROM ndb.taxagrouptypes
+                    #                     WHERE taxagroup= %(taxagroupid)s"""}
         for row in zip(*inputs.values()):
             row = dict(zip(list(inputs.keys()), row, strict=False))
             row = {k: row.get(k) for k in PARAMS}
+            row['notes'] = row.get('notes', '').strip() if row.get('notes') else None
             for param, query_template in id_params.items():
                 param_value = row.get(param)
                 if isinstance(param_value, str) and param_value.strip() != "":
@@ -44,8 +44,8 @@ def vocab_uploader(cur, conn, yml_dict, csv_file, table, upload=False, logfile=[
                             logfile.append(f"Warning: '{param_value}' for parameter '{param}' does not exist in the database. It will be treated as NULL.")
                             row[param] = None
             output = row.copy()
-            optional_fields = [p for p in PARAMS if p != 'taxonname' and row.get(p) is not None]
-            conditions = ["taxonname = %(taxonname)s"] + [f"{p} IS NOT DISTINCT FROM %({p})s" for p in optional_fields]
+            optional_fields = [p for p in ['author'] if p != 'taxonname' and row.get(p) is not None]
+            conditions = ["taxonname ILIKE %(taxonname)s"] + [f"{p} IS NOT DISTINCT FROM %({p})s" for p in optional_fields]
             dynamic_query = "SELECT taxonid FROM ndb.taxa WHERE " + " AND ".join(conditions)
             cur.execute(dynamic_query, row)
             result = cur.fetchone()

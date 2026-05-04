@@ -12,7 +12,7 @@ def write_csv(data, filename="output.csv"):
         fieldnames = ["taxonid", "taxoncode", "taxonname", "author", "valid", "highertaxonid",
                       "extinct", "taxagroupid", "publicationid", "validatorid", 
                       "validatedate", "notes"]
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
+        writer = csv.DictWriter(csvfile, fieldnames=fieldnames, lineterminator='\n')
         writer.writeheader()
         for row in data:
             writer.writerow(row)
