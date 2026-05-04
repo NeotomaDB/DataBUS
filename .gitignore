@@ -13,7 +13,7 @@ data/*
 !data/data_example.csv
 
 build/
-validation_playground.py
+validation_playground*.py
 
 playground_results.yml
 
