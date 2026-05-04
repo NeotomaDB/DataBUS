@@ -19,3 +19,6 @@ playground_results.yml
 
 # Eventually Add:
 .github/workflows/release.yml
+
+*.py
+*.md
