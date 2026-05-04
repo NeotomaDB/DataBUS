@@ -2,6 +2,7 @@
 
 import os
 
+import openpyxl
 import pytest
 
 import DataBUS.neotomaHelpers as nh
@@ -62,6 +63,135 @@ class TestPullParams:
 
         result = nh.pull_params(SITE_PARAMS, yml_dict, csv_file, "ndb.sites")
         assert isinstance(result, dict)
+
+
+class TestReadXlsx:
+    def test_read_xlsx_returns_dict(self, tmp_path):
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Sites"
+        ws.append(["site_name", "lat", "lon"])
+        ws.append(["Lake X", "45.0", "-90.0"])
+        ws2 = wb.create_sheet("Samples")
+        ws2.append(["depth", "taxon"])
+        ws2.append(["2.5", "Quercus"])
+        ws2.append(["5.0", "Pinus"])
+        path = str(tmp_path / "test.xlsx")
+        wb.save(path)
+
+        result = nh.read_xlsx(path)
+        assert isinstance(result, dict)
+        assert "Sites" in result
+        assert "Samples" in result
+
+    def test_read_xlsx_sheet_rows(self, tmp_path):
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Sites"
+        ws.append(["site_name", "lat"])
+        ws.append(["Lake X", "45.0"])
+        path = str(tmp_path / "test.xlsx")
+        wb.save(path)
+
+        result = nh.read_xlsx(path)
+        assert len(result["Sites"]) == 1
+        assert result["Sites"][0]["site_name"] == "Lake X"
+
+    def test_read_xlsx_multiple_rows(self, tmp_path):
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Samples"
+        ws.append(["depth", "count"])
+        ws.append(["2.5", "10"])
+        ws.append(["5.0", "20"])
+        path = str(tmp_path / "test.xlsx")
+        wb.save(path)
+
+        result = nh.read_xlsx(path)
+        assert len(result["Samples"]) == 2
+
+    def test_read_xlsx_missing_file(self):
+        result = nh.read_xlsx("nonexistent.xlsx")
+        assert result == {}
+
+    def test_read_xlsx_empty_sheet(self, tmp_path):
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Empty"
+        path = str(tmp_path / "empty.xlsx")
+        wb.save(path)
+
+        result = nh.read_xlsx(path)
+        assert result["Empty"] == []
+
+
+class TestPullParamsWithSheet:
+    def test_pull_params_sheet_selection(self, tmp_path):
+        """pull_params picks the correct sheet when csv_file is a dict."""
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "SiteMeta"
+        ws.append(["Site.name", "Lat", "Long"])
+        ws.append(["TestLake", "45.0", "-90.0"])
+        path = str(tmp_path / "multi.xlsx")
+        wb.save(path)
+
+        csv_file = nh.read_xlsx(path)
+        yml_dict = {
+            "metadata": [
+                {
+                    "column": "Site.name",
+                    "neotoma": "ndb.sites.sitename",
+                    "sheet": "SiteMeta",
+                    "rowwise": False,
+                    "type": "string",
+                }
+            ]
+        }
+        result = nh.pull_params(["sitename"], yml_dict, csv_file, "ndb.sites")
+        assert result.get("sitename") == "TestLake"
+
+    def test_pull_params_missing_sheet_returns_none(self, tmp_path):
+        """If the named sheet doesn't exist, pull_params returns None for the param."""
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "OtherSheet"
+        ws.append(["Site.name"])
+        ws.append(["TestLake"])
+        path = str(tmp_path / "wrong_sheet.xlsx")
+        wb.save(path)
+
+        csv_file = nh.read_xlsx(path)
+        yml_dict = {
+            "metadata": [
+                {
+                    "column": "Site.name",
+                    "neotoma": "ndb.sites.sitename",
+                    "sheet": "SiteMeta",
+                    "rowwise": False,
+                    "type": "string",
+                }
+            ]
+        }
+        result = nh.pull_params(["sitename"], yml_dict, csv_file, "ndb.sites")
+        assert result.get("sitename") is None
+
+    def test_pull_params_csv_list_ignores_sheet_field(self):
+        """A plain list csv_file (CSV path) still works when YAML has a sheet field."""
+        csv_file = [{"Site.name": "PlainCSVLake"}]
+        yml_dict = {
+            "metadata": [
+                {
+                    "column": "Site.name",
+                    "neotoma": "ndb.sites.sitename",
+                    "sheet": "SomSheet",
+                    "rowwise": False,
+                    "type": "string",
+                }
+            ]
+        }
+        result = nh.pull_params(["sitename"], yml_dict, csv_file, "ndb.sites")
+        assert result.get("sitename") == "PlainCSVLake"
 
 
 class TestToyData:

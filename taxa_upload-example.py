@@ -15,17 +15,20 @@ A second time with the --upload flag set to True to upload the new taxa to the d
 
 Run with uv
 Example usage:
-    uv run taxa_upload.py --template='data/chiro/template.yml' --data='data/chiro/list_v2.csv' --upload False
-    uv run taxa_upload.py --template='data/chiro/template.yml' --data='data/chiro/list_v2.csv' --upload True
+    uv run taxa_upload-example.py --template='data/chiro/template.yml' --data='data/chiro/list_v2.csv' --upload False
+    uv run taxa_upload-example.py --template='data/chiro/template.yml' --data='data/chiro/list_v2.csv' --upload True
 """
 
 args = nh.parse_arguments()
 load_dotenv()
-connection = json.loads(os.getenv("PGDB_TANK"))
+connection = json.loads(os.getenv("PGDB_LOCAL"))
 
-# Load YAML template and CSV files
+# Load YAML template and CSV/XLSX file
 yml_dict = nh.template_to_dict(temp_file=args["template"])
-csv_file = nh.read_csv(args["data"])
+if args["data"].endswith(".xlsx"):
+    csv_file = nh.read_xlsx(args["data"])
+else:
+    csv_file = nh.read_csv(args["data"])
 
 # Connect to the PostgreSQL database using psycopg2
 conn = psycopg2.connect(**connection, connect_timeout=5)

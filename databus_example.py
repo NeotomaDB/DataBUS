@@ -34,8 +34,8 @@ args = nh.parse_arguments()
 load_dotenv()
 connection = json.loads(os.getenv("PGDB_TANK"))
 
-# Load YAML template and CSV files
-filenames = glob.glob(args["data"] + "*.csv")
+# Load YAML template and CSV/XLSX files
+filenames = glob.glob(args["data"] + "*.csv") + glob.glob(args["data"] + "*.xlsx")
 yml_dict = nh.template_to_dict(temp_file=args["template"])
 
 # Connect to the PostgreSQL database using psycopg2
@@ -50,7 +50,10 @@ for filename in tqdm(filenames, desc="Files", unit="file"):
     logfile = []
     databus = {}
 
-    csv_file = nh.read_csv(filename)
+    if filename.endswith(".xlsx"):
+        csv_file = nh.read_xlsx(filename)
+    else:
+        csv_file = nh.read_csv(filename)
     hashcheck = nh.hash_file(filename)
     filecheck = nh.check_file(filename, validation_files="data/")
 

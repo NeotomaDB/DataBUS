@@ -147,10 +147,9 @@ def valid_collunit(cur, yml_dict, csv_file, databus=None):
         response.message.append(f"{i}")
     required = nh.pull_required(CU_PARAMS, yml_dict, table="ndb.collectionunits")
     required_k = [key for key, value in required.items() if value]
-    csv_nonempty_fields = [key for key, value in inputs.items() if value not in (None, "NA")]
     found_keywords = {
         keyword
-        for keyword in required_k + csv_nonempty_fields
+        for keyword in required_k
         if any(re.search(rf"CSV\s+\b{re.escape(keyword)}\b", text) for text in diff)
     }
     found_keywords.discard("geog")
