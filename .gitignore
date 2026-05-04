@@ -20,5 +20,6 @@ playground_results.yml
 # Eventually Add:
 .github/workflows/release.yml
 
+# Dont add all the trial uploads for different groups
 *.py
 *.md
