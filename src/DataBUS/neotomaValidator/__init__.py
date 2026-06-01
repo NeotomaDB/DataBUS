@@ -37,6 +37,7 @@ from .valid_pbmodel import valid_pbmodel
 from .valid_publication import valid_publication
 from .valid_sample import valid_sample
 from .valid_sample_age import valid_sample_age
+from .valid_sequence import valid_sequence
 from .valid_site import valid_site
 from .valid_speleothem import valid_speleothem
 from .valid_uth_series import valid_uth_series

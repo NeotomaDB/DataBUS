@@ -4,11 +4,16 @@ import logging
 import openpyxl
 
 
-def read_xlsx(filename):
+def read_xlsx(filename, num_headers=1):
     """Read an Excel file and return a dict mapping sheet names to rows.
 
-    Each sheet is parsed into a list of dictionaries using the first row as
-    column headers. Sheets with no data rows are included as empty lists.
+    Each sheet is parsed into a list of dictionaries using the header row(s)
+    as column names. When ``num_headers >= 2``, sheets whose second row
+    contains at least one ``None`` value are treated as having multi-row
+    headers: the first two rows are joined with ``_`` to form combined
+    column names (e.g. ``TaxonName`` + ``ASV1`` → ``TaxonName_ASV1``).
+    Sheets where the second row has no ``None`` values are assumed to have
+    a single header row (the second row is treated as data).
 
     Examples:
         >>> read_xlsx('data.xlsx')  # doctest: +SKIP
@@ -16,6 +21,9 @@ def read_xlsx(filename):
 
     Args:
         filename (str): Path to the .xlsx file to read.
+        num_headers (int): Number of header rows declared in the template.
+            When >= 2, multi-row header combining is attempted per sheet.
+            Defaults to 1.
 
     Returns:
         dict: Mapping of sheet name (str) to list of row dicts.
@@ -36,12 +44,43 @@ def read_xlsx(filename):
         if not rows:
             result[sheet_name] = []
             continue
-        headers = [str(h) if h is not None else f"col_{i}" for i, h in enumerate(rows[0])]
+        if num_headers >= 2 and len(rows) >= 2 and any(v is None for v in rows[1]):
+            headers = _combine_header_rows(rows[0], rows[1])
+            data_start = num_headers
+        else:
+            headers = [str(h) if h is not None else f"col_{i}" for i, h in enumerate(rows[0])]
+            data_start = 1
         result[sheet_name] = [
-            dict(zip(headers, row, strict=False)) for row in rows[1:] if any(v is not None for v in row)
+            dict(zip(headers, row, strict=False))
+            for row in rows[data_start:]
+            if any(v is not None for v in row)
         ]
     wb.close()
     return result
+
+
+def _combine_header_rows(row0, row1):
+    """Combine two header rows into a single list of column names.
+
+    For columns where row1 is ``None`` or empty, uses row0 alone.
+    For columns where both rows have values, joins them with ``_``.
+
+    Args:
+        row0 (tuple): First header row values.
+        row1 (tuple): Second header row values.
+
+    Returns:
+        list[str]: Combined column names.
+    """
+    headers = []
+    for i, (h0, h1) in enumerate(zip(row0, row1, strict=False)):
+        if h0 is None:
+            headers.append(f"col_{i}")
+        elif h1 is None or str(h1).strip() == "":
+            headers.append(str(h0))
+        else:
+            headers.append(f"{h0}_{h1}")
+    return headers
 
 
 def read_csv(filename):

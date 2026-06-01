@@ -68,7 +68,10 @@ def valid_data(cur, yml_dict, csv_file, databus=None):
     else:
         data = {k: v for k, v in inputs2.items() if v is not None}
         for key in inputs:
-            data[key]["taxonid"] = [key] * len(inputs[key]["value"])
+            # For compound keys (taxonname::asv), extract the real taxon name
+            real_taxon = key.split("::")[0] if "::" in key else key
+            data[key]["_entry_key"] = [key] * len(inputs[key]["value"])
+            data[key]["taxonid"] = [real_taxon] * len(inputs[key]["value"])
             data[key]["value"] = inputs[key]["value"]
             if sampleids:
                 data[key]["sampleid"] = sampleids
@@ -95,7 +98,8 @@ def valid_data(cur, yml_dict, csv_file, databus=None):
     response.id_dict = {}
     for datum in zip(*data.values(), strict=False):
         datum = dict(zip(list(data.keys()), datum, strict=False))
-        txname = datum.get("taxonid")
+        entry_key = datum.pop("_entry_key", None)
+        txname = entry_key if entry_key else datum.get("taxonid")
         if txname not in response.id_dict:
             response.id_dict[txname] = []
         for param, (query, key) in par.items():

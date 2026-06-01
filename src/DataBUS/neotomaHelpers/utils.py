@@ -62,6 +62,7 @@ def _convert_coordinates(value):
 
 def _convert_bool(value, is_rowwise):
     """Convert strings to booleans, treating 'true'/'false'/'1'/'0' case-insensitively."""
+
     def _to_bool(v):
         if v is None:
             return None
@@ -180,6 +181,10 @@ def add_chronology_entry(add_unit_inputs, value_meta, clean_value, table, i):
 def add_taxon_entry(add_unit_inputs, value_meta, clean_value):
     """Add entry to taxa hierarchy with optional unit and uncertainty info.
 
+    For aeDNA entries that carry an ``asv`` field, uses a compound key
+    (``taxonname::asv``) so that the same taxon with different ASVs
+    produces distinct entries instead of overwriting each other.
+
     Args:
         add_unit_inputs (dict): Accumulator dictionary.
         value_meta (dict): Metadata entry containing taxonname.
@@ -190,11 +195,13 @@ def add_taxon_entry(add_unit_inputs, value_meta, clean_value):
     taxon_name = value_meta["taxonname"]
     # retrieve the last word after the last `.` neotoma: ndb.variables.variableunitsid -> variableunitsid
     key = value_meta["neotoma"].split(".")[-1]
-    if taxon_name not in add_unit_inputs:
-        add_unit_inputs[taxon_name] = {}
-    add_unit_inputs[taxon_name][key] = clean_value
+    asv = value_meta.get("asv")
+    entry_key = f"{taxon_name}::{asv}" if asv else taxon_name
+    if entry_key not in add_unit_inputs:
+        add_unit_inputs[entry_key] = {}
+    add_unit_inputs[entry_key][key] = clean_value
     if "uncertaintybasisid" in value_meta:
-        add_unit_inputs[taxon_name]["uncertaintybasisid"] = value_meta["uncertaintybasisid"]
+        add_unit_inputs[entry_key]["uncertaintybasisid"] = value_meta["uncertaintybasisid"]
 
 
 def finalize_output(add_unit_inputs):
