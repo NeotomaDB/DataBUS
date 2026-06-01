@@ -63,8 +63,8 @@ def valid_chronologies(cur, yml_dict, csv_file, databus=None):
 
     for chron_key in inputs:
         ch = inputs[chron_key]
-        ch["agetypeid"] = ch.get('agetypeid', agetype)
-        ch["contactid"] = ch.get('contactid', author)
+        ch["agetypeid"] = ch.get("agetypeid", agetype)
+        ch["contactid"] = ch.get("contactid", author)
         if ch.get("chronologyname") is None:
             ch["chronologyname"] = chron_key
         if ch.get("agetypeid") is not None and isinstance(ch["agetypeid"], str):
