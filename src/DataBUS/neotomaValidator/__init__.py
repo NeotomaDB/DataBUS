@@ -34,6 +34,7 @@ from .valid_geochroncontrol import valid_geochroncontrol
 from .valid_geopolitical_units import valid_geopolitical_units
 from .valid_hiatus import valid_hiatus
 from .valid_pbmodel import valid_pbmodel
+from .valid_project import valid_project
 from .valid_publication import valid_publication
 from .valid_sample import valid_sample
 from .valid_sample_age import valid_sample_age
