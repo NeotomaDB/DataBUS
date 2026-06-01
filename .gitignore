@@ -21,5 +21,6 @@ playground_results.yml
 .github/workflows/release.yml
 
 # Dont add all the trial uploads for different groups
-*.py
+aedna_databus.py
 *.md
+tasks/
