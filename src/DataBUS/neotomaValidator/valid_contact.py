@@ -96,9 +96,7 @@ def valid_contact(cur, yml_dict, csv_file, tables=CONTACT_TABLES, databus=None):
                             )
                             response.valid.append(False)
         else:
-            counter = 0
-            for contact_id in inputs[key]["contactid"]:
-                counter += 1
+            for counter, contact_id in enumerate(inputs[key]["contactid"], start=1):
                 try:
                     contact = Contact(contactid=contact_id, order=counter)
                     response.message.append(f"✓ Valid contact ID: {contact_id} for {key}.")
