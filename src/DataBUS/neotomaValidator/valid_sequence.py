@@ -27,14 +27,12 @@ def valid_sequence(cur, yml_dict, csv_file, databus=None):
     """
     response = Response()
 
-    # ── 1. Extract DNA metadata from the template ────────────────────────
     dna_entries = _extract_dna_entries(yml_dict)
     if not dna_entries:
         response.message.append("? No aeDNA sequence entries found in template.")
         response.valid.append(True)
         return response
 
-    # ── 2. Extract model info from the template ──────────────────────────
     model_name, superseeds_list = _extract_model_info(yml_dict)
     if model_name is None:
         response.message.append(
@@ -42,7 +40,6 @@ def valid_sequence(cur, yml_dict, csv_file, databus=None):
             "Sequences will be inserted without model records."
         )
 
-    # ── 3. Get datasetid from the prior valid_dataset step ────────────────
     try:
         datasetid = databus["datasets"].id_int
     except Exception as e:
@@ -50,7 +47,6 @@ def valid_sequence(cur, yml_dict, csv_file, databus=None):
         response.message.append(f"✗ Dataset ID not available from valid_dataset: {e}")
         return response
 
-    # ── 4. Get data IDs from the prior valid_data step ───────────────────
     try:
         data_ids = databus["data"].id_dict
     except Exception as e:
@@ -58,7 +54,6 @@ def valid_sequence(cur, yml_dict, csv_file, databus=None):
         response.message.append(f"✗ Data IDs not available from valid_data: {e}")
         return response
 
-    # ── 5. Build mapping from id_dict keys to DNA metadata ───────────────
     key_to_dna = _build_key_to_dna_map(dna_entries, data_ids)
 
     if not key_to_dna:
@@ -69,7 +64,6 @@ def valid_sequence(cur, yml_dict, csv_file, databus=None):
         response.valid.append(True)
         return response
 
-    # ── 6. Iterate and insert ────────────────────────────────────────────
     taxonid_query = """
         SELECT v.taxonid
         FROM ndb.data d
@@ -87,7 +81,6 @@ def valid_sequence(cur, yml_dict, csv_file, databus=None):
         dnasequence = dna_info["dnasequence"]
         asv = dna_info["asv"]
 
-        # ── 6a. Insert one row into ndb.sequences per unique entry ────
         try:
             seq = Sequence(datasetid=datasetid, sequence=dnasequence, asv=asv)
             response.valid.append(True)
@@ -108,7 +101,6 @@ def valid_sequence(cur, yml_dict, csv_file, databus=None):
                 response.message.append(f"✗ Sequence cannot be inserted: {e}")
             continue
 
-        # ── 6b. Insert ndb.sequencedata rows for each dataid ──────────
         for dataid in dataid_list:
             try:
                 sd = SequenceData(dataid=dataid, sequenceid=sequenceid)
@@ -119,7 +111,6 @@ def valid_sequence(cur, yml_dict, csv_file, databus=None):
                 if f"✗ SequenceData cannot be inserted: {e}" not in response.message:
                     response.message.append(f"✗ SequenceData cannot be inserted: {e}")
 
-        # ── 6c. Look up taxonid from the first dataid ─────────────────
         if model_name is None:
             response.id_dict[entry_key] = {"sequenceid": sequenceid, "modelid": None}
             continue
@@ -143,7 +134,6 @@ def valid_sequence(cur, yml_dict, csv_file, databus=None):
             response.id_dict[entry_key] = {"sequenceid": sequenceid, "modelid": None}
             continue
 
-        # ── 6d. Insert into ndb.aednamodels ───────────────────────────
         try:
             aedna = AeDNAModel(
                 sequenceid=sequenceid,
@@ -170,7 +160,6 @@ def valid_sequence(cur, yml_dict, csv_file, databus=None):
             response.id_dict[entry_key] = {"sequenceid": sequenceid, "modelid": None}
             continue
 
-        # ── 6e. Handle supersession ───────────────────────────────────
         if superseeds_list:
             try:
                 updated = aedna.supersede_previous(cur, superseeds_list)
