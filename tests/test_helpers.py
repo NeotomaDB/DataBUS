@@ -124,6 +124,66 @@ class TestReadXlsx:
         result = nh.read_xlsx(path)
         assert result["Empty"] == []
 
+    def test_read_xlsx_faire_3row_header(self, tmp_path):
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "sampleMetadata"
+        ws.append(["# requirement_level_code", "M", "M"])
+        ws.append(["# section", "Sample", "Location"])
+        ws.append(["samp_name", "SiteName", "decimalLatitude"])
+        ws.append(["WLO17", "West Okoboji Lake", "43.37"])
+        path = str(tmp_path / "faire.xlsx")
+        wb.save(path)
+
+        result = nh.read_xlsx(path, num_headers=2)
+        assert len(result["sampleMetadata"]) == 1
+        assert result["sampleMetadata"][0]["samp_name"] == "WLO17"
+        assert result["sampleMetadata"][0]["SiteName"] == "West Okoboji Lake"
+
+    def test_read_xlsx_faire_3row_header_no_label(self, tmp_path):
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "taxaRaw"
+        ws.append(["M", "HR", "O"])
+        ws.append(["OTU", "ASV", "Taxonomy"])
+        ws.append(["dna_sequence", "scientificName", "taxonID"])
+        ws.append(["ACGT", "Choricystis limnetica", "123"])
+        path = str(tmp_path / "taxaraw.xlsx")
+        wb.save(path)
+
+        result = nh.read_xlsx(path, num_headers=2)
+        assert result["taxaRaw"][0]["scientificName"] == "Choricystis limnetica"
+
+    def test_read_xlsx_stacked_taxon_header_skips_sequence_row(self, tmp_path):
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "data"
+        ws.append(["sitename", "SampleName", "Taxon_A"])
+        ws.append([None, None, "ASV1"])
+        ws.append([None, None, "ACGTACGT"])
+        ws.append(["Lake X", "S1", 3860])
+        ws.append(["Lake X", "S2", 122])
+        path = str(tmp_path / "stacked.xlsx")
+        wb.save(path)
+
+        result = nh.read_xlsx(path, num_headers=2)
+        assert len(result["data"]) == 2
+        assert result["data"][0]["Taxon_A_ASV1"] == 3860
+        assert result["data"][0]["sitename"] == "Lake X"
+
+    def test_read_xlsx_flat_header_unaffected(self, tmp_path):
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "ageModels"
+        ws.append(["PlotDepth(cm)", "AgeModel", "AgeType"])
+        ws.append(["0.5", "CRS", "Calendar"])
+        path = str(tmp_path / "flat.xlsx")
+        wb.save(path)
+
+        result = nh.read_xlsx(path, num_headers=2)
+        assert len(result["ageModels"]) == 1
+        assert result["ageModels"][0]["PlotDepth(cm)"] == "0.5"
+
 
 class TestPullParamsWithSheet:
     def test_pull_params_sheet_selection(self, tmp_path):
