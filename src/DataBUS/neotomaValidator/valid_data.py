@@ -68,6 +68,8 @@ def valid_data(cur, yml_dict, csv_file, databus=None):
     else:
         data = {k: v for k, v in inputs2.items() if v is not None}
         for key in inputs:
+            if inputs[key] is None:  # base-param placeholder from pull_params
+                continue
             # For compound keys (taxonname::asv), extract the real taxon name
             real_taxon = key.split("::")[0] if "::" in key else key
             data[key]["_entry_key"] = [key] * len(inputs[key]["value"])
