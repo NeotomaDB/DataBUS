@@ -60,8 +60,19 @@ def _convert_coordinates(value):
     return [float(num) for num in value[0].split(",")]
 
 
-def _convert_bool(value, is_rowwise):
-    """Convert strings to booleans, treating 'true'/'false'/'1'/'0' case-insensitively."""
+def convert_to_bool(value, is_rowwise=False):
+    """Convert strings to booleans, treating 'true'/'1'/'yes' case-insensitively.
+
+    ``None`` is passed through as ``None`` so callers can tell "not recorded"
+    apart from "recorded as false".
+
+    Args:
+        value: A single value, or a list of them when ``is_rowwise`` is True.
+        is_rowwise (bool): Whether ``value`` is a per-row list.
+
+    Returns:
+        bool | None | list: The converted value(s).
+    """
 
     def _to_bool(v):
         if v is None:
@@ -71,6 +82,10 @@ def _convert_bool(value, is_rowwise):
         return str(v).strip().lower() in ("true", "1", "yes")
 
     return [_to_bool(v) for v in value] if is_rowwise else _to_bool(value)
+
+
+# Retained for the type-dispatch table in convert_value_by_type.
+_convert_bool = convert_to_bool
 
 
 def _convert_string(value, is_rowwise):
@@ -356,6 +371,13 @@ def validate_int_values(value, name: str) -> int | None:
     if value is not None and not isinstance(value, (int, float)):
         raise ValueError(f"✗ {name} must be an integer or None.")
     return int(value) if value is not None else None
+
+
+def validate_str_values(value, name: str) -> str | None:
+    """Validates that a value is a str or None, returning it unchanged."""
+    if value is not None and not isinstance(value, str):
+        raise TypeError(f"✗ {name} must be a string or None.")
+    return value
 
 
 def validate_date_values(value, name: str) -> datetime.date | None:

@@ -132,6 +132,7 @@ def valid_project(cur, yml_dict, csv_file, databus=None):
             try:
                 insert_project_participant(cur, projectid, contactid)
                 response.valid.append(True)
+                response.message.append(f"✔ Participant '{name}' linked (contactid {contactid}).")
             except Exception as e:
                 response.message.append(f"? Could not add participant '{name}': {e}")
         else:
@@ -260,15 +261,22 @@ def _extract_contact_institutions(yml_dict):
 
 
 def _resolve_contact(cur, name):
-    """Look up a contactid by name. Returns int or None."""
+    """Look up a contactid via the same strategy as PI lookup (nh.get_contacts).
+
+    Falls back to reordering a "Given [M.] Surname" string into Neotoma's
+    "Surname, Given" convention when the first lookup misses.
+    """
     if not name:
         return None
-    cur.execute(
-        "SELECT contactid FROM ndb.contacts WHERE LOWER(contactname) = %(name)s;",
-        {"name": name.lower().strip()},
-    )
-    result = cur.fetchone()
-    return result[0] if result else None
+    from DataBUS.neotomaHelpers.get_contacts import get_contacts
+
+    name = name.strip()
+    contact = get_contacts(cur, name)
+    if contact.get("id") is None and "," not in name:
+        parts = name.split()
+        if len(parts) >= 2:
+            contact = get_contacts(cur, f"{parts[-1]}, {parts[0]}")
+    return contact.get("id")
 
 
 def _resolve_keyword(cur, keyword):

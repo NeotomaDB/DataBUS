@@ -26,6 +26,8 @@ class Response:
         id_dict (dict): Mapping of data identifiers.
         name (dict): Name mapping dictionary.
         indices (list): List of indices.
+        matched (dict): Name/location match flags from close-record searches.
+        doublematched (bool): True when both name and location matched.
     """
 
     def __init__(self):
@@ -40,6 +42,8 @@ class Response:
         self.name = {}
         self.indices = []
         self.counter = 0
+        self.matched = {}
+        self.doublematched = False
 
     @property
     def validAll(self):

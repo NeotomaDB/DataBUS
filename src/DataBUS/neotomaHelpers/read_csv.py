@@ -8,12 +8,14 @@ def read_xlsx(filename, num_headers=1):
     """Read an Excel file and return a dict mapping sheet names to rows.
 
     Each sheet is parsed into a list of dictionaries using the header row(s)
-    as column names. When ``num_headers >= 2``, sheets whose second row
-    contains at least one ``None`` value are treated as having multi-row
-    headers: the first two rows are joined with ``_`` to form combined
-    column names (e.g. ``TaxonName`` + ``ASV1`` → ``TaxonName_ASV1``).
-    Sheets where the second row has no ``None`` values are assumed to have
-    a single header row (the second row is treated as data).
+    as column names. FAIRe sheets (3-row header: requirement level, section,
+    ``term_name``) are detected per sheet and read from the ``term_name`` row.
+    Otherwise, when ``num_headers >= 2``, sheets whose second row contains at
+    least one ``None`` value are treated as having multi-row headers: the first
+    two rows are joined with ``_`` to form combined column names (e.g.
+    ``TaxonName`` + ``ASV1`` → ``TaxonName_ASV1``). Sheets where the second row
+    has no ``None`` values are assumed to have a single header row (the second
+    row is treated as data).
 
     Examples:
         >>> read_xlsx('data.xlsx')  # doctest: +SKIP
@@ -44,11 +46,14 @@ def read_xlsx(filename, num_headers=1):
         if not rows:
             result[sheet_name] = []
             continue
-        if num_headers >= 2 and len(rows) >= 2 and any(v is None for v in rows[1]):
+        if _is_faire_header(rows):
+            headers = _single_header(rows[2])
+            data_start = 3
+        elif num_headers >= 2 and len(rows) >= 2 and any(v is None for v in rows[1]):
             headers = _combine_header_rows(rows[0], rows[1])
-            data_start = num_headers
+            data_start = _stacked_data_start(rows)
         else:
-            headers = [str(h) if h is not None else f"col_{i}" for i, h in enumerate(rows[0])]
+            headers = _single_header(rows[0])
             data_start = 1
         result[sheet_name] = [
             dict(zip(headers, row, strict=False))
@@ -81,6 +86,46 @@ def _combine_header_rows(row0, row1):
         else:
             headers.append(f"{h0}_{h1}")
     return headers
+
+
+def _single_header(row):
+    """Turn one header row into column names, filling blanks with ``col_<i>``."""
+    return _combine_header_rows(row, [None] * len(row))
+
+
+def _stacked_data_start(rows):
+    """First data-row index for a stacked taxon header (name / ASV / sequence).
+
+    Sub-header rows only populate the taxon columns — the same positions that
+    are ``None`` in row 1. The first row that also fills a non-taxon column is
+    the first data row. Falls back to ``len(rows)`` when none qualifies.
+    """
+    sparse = [i for i, v in enumerate(rows[1]) if v is None]
+    for idx in range(1, len(rows)):
+        if not all(rows[idx][i] is None for i in sparse):
+            return idx
+    return len(rows)
+
+
+_FAIRE_LEVELS = {"m", "o", "r", "hr"}
+
+
+def _is_faire_header(rows):
+    """Detect a 3-row FAIRe header (requirement level / section / term_name).
+
+    True when the sheet has at least three rows and the first row is a row of
+    FAIRe requirement-level codes (``M``/``O``/``R``/``HR``), optionally led by
+    the ``requirement_level_code`` label cell. The real column names then live
+    on the third row (``term_name``).
+    """
+    if len(rows) < 3:
+        return False
+    values = [str(v).strip() for v in rows[0] if v is not None]
+    if not values:
+        return False
+    if values[0].lstrip("# ").lower() == "requirement_level_code":
+        values = values[1:]
+    return bool(values) and all(v.lstrip("# ").lower() in _FAIRE_LEVELS for v in values)
 
 
 def read_csv(filename):

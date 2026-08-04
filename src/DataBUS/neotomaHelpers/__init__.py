@@ -18,5 +18,5 @@ from .pull_required import pull_required
 from .read_csv import read_csv, read_xlsx
 from .safe_step import safe_step
 from .template_to_dict import template_to_dict
-from .utils import convert_to_bp, retrieve_dict
+from .utils import convert_to_bool, convert_to_bp, retrieve_dict
 from .write_csv import write_csv

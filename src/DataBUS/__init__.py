@@ -16,6 +16,10 @@ import itertools
 import logging
 import os
 
+from .AeDNAAssay import AeDNAAssay
+from .AeDNAEntity import AeDNAEntity
+from .AeDNALibrary import AeDNALibrary
+from .AeDNAModel import AeDNAModel
 from .AnalysisUnit import AnalysisUnit
 from .ChronControl import ChronControl
 from .Chronology import Chronology
@@ -30,9 +34,12 @@ from .GeochronControl import GeochronControl
 from .Geog import Geog, WrongCoordinates
 from .Hiatus import Hiatus
 from .LeadModel import LeadModel
+from .Project import Grant, Institution, Project
 from .Response import Response
 from .Sample import Sample
 from .SampleAge import SampleAge
+from .Sequence import Sequence
+from .SequenceData import SequenceData
 from .Site import Site
 from .Speleothem import ExternalSpeleothem, Speleothem
 from .UThSeries import UThSeries, insert_uraniumseriesdata

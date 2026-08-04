@@ -124,6 +124,66 @@ class TestReadXlsx:
         result = nh.read_xlsx(path)
         assert result["Empty"] == []
 
+    def test_read_xlsx_faire_3row_header(self, tmp_path):
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "sampleMetadata"
+        ws.append(["# requirement_level_code", "M", "M"])
+        ws.append(["# section", "Sample", "Location"])
+        ws.append(["samp_name", "SiteName", "decimalLatitude"])
+        ws.append(["WLO17", "West Okoboji Lake", "43.37"])
+        path = str(tmp_path / "faire.xlsx")
+        wb.save(path)
+
+        result = nh.read_xlsx(path, num_headers=2)
+        assert len(result["sampleMetadata"]) == 1
+        assert result["sampleMetadata"][0]["samp_name"] == "WLO17"
+        assert result["sampleMetadata"][0]["SiteName"] == "West Okoboji Lake"
+
+    def test_read_xlsx_faire_3row_header_no_label(self, tmp_path):
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "taxaRaw"
+        ws.append(["M", "HR", "O"])
+        ws.append(["OTU", "ASV", "Taxonomy"])
+        ws.append(["dna_sequence", "scientificName", "taxonID"])
+        ws.append(["ACGT", "Choricystis limnetica", "123"])
+        path = str(tmp_path / "taxaraw.xlsx")
+        wb.save(path)
+
+        result = nh.read_xlsx(path, num_headers=2)
+        assert result["taxaRaw"][0]["scientificName"] == "Choricystis limnetica"
+
+    def test_read_xlsx_stacked_taxon_header_skips_sequence_row(self, tmp_path):
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "data"
+        ws.append(["sitename", "SampleName", "Taxon_A"])
+        ws.append([None, None, "ASV1"])
+        ws.append([None, None, "ACGTACGT"])
+        ws.append(["Lake X", "S1", 3860])
+        ws.append(["Lake X", "S2", 122])
+        path = str(tmp_path / "stacked.xlsx")
+        wb.save(path)
+
+        result = nh.read_xlsx(path, num_headers=2)
+        assert len(result["data"]) == 2
+        assert result["data"][0]["Taxon_A_ASV1"] == 3860
+        assert result["data"][0]["sitename"] == "Lake X"
+
+    def test_read_xlsx_flat_header_unaffected(self, tmp_path):
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "ageModels"
+        ws.append(["PlotDepth(cm)", "AgeModel", "AgeType"])
+        ws.append(["0.5", "CRS", "Calendar"])
+        path = str(tmp_path / "flat.xlsx")
+        wb.save(path)
+
+        result = nh.read_xlsx(path, num_headers=2)
+        assert len(result["ageModels"]) == 1
+        assert result["ageModels"][0]["PlotDepth(cm)"] == "0.5"
+
 
 class TestPullParamsWithSheet:
     def test_pull_params_sheet_selection(self, tmp_path):
@@ -192,6 +252,71 @@ class TestPullParamsWithSheet:
         }
         result = nh.pull_params(["sitename"], yml_dict, csv_file, "ndb.sites")
         assert result.get("sitename") == "PlainCSVLake"
+
+
+class TestPullParamsValueConstants:
+    """`value:` constants stand in for columns that are not in the data.
+
+    Sheets whose header is not machine-readable (projectMetadata in the FAIRe
+    workbook, for one) cannot be pulled by column, so their entries carry the
+    datum inline as `value:`. That fallback applies only when the column is
+    absent outright — a column that exists but is blank must stay blank rather
+    than quietly picking up the constant.
+    """
+
+    def _yml(self, **extra):
+        entry = {
+            "column": "PrincipalInvestigator",
+            "neotoma": "ndb.datasetpis.contactname",
+            "rowwise": False,
+            "type": "string",
+        }
+        entry.update(extra)
+        return {"metadata": [entry]}
+
+    def test_constant_used_when_column_is_absent(self):
+        csv_file = [{"SomeOtherColumn": "x"}]
+        result = nh.pull_params(
+            ["contactname"], self._yml(value="Spanbauer, Trisha"), csv_file, "ndb.datasetpis"
+        )
+        assert result.get("contactname") == ["Spanbauer, Trisha"]
+
+    def test_constant_used_when_csv_is_a_sheet_dict(self):
+        """No `sheet:` key means template_rows is the whole sheet dict, not rows."""
+        csv_file = {"data": [{"SomeOtherColumn": "x"}]}
+        result = nh.pull_params(
+            ["contactname"], self._yml(value="Spanbauer, Trisha"), csv_file, "ndb.datasetpis"
+        )
+        assert result.get("contactname") == ["Spanbauer, Trisha"]
+
+    def test_piped_constant_is_split_into_several_contacts(self):
+        csv_file = [{"SomeOtherColumn": "x"}]
+        result = nh.pull_params(
+            ["contactname"],
+            self._yml(value="Spanbauer, Trisha | Goring, Simon"),
+            csv_file,
+            "ndb.datasetpis",
+        )
+        assert result.get("contactname") == ["Spanbauer, Trisha", "Goring, Simon"]
+
+    def test_absent_column_without_a_constant_stays_none(self):
+        csv_file = [{"SomeOtherColumn": "x"}]
+        result = nh.pull_params(["contactname"], self._yml(), csv_file, "ndb.datasetpis")
+        assert result.get("contactname") is None
+
+    def test_present_column_wins_over_the_constant(self):
+        csv_file = [{"PrincipalInvestigator": "Goring, Simon"}]
+        result = nh.pull_params(
+            ["contactname"], self._yml(value="Spanbauer, Trisha"), csv_file, "ndb.datasetpis"
+        )
+        assert result.get("contactname") == ["Goring, Simon"]
+
+    def test_blank_column_does_not_fall_back_to_the_constant(self):
+        csv_file = [{"PrincipalInvestigator": ""}]
+        result = nh.pull_params(
+            ["contactname"], self._yml(value="Spanbauer, Trisha"), csv_file, "ndb.datasetpis"
+        )
+        assert result.get("contactname") is None
 
 
 class TestToyData:

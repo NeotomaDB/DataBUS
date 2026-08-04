@@ -1,6 +1,13 @@
 from .neotomaHelpers.utils import validate_int_values
 
-AEDNAMODEL_PARAMS = ["sequenceid", "taxonid", "model"]
+AEDNAMODEL_PARAMS = [
+    "sequenceid",
+    "taxonid",
+    "model",
+    "supersededbymodelid",
+    "publicationid",
+    "notes",
+]
 
 
 class AeDNAModel:
@@ -75,21 +82,21 @@ class AeDNAModel:
         self.modelid = cur.fetchone()[0]
         return self.modelid
 
-    def supersede_previous(self, cur, superseeds_list):
+    def supersede_previous(self, cur, supersedes_list):
         """Mark older aeDNA model entries as superseded by this model.
 
-        For each model name in superseeds_list, finds existing aednamodels rows
+        For each model name in supersedes_list, finds existing aednamodels rows
         that share this taxonid and that model name, then sets their
         supersededbymodelid to this model's modelid.
 
         Args:
             cur (psycopg2.cursor): Database cursor for executing queries.
-            superseeds_list (list[str]): Model names that this model supersedes.
+            supersedes_list (list[str]): Model names that this model supersedes.
 
         Returns:
             int: Total number of rows updated.
         """
-        if not superseeds_list or self.modelid is None:
+        if not supersedes_list or self.modelid is None:
             return 0
         update_q = """
             UPDATE ndb.aednamodels
@@ -100,7 +107,7 @@ class AeDNAModel:
               AND modelid != %(new_modelid)s;
         """
         total_updated = 0
-        for old_model in superseeds_list:
+        for old_model in supersedes_list:
             cur.execute(
                 update_q,
                 {

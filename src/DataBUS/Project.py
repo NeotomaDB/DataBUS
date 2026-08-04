@@ -7,6 +7,10 @@ PROJECT_PARAMS = [
     "projectenddate",
 ]
 
+GRANT_PARAMS = ["grantname", "grantnumber", "dateawarded", "dateended"]
+
+INSTITUTION_PARAMS = ["institutionid", "institutionname", "institutionlocation"]
+
 
 class Project:
     """A research project record in the Neotoma database.
@@ -50,7 +54,7 @@ class Project:
         Returns:
             int: The projectid assigned by the database.
         """
-        q = """
+        project_q = """
             INSERT INTO ndb.projects
                 (parentprojectid, projectname, projectdescription,
                  projectstartdate, projectenddate)
@@ -66,7 +70,7 @@ class Project:
             "projectstartdate": self.projectstartdate,
             "projectenddate": self.projectenddate,
         }
-        cur.execute(q, inputs)
+        cur.execute(project_q, inputs)
         self.projectid = cur.fetchone()[0]
         return self.projectid
 
@@ -113,7 +117,7 @@ class Grant:
         Returns:
             int: The grantid assigned by the database.
         """
-        q = """
+        grant_q = """
             INSERT INTO ndb.grants (grantname, grantnumber, dateawarded, dateended)
             VALUES (%(grantname)s, %(grantnumber)s, %(dateawarded)s, %(dateended)s)
             RETURNING grantid;
@@ -124,7 +128,7 @@ class Grant:
             "dateawarded": self.dateawarded,
             "dateended": self.dateended,
         }
-        cur.execute(q, inputs)
+        cur.execute(grant_q, inputs)
         self.grantid = cur.fetchone()[0]
         return self.grantid
 
@@ -175,7 +179,7 @@ class Institution:
         Returns:
             str: The institutionid.
         """
-        q = """
+        institution_q = """
             INSERT INTO ndb.institutions (institutionid, institutionname, institutionlocation)
             VALUES (%(institutionid)s, %(institutionname)s, %(institutionlocation)s)
             ON CONFLICT (institutionid) DO UPDATE
@@ -188,15 +192,12 @@ class Institution:
             "institutionname": self.institutionname,
             "institutionlocation": self.institutionlocation,
         }
-        cur.execute(q, inputs)
+        cur.execute(institution_q, inputs)
         self.institutionid = cur.fetchone()[0]
         return self.institutionid
 
     def __str__(self):
         return f"Institution(institutionid={self.institutionid}, name={self.institutionname})"
-
-
-# ── Junction table helpers ────────────────────────────────────────────────────
 
 
 def insert_project_dataset(cur, projectid, datasetid):

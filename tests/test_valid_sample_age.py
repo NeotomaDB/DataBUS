@@ -8,6 +8,60 @@ import DataBUS.neotomaValidator as nv
 from DataBUS import Response
 
 
+class TestChronologyScalarBroadcast:
+    """A chronology-wide scalar must not truncate the per-sample age rows.
+
+    ``agemodel`` is pulled once for the whole chronology while ages are pulled
+    per sample. Wrapping the scalar in a one-element list made the zip stop after
+    a single row, so a 42-sample dataset landed exactly one sample age.
+    """
+
+    AGES = ["100", "200", "300"]
+
+    @pytest.fixture
+    def crs_pair(self):
+        yml_dict = {
+            "metadata": [
+                {
+                    "column": "Age",
+                    "neotoma": "ndb.sampleages.age",
+                    "rowwise": True,
+                    "type": "float",
+                    "chronologyname": "DefaultChronology",
+                },
+                {
+                    "column": "AgeModel",
+                    "neotoma": "ndb.sampleages.agemodel",
+                    "rowwise": False,
+                    "type": "string",
+                    "chronologyname": "DefaultChronology",
+                },
+            ]
+        }
+        csv_file = [{"Age": a, "AgeModel": "CRS"} for a in self.AGES]
+        return csv_file, yml_dict
+
+    def test_every_sample_gets_an_age(self, mock_cur, crs_pair):
+        csv_file, yml_dict = crs_pair
+        mock_cur.mock_fetchone = (1,)
+        # `name` is a reserved MagicMock constructor kwarg, so it has to be
+        # assigned after construction to become a real attribute.
+        chronologies = MagicMock()
+        chronologies.name = {"DefaultChronology": 5}
+        databus = {
+            "chronologies": chronologies,
+            "samples": MagicMock(id_list=[11, 12, 13]),
+        }
+        nv.valid_sample_age(cur=mock_cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus)
+
+        inserts = [
+            params for q, params in mock_cur._execute_calls if "insertsampleage" in q.lower()
+        ]
+        assert len(inserts) == len(self.AGES)
+        assert {p["sampleid"] for p in inserts} == {11, 12, 13}
+        assert {p["age"] for p in inserts} == {100.0, 200.0, 300.0}
+
+
 class TestValidSampleAgeMock:
     def test_returns_response_no_sample_ages(self, mock_cur):
         result = nv.valid_sample_age(
