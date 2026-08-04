@@ -18,7 +18,9 @@ import os
 import DataBUS.neotomaHelpers
 
 from .insert_final import insert_final
+from .valid_aednalibraries import valid_aednalibraries
 from .valid_analysisunit import valid_analysisunit
+from .valid_assays import valid_assays
 from .valid_chroncontrols import valid_chroncontrols
 from .valid_chronologies import valid_chronologies
 from .valid_collunit import valid_collunit

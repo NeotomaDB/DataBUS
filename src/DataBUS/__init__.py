@@ -16,6 +16,9 @@ import itertools
 import logging
 import os
 
+from .AeDNAAssay import AeDNAAssay
+from .AeDNAEntity import AeDNAEntity
+from .AeDNALibrary import AeDNALibrary
 from .AeDNAModel import AeDNAModel
 from .AnalysisUnit import AnalysisUnit
 from .ChronControl import ChronControl

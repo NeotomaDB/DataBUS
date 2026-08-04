@@ -85,10 +85,10 @@ def valid_speleothem(cur, yml_dict, csv_file, databus=None):
         response.valid.append(True)
         response.message.append("✔ No speleothem parameters provided.")
         return response
-    if inputs.get("monitoring", "").lower() == "yes":
-        inputs["monitoring"] = True
-    else:
-        inputs["monitoring"] = False
+    # pull_params reports an absent column as an explicit None rather than by
+    # omitting the key, so a `.get(..., "")` default would never fire.  Reuse the
+    # shared coercion and collapse the "not recorded" case to False.
+    inputs["monitoring"] = bool(nh.convert_to_bool(inputs.get("monitoring"), is_rowwise=False))
     if isinstance(inputs.get("ref_id"), str):
         inputs["ref_id"] = list(map(int, inputs.get("ref_id", []).split(",")))
     for inp in inputs:
