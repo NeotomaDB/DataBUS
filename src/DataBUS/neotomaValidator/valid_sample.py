@@ -55,6 +55,20 @@ def valid_sample(cur, yml_dict, csv_file, databus):
         response.message.append(f"✗ Error pulling sample parameters: {e}")
         response.valid.append(False)
         return response
+    # The zip below pairs each sample name with an analysis unit purely by
+    # position, and ``strict=False`` makes a length mismatch truncate in silence
+    # — samples go missing and the survivors keep names belonging to other rows.
+    # Refuse to guess when the row counts disagree.
+    row_counts = {k: len(v) for k, v in inputs.items() if isinstance(v, list)}
+    if len(set(row_counts.values())) > 1:
+        response.valid.append(False)
+        response.message.append(
+            "✗ Sample parameters have mismatched row counts: "
+            + ", ".join(f"{k}={n}" for k, n in sorted(row_counts.items()))
+            + ". Every rowwise column must cover the same samples, in the same order."
+        )
+        return response
+
     response.counter = 0
     get_taxonid = """SELECT taxonid FROM ndb.taxa
                      WHERE LOWER(taxonname) %% %(taxonname)s;"""

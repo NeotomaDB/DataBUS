@@ -254,6 +254,71 @@ class TestPullParamsWithSheet:
         assert result.get("sitename") == "PlainCSVLake"
 
 
+class TestPullParamsValueConstants:
+    """`value:` constants stand in for columns that are not in the data.
+
+    Sheets whose header is not machine-readable (projectMetadata in the FAIRe
+    workbook, for one) cannot be pulled by column, so their entries carry the
+    datum inline as `value:`. That fallback applies only when the column is
+    absent outright — a column that exists but is blank must stay blank rather
+    than quietly picking up the constant.
+    """
+
+    def _yml(self, **extra):
+        entry = {
+            "column": "PrincipalInvestigator",
+            "neotoma": "ndb.datasetpis.contactname",
+            "rowwise": False,
+            "type": "string",
+        }
+        entry.update(extra)
+        return {"metadata": [entry]}
+
+    def test_constant_used_when_column_is_absent(self):
+        csv_file = [{"SomeOtherColumn": "x"}]
+        result = nh.pull_params(
+            ["contactname"], self._yml(value="Spanbauer, Trisha"), csv_file, "ndb.datasetpis"
+        )
+        assert result.get("contactname") == ["Spanbauer, Trisha"]
+
+    def test_constant_used_when_csv_is_a_sheet_dict(self):
+        """No `sheet:` key means template_rows is the whole sheet dict, not rows."""
+        csv_file = {"data": [{"SomeOtherColumn": "x"}]}
+        result = nh.pull_params(
+            ["contactname"], self._yml(value="Spanbauer, Trisha"), csv_file, "ndb.datasetpis"
+        )
+        assert result.get("contactname") == ["Spanbauer, Trisha"]
+
+    def test_piped_constant_is_split_into_several_contacts(self):
+        csv_file = [{"SomeOtherColumn": "x"}]
+        result = nh.pull_params(
+            ["contactname"],
+            self._yml(value="Spanbauer, Trisha | Goring, Simon"),
+            csv_file,
+            "ndb.datasetpis",
+        )
+        assert result.get("contactname") == ["Spanbauer, Trisha", "Goring, Simon"]
+
+    def test_absent_column_without_a_constant_stays_none(self):
+        csv_file = [{"SomeOtherColumn": "x"}]
+        result = nh.pull_params(["contactname"], self._yml(), csv_file, "ndb.datasetpis")
+        assert result.get("contactname") is None
+
+    def test_present_column_wins_over_the_constant(self):
+        csv_file = [{"PrincipalInvestigator": "Goring, Simon"}]
+        result = nh.pull_params(
+            ["contactname"], self._yml(value="Spanbauer, Trisha"), csv_file, "ndb.datasetpis"
+        )
+        assert result.get("contactname") == ["Goring, Simon"]
+
+    def test_blank_column_does_not_fall_back_to_the_constant(self):
+        csv_file = [{"PrincipalInvestigator": ""}]
+        result = nh.pull_params(
+            ["contactname"], self._yml(value="Spanbauer, Trisha"), csv_file, "ndb.datasetpis"
+        )
+        assert result.get("contactname") is None
+
+
 class TestToyData:
     """Quick sanity checks that the toy data files are readable."""
 

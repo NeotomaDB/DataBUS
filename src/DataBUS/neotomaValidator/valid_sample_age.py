@@ -62,7 +62,12 @@ def valid_sample_age(cur, yml_dict, csv_file, databus=None):
     for chron in inputs:
         sa = inputs[chron]
         sa["sampleid"] = sample_ids
-        sa = {k: v if isinstance(v, list) else [v] for k, v in sa.items()}
+        # Chronology-wide values (agemodel, for one) arrive as scalars alongside
+        # the per-sample age lists. Wrapping them as one-element lists would make
+        # the zip below stop after a single row and silently write one sample age
+        # for the whole dataset, so broadcast them across every sample instead.
+        n_rows = max((len(v) for v in sa.values() if isinstance(v, list)), default=1)
+        sa = {k: v if isinstance(v, list) else [v] * n_rows for k, v in sa.items()}
         chronologyid = chron_id_map.get(chron)
         for _, row in enumerate(zip(*sa.values(), strict=False)):
             sa_age = dict(zip(sa.keys(), row, strict=False))

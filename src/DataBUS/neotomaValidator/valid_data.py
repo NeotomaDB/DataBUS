@@ -104,6 +104,13 @@ def valid_data(cur, yml_dict, csv_file, databus=None):
         txname = entry_key if entry_key else datum.get("taxonid")
         if txname not in response.id_dict:
             response.id_dict[txname] = []
+        # A measurement that was not taken for this sample is not a datum. The
+        # all-None check above only drops a taxon measured nowhere; a taxon
+        # measured for some samples still yields empty rows for the rest, and
+        # those carry no units either, so the variable lookup would fail on a
+        # row that should never have existed.
+        if datum.get("value") is None:
+            continue
         for param, (query, key) in par.items():
             if isinstance(datum.get(param), str) and datum[param].strip().lower() == "none":
                 datum[param] = None

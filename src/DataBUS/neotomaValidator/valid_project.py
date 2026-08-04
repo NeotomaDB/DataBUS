@@ -132,6 +132,7 @@ def valid_project(cur, yml_dict, csv_file, databus=None):
             try:
                 insert_project_participant(cur, projectid, contactid)
                 response.valid.append(True)
+                response.message.append(f"✔ Participant '{name}' linked (contactid {contactid}).")
             except Exception as e:
                 response.message.append(f"? Could not add participant '{name}': {e}")
         else:

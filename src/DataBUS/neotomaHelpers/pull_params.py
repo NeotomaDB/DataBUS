@@ -57,8 +57,16 @@ def _process_value_entry(param_name, val_entry, csv_template, table, add_unit_in
         clean_valor = ut.clean_column(
             val_entry.get("column"), template_rows, clean=not val_entry.get("rowwise")
         )
-    except KeyError:
-        return
+    except (KeyError, TypeError):
+        # The named column is not in the data at all. An entry carrying a
+        # `value:` constant supplies the datum directly instead — that is how
+        # sheets with a non-machine-readable header (projectMetadata and
+        # friends) are read. Without such a constant the parameter is genuinely
+        # absent, as before. Note this deliberately does not cover a column that
+        # exists but is blank: falling back there would mask missing data.
+        if val_entry.get("value") is None:
+            return
+        clean_valor = val_entry["value"]
     if not clean_valor:
         if "taxonname" not in val_entry:
             add_unit_inputs[param_name] = None

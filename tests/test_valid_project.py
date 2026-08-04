@@ -21,6 +21,7 @@ from DataBUS.neotomaValidator.valid_project import (
     _extract_keywords,
     _extract_participants,
     _extract_project_info,
+    _resolve_contact,
     _resolve_keyword,
 )
 
@@ -192,6 +193,72 @@ class TestResolveKeyword:
 
     def test_not_found(self):
         assert _resolve_keyword(RoutingCursor(), "nope") is None
+
+
+class ContactCursor:
+    """Answers get_contacts' exact-name lookup for a fixed set of known contacts.
+
+    get_contacts issues the same SQL text no matter which name it is given, so
+    routing here keys off the bound parameter instead of the query. Only the
+    exact-contactname lookup is answered; the surname/givennames fallback query
+    carries different params and so returns None, which reads as "not found".
+    """
+
+    def __init__(self, known=None):
+        self.known = known or {}
+        self.seen = []
+        self._next = None
+
+    def execute(self, query, params=None):
+        self.seen.append(params)
+        self._next = None
+        if params and "contactname" in params:
+            self._next = self.known.get(params["contactname"])
+
+    def fetchone(self):
+        return self._next
+
+    @property
+    def names_looked_up(self):
+        return [p["contactname"] for p in self.seen if p and "contactname" in p]
+
+
+# Neotoma stores contacts as "Surname, Given"; FAIRe templates carry recordedBy
+# the other way round, so _resolve_contact has to bridge the two.
+SPANBAUER = {"spanbauer, trisha": (10234, "Spanbauer, Trisha")}
+
+
+class TestResolveContact:
+    def test_empty_name_is_none(self):
+        assert _resolve_contact(ContactCursor(), None) is None
+        assert _resolve_contact(ContactCursor(), "") is None
+
+    def test_canonical_surname_first_matches_directly(self):
+        cur = ContactCursor(SPANBAUER)
+        assert _resolve_contact(cur, "Spanbauer, Trisha") == 10234
+        assert cur.names_looked_up == ["spanbauer, trisha"]
+
+    def test_given_name_first_is_reordered_on_retry(self):
+        cur = ContactCursor(SPANBAUER)
+        assert _resolve_contact(cur, "Trisha L. Spanbauer") == 10234
+        # First attempt uses the template's order and misses; the retry reorders
+        # it into Neotoma's convention, dropping the middle initial.
+        assert cur.names_looked_up == ["trisha l. spanbauer", "spanbauer, trisha"]
+
+    def test_surrounding_whitespace_is_stripped(self):
+        cur = ContactCursor(SPANBAUER)
+        assert _resolve_contact(cur, "  Trisha L. Spanbauer  ") == 10234
+
+    def test_name_with_a_comma_is_not_reordered(self):
+        cur = ContactCursor()
+        assert _resolve_contact(cur, "Nobody, Here") is None
+        # A comma means the caller already used Neotoma's order, so there is
+        # nothing to retry — exactly one lookup, not two.
+        assert cur.names_looked_up == ["nobody, here"]
+
+    def test_unknown_name_is_none(self):
+        cur = ContactCursor()
+        assert _resolve_contact(cur, "Trisha L. Spanbauer") is None
 
 
 class TestValidProject:
