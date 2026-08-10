@@ -380,6 +380,23 @@ def validate_str_values(value, name: str) -> str | None:
     return value
 
 
+def validate_bool_values(value, name: str) -> bool | None:
+    """Validates that a value is a bool, 0/1, or None, returning it as bool or None.
+
+    ``None`` passes through so a NULL column stays distinguishable from a
+    recorded ``False`` — for the FAIRe control flags, "not recorded" and "no
+    controls were used" are different claims.
+    """
+    if value is None:
+        return None
+    if isinstance(value, bool):
+        return value
+    # Excel round-trips a checklist Boolean as 0/1 as readily as True/False.
+    if isinstance(value, int) and value in (0, 1):
+        return bool(value)
+    raise TypeError(f"✗ {name} must be a boolean, 0/1, or None.")
+
+
 def validate_date_values(value, name: str) -> datetime.date | None:
     """Validates that a value is an date or None, returning it as date or None."""
     if isinstance(value, list):

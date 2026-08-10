@@ -1,16 +1,22 @@
-from .neotomaHelpers.utils import validate_int_values, validate_str_values
+from .neotomaHelpers.utils import (
+    validate_bool_values,
+    validate_int_values,
+    validate_str_values,
+)
 
 
 class AeDNAEntity:
     """Base for the flat aeDNA tables (ndb.aednaassays, ndb.aednalibraries).
 
-    Subclasses declare four class attributes:
+    Subclasses declare five class attributes:
 
     * ``_TABLE`` — fully-qualified table name.
     * ``_PARAMS`` — ordered list of insert columns.
     * ``_PK`` — primary-key column name (returned by the insert).
-    * ``_INT_FIELDS`` — the ``_PARAMS`` that are integer FKs/sizes; every other
-      param is validated as a string.
+    * ``_INT_FIELDS`` — the ``_PARAMS`` that are integer FKs/sizes.
+    * ``_BOOL_FIELDS`` — the ``_PARAMS`` backed by a Postgres ``BOOLEAN``.
+
+    Every param in neither tuple is validated as a string.
 
     Construction validates each field and stores it as an attribute; ``_PK`` is
     initialised to ``None`` and set after :meth:`insert_to_db`.
@@ -20,6 +26,7 @@ class AeDNAEntity:
     _PARAMS: list[str] = []
     _PK: str = ""
     _INT_FIELDS: tuple[str, ...] = ()
+    _BOOL_FIELDS: tuple[str, ...] = ()
 
     def __init__(self, **fields):
         setattr(self, self._PK, None)
@@ -27,6 +34,8 @@ class AeDNAEntity:
             value = fields.get(name)
             if name in self._INT_FIELDS:
                 value = validate_int_values(value, name)
+            elif name in self._BOOL_FIELDS:
+                value = validate_bool_values(value, name)
             else:
                 value = validate_str_values(value, name)
             setattr(self, name, value)
