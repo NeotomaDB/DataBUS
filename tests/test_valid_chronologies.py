@@ -56,3 +56,35 @@ class TestValidChronologiesMock:
             cur=mock_cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus
         )
         assert isinstance(result, Response)
+
+    def test_chronology_without_bounds_is_created(self, mock_cur):
+        """A chronology whose age column is filled but whose bounds are blank
+        is still created, just without age bounds."""
+        yml_dict = {
+            "metadata": [
+                {
+                    "column": "interp_age",
+                    "neotoma": "ndb.chronologies.age",
+                    "chronologyname": "interp_author",
+                    "default": True,
+                    "rowwise": True,
+                    "type": "float",
+                },
+                {
+                    "column": "interp_age_uncert_pos",
+                    "neotoma": "ndb.chronologies.ageboundolder",
+                    "chronologyname": "interp_author",
+                    "rowwise": True,
+                    "type": "float",
+                },
+            ]
+        }
+        csv_file = [
+            {"interp_age": 10.0, "interp_age_uncert_pos": None},
+            {"interp_age": 12.0, "interp_age_uncert_pos": None},
+        ]
+        databus = {"collunits": MagicMock(id_int=999)}
+        result = nv.valid_chronologies(
+            cur=mock_cur, yml_dict=yml_dict, csv_file=csv_file, databus=databus
+        )
+        assert "✔  Chronology can be created." in result.message
