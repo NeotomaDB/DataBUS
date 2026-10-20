@@ -55,6 +55,7 @@ def valid_data(cur, yml_dict, csv_file, databus=None):
     except Exception as e:
         response.valid.append(False)
         response.message.append(f"✗ Sample IDs not available; using placeholder: {e}")
+        sampleids = []
     data = {}
     if inputs.get("value"):
         data = inputs2.copy()
@@ -62,6 +63,24 @@ def valid_data(cur, yml_dict, csv_file, databus=None):
         # Surface samples or data from literature with no depths/unique AU.
         if len(sampleids) == 1:
             data["sampleid"] = [sampleids[0]] * len(inputs["value"])
+        elif len(sampleids) > 1:
+            # Long format: every row is one measurement and belongs to the sample of its analysis
+            # unit. Rows sharing a `groupby` key (e.g. depth) share a unit, as in valid_analysisunit.
+            _, row_to_unit = nh.group_rows(yml_dict, csv_file)
+            if (
+                row_to_unit is not None
+                and len(row_to_unit) == len(inputs["value"])
+                and max(row_to_unit) + 1 == len(sampleids)
+            ):
+                data["sampleid"] = [sampleids[unit] for unit in row_to_unit]
+            else:
+                response.valid.append(False)
+                response.message.append(
+                    f"✗ Cannot assign data to samples: {len(inputs['value'])} data rows form "
+                    f"{len(set(row_to_unit or []))} analysis units, but there are "
+                    f"{len(sampleids)} samples."
+                )
+                return response
         data = {
             k: (v if isinstance(v, list) else [v] * len(inputs["value"])) for k, v in data.items()
         }
@@ -155,6 +174,10 @@ def valid_data(cur, yml_dict, csv_file, databus=None):
                 )
             if "✗  Variable ID needed to create datum for taxon." not in response.message:
                 response.message.append("✗  Variable ID needed to create datum for taxon.")
+            # No variable for this row (a taxon, element or units name did not resolve above).
+            # Without this, the lookup below reused the Variable of the previous row and the
+            # datum was stored under it.
+            continue
         try:
             varid = var.get_id_from_db(cur)
             varid = varid[0]

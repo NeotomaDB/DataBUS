@@ -31,8 +31,11 @@ def valid_analysisunit(cur, yml_dict, csv_file, databus=None):
         Response(valid=[True], message=[...], validAll=True, counter=1)
     """
     response = Response()
+    # In a long file the analysis unit repeats on every measurement row; with `groupby: true` on
+    # the template entry only the first row of each unit is read here.
+    unit_rows, _ = nh.group_rows(yml_dict, csv_file)
     try:
-        inputs = nh.pull_params(ANALYSIS_UNIT_PARAMS, yml_dict, csv_file, "ndb.analysisunits")
+        inputs = nh.pull_params(ANALYSIS_UNIT_PARAMS, yml_dict, unit_rows, "ndb.analysisunits")
     except Exception as e:
         response.valid.append(False)
         response.message.append(

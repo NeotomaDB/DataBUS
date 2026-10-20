@@ -31,8 +31,10 @@ def valid_sample(cur, yml_dict, csv_file, databus):
         Response(valid=[True], message=[...], validAll=True, counter=5)
     """
     response = Response()
+    # One sample per analysis unit: read the same grouped rows valid_analysisunit used.
+    unit_rows, _ = nh.group_rows(yml_dict, csv_file)
     try:
-        inputs = nh.pull_params(SAMPLE_PARAMS, yml_dict, csv_file, "ndb.samples")
+        inputs = nh.pull_params(SAMPLE_PARAMS, yml_dict, unit_rows, "ndb.samples")
         try:
             inputs["analysisunitid"] = databus["analysisunits"].id_list
             if not inputs["analysisunitid"]:

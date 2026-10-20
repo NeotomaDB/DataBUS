@@ -32,6 +32,8 @@ def valid_dataset(cur, yml_dict, csv_file, databus=None):
     response = Response()
     inputs = {}
     for param in DATASET_PARAMS:
+        if param[0] == "datasetname":
+            continue  # read from the data below, together with the notes
         val = nh.retrieve_dict(yml_dict, param[1])
         if val:
             try:
@@ -75,7 +77,11 @@ def valid_dataset(cur, yml_dict, csv_file, databus=None):
                 "✗ Dataset type is not known to Neotoma and needs to be created first."
             )
             response.valid.append(False)
-    inputs["notes"] = nh.pull_params(["notes"], yml_dict, csv_file, "ndb.datasets").get("notes")
+    # The name is read like any other column, so each file of a bulk upload carries its own and a
+    # blank cell stays NULL. A template `value:` still works as a constant when the column is absent.
+    dataset_params = nh.pull_params(["datasetname", "notes"], yml_dict, csv_file, "ndb.datasets")
+    inputs["datasetname"] = dataset_params.get("datasetname")
+    inputs["notes"] = dataset_params.get("notes")
     try:
         inputs["collectionunitid"] = databus["collunits"].id_int
     except Exception as e:

@@ -69,6 +69,16 @@ def valid_sample_age(cur, yml_dict, csv_file, databus=None):
         n_rows = max((len(v) for v in sa.values() if isinstance(v, list)), default=1)
         sa = {k: v if isinstance(v, list) else [v] * n_rows for k, v in sa.items()}
         chronologyid = chron_id_map.get(chron)
+        if chronologyid is None and databus.get("chronologies") is not None:
+            # Sending a null chronology ID to the database only produces a
+            # constraint error that never mentions which chronology was missing.
+            response.valid.append(False)
+            response.message.append(
+                f"✗ Sample ages for chronology '{chron}' cannot be inserted: no "
+                f"chronology with that name was inserted. Chronologies available: "
+                f"{list(chron_id_map)}."
+            )
+            continue
         for _, row in enumerate(zip(*sa.values(), strict=False)):
             sa_age = dict(zip(sa.keys(), row, strict=False))
             sa_age["agemodel"] = agemodel
@@ -100,8 +110,17 @@ def valid_sample_age(cur, yml_dict, csv_file, databus=None):
                         response.message.append("✔ Sample Age inserted.")
                 except Exception as e:
                     response.valid.append(False)
-                    if f"✗ Sample Age could not be inserted. {e}" not in response.message:
-                        response.message.append(f"✗ Sample Age could not be inserted. {e}")
+                    response.message.append(
+                        f"✗ Sample Age could not be inserted for sample ID "
+                        f"{sa_age.get('sampleid')} in chronology '{chron}' "
+                        f"(ID {chronologyid}): {str(e).strip()}"
+                    )
+                    # A failed statement aborts the transaction, so every row
+                    # after this one could only report that same abort.
+                    response.message.append(
+                        "? Remaining sample ages were skipped after this database error."
+                    )
+                    return response
             except Exception as e:
                 response.valid.append(False)
                 if f"✗ Samples ages cannot be created. {e}" not in response.message:
