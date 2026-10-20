@@ -25,7 +25,8 @@ def valid_data(cur, yml_dict, csv_file, databus=None):
     var_query = """SELECT variableelementid FROM ndb.variableelements
                     WHERE LOWER(variableelement) = %(variableelementid)s;"""
     taxon_query = """SELECT * FROM ndb.taxa
-                        WHERE LOWER(taxonname) = %(taxonid)s;"""
+                        WHERE LOWER(taxonname) = %(taxonid)s
+                        ORDER BY taxonid;"""
     units_query = """SELECT variableunitsid FROM ndb.variableunits
                         WHERE LOWER(variableunits) = %(variableunitsid)s;"""
     context_query = """SELECT variablecontextid FROM ndb.variablecontexts
