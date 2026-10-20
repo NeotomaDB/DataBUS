@@ -1,4 +1,4 @@
-from DataBUS import Response
+from DataBUS.Response import Response
 
 
 def logging_response(response, logfile):

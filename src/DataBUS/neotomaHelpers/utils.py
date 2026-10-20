@@ -312,6 +312,11 @@ def retrieve_dict(yml_dict, sql_column):
         return result
 
 
+def is_blank_cell(value):
+    """True for a string cell that stands for a missing value ("NA", "None" or empty)."""
+    return isinstance(value, str) and value.strip() in ("NA", "", "None")
+
+
 def clean_column(column, template, clean=True):
     """Extracts a single column from template data and optionally reduces it to unique
     values. Handles special cases where there are multiple non-empty values by raising
@@ -319,14 +324,11 @@ def clean_column(column, template, clean=True):
     """
     if clean:
         value = _extract_unique_column_value(template, column)
-        if isinstance(value, str) and value.strip() in ("NA", "", "None"):
+        if is_blank_cell(value):
             return None
         return value
     else:
-        values = [
-            None if isinstance(v, str) and v.strip() in ("NA", "", "None") else v
-            for v in (row[column] for row in template)
-        ]
+        values = [None if is_blank_cell(v) else v for v in (row[column] for row in template)]
         return values if values else None
 
 
