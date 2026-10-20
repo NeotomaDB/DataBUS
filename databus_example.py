@@ -1,7 +1,7 @@
-import datetime
 import glob
 import json
 import os
+from datetime import datetime
 
 import psycopg2
 from dotenv import load_dotenv
@@ -50,21 +50,16 @@ for filename in tqdm(filenames, desc="Files", unit="file"):
     logfile = []
     databus = {}
 
-    if filename.endswith(".xlsx"):
-        csv_file = nh.read_xlsx(filename)
-    else:
-        csv_file = nh.read_csv(filename)
+    csv_file = nh.read_xlsx(filename) if filename.endswith(".xlsx") else nh.read_csv(filename)
     hashcheck = nh.hash_file(filename)
     filecheck = nh.check_file(filename, validation_files="data/")
 
     logfile = logfile + hashcheck["message"] + filecheck["message"]
     logfile.append(f"\nNew Upload started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
-    if hashcheck["pass"] is False and filecheck["pass"] is False:
+    file_validated = hashcheck["pass"] is not False and filecheck["pass"] is not False
+    if not file_validated:
         logfile.append("File must be properly validated before it can be uploaded.")
-        hashcheck = False
-    else:
-        hashcheck = True
 
     try:
         step_bar = tqdm(total=16, desc=os.path.basename(filename), leave=False, unit="step")
@@ -294,8 +289,8 @@ for filename in tqdm(filenames, desc="Files", unit="file"):
         step_bar.close()
 
         all_true = all(databus[key].validAll for key in databus)
-        all_true = all_true and hashcheck
-        if args.upload:
+        all_true = all_true and file_validated
+        if args["upload"]:
             if all_true:
                 # Special command for finalizing the upload and inserting into the datasetsubmissions table.
                 databus["finalize"] = nv.insert_final(cur, databus=databus)

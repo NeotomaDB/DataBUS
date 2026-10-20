@@ -14,6 +14,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `write_csv` helper in `neotomaHelpers` to serialise list-of-dicts results to CSV.
 - `taxa_upload-example.py` example script demonstrating the taxa upload workflow with log file and CSV output.
 - `bool`/`boolean` type support in `convert_value_by_type` and new `_convert_bool` helper in `utils.py`.
+- `group_rows` helper in `neotomaHelpers` and the `groupby: true` template key on `ndb.analysisunits` entries: rows of a long file that share the key (e.g. depth) form one analysis unit and one sample.
+- `is_blank_cell` helper in `utils.py`, shared by `clean_column` and `group_rows`.
+- `run_step` helper in `neotomaHelpers`: runs one validation step through `safe_step`, stores its Response in `databus[key]` and logs it. `logging_response` is now exported from `neotomaHelpers`.
 
 ### Changed
 
@@ -21,9 +24,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Taxa insertion switched from a raw `INSERT` to the `ts.inserttaxon` stored procedure.
 - `parse_arguments` updated to expose `--upload` flag consumed by the vocab uploader.
 - `add_note_entry` in `utils.py` now correctly accepts and stores `clean_value` (previously ignored the argument).
+- `valid_analysisunit` and `valid_sample` read the grouped rows (`groupby`), so a long file gives one unit and sample per depth instead of one per row.
+- `valid_data` assigns each long-format datum the sample of its analysis unit (previously only a single-sample file got a `sampleid`). It reports an error, and inserts nothing, when the units and samples cannot be matched.
+- `valid_dataset` reads `ndb.datasets.datasetname` from the data like other columns (a `value:` constant still works); a blank cell inserts NULL.
 
 ### Fixed
 
+- `valid_data`: a row whose taxon, element or units name does not resolve is now reported invalid and skipped. Before, its datum was inserted under the `Variable` of the previous row.
 - `pull_params.py`: `add_note_entry` call now passes `clean_valor` so notes values are actually recorded.
 - `add_note_entry`: added missing `else` branch to assign `clean_value` when notes is not already a list.
 

@@ -63,9 +63,6 @@ def valid_chronologies(cur, yml_dict, csv_file, databus=None):
 
     for chron_key in inputs:
         ch = inputs[chron_key]
-        # `age` only signals that the chronology exists, so one without
-        # uncertainties is still created, just without age bounds.
-        ch.pop("age", None)
         ch["agetypeid"] = ch.get("agetypeid", agetype)
         ch["contactid"] = ch.get("contactid", author)
         if ch.get("chronologyname") is None:

@@ -131,6 +131,30 @@ A data variable pair (value + units) looks like this:
   type: string
 ```
 
+**Long-format files** — a file with one row per measurement does not need to be pivoted to wide. Map a single `ndb.data.value` column and rowwise `ndb.variables.taxonid`, `variableelementid`, `variableunitsid` (and optionally `variablecontextid`) columns holding Neotoma names; `valid_data` looks the variable up from each row. Mark the analysis unit column with `groupby: true` so rows sharing its value (usually the depth) become one analysis unit and one sample, and every datum is attached to the sample of its unit:
+
+```yaml
+- column: depth
+  neotoma: ndb.analysisunits.depth
+  groupby: true                  # rows with the same depth are one analysis unit / sample
+  rowwise: true
+  type: float
+
+- column: value
+  neotoma: ndb.data.value
+  rowwise: true
+  type: float
+
+- column: taxon
+  neotoma: ndb.variables.taxonid
+  rowwise: true
+  type: string
+```
+
+Rows with a blank `groupby` value are never merged. Without `groupby` every row is its own unit, as before.
+
+**`ndb.datasets.datasetname`** — can be a CSV column (`rowwise: false`), so each file of a bulk upload carries its own name. A blank cell is stored as NULL. A `value:` constant is still read when the column is not in the file.
+
 See `data/template_example.yml` for the complete annotated template covering all supported sections.
 
 ---
